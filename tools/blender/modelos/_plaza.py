@@ -44,15 +44,21 @@ def barra(bm, x, a, b, ancho, grosor, mat=0, bisel=0.0):
 
 
 def torno(bm, perfil, lados, mats=None, centro=(0.0, 0.0, 0.0), tapa_abajo=False,
-          tapa_arriba=False):
+          tapa_arriba=False, abierta=False):
     """Pieza de revolución sobre el eje Y de Godot. perfil = [(radio, y)] de abajo hacia
     arriba (o de afuera hacia adentro); un radio 0 cierra en punta. mats[i] = material de la
-    banda entre el punto i y el i+1. Una cara plana queda hacia +Z (el frente)."""
+    banda entre el punto i y el i+1. Una cara plana queda hacia +Z (el frente).
+    Los radios son de las caras planas (apotema), no de las aristas: así un torno de radio 3
+    mide justo 6 m de lado a lado, y uno de 4 lados y radio a es un cuadrado de lado 2a.
+    abierta=True: superficie suelta (una cortina de agua), con las caras mirando hacia afuera
+    del eje en vez de recalcular las normales."""
     mats = mats or [0] * (len(perfil) - 1)
     previas = set(bm.faces)
     giro = math.pi / lados - math.pi / 2
+    aj = 1 / math.cos(math.pi / lados)
     anillos = []
     for r, y in perfil:
+        r *= aj
         if r < 1e-9:
             anillos.append([bm.verts.new(g2b((centro[0], centro[1] + y, centro[2])))])
         else:
@@ -75,8 +81,33 @@ def torno(bm, perfil, lados, mats=None, centro=(0.0, 0.0, 0.0), tapa_abajo=False
     if tapa_arriba and len(anillos[-1]) > 1:
         bm.faces.new(anillos[-1]).material_index = mats[-1]
     nuevas = [f for f in bm.faces if f not in previas]
-    bmesh.ops.recalc_face_normals(bm, faces=nuevas)
+    if abierta:
+        eje = g2b(centro)
+        for f in nuevas:
+            f.normal_update()
+            radial = f.calc_center_median() - eje
+            radial.z = 0
+            if f.normal.dot(radial) < 0:
+                f.normal_flip()
+    else:
+        bmesh.ops.recalc_face_normals(bm, faces=nuevas)
     return nuevas
+
+
+def disco(bm, radio, y, lados, mat=0, centro=(0.0, 0.0)):
+    """Disco plano horizontal (un solo polígono, mirando hacia arriba) a la altura y.
+    centro = (x, z) de Godot. Para superficies de agua. radio = apotema, como en torno()."""
+    giro = math.pi / lados - math.pi / 2
+    radio /= math.cos(math.pi / lados)
+    vs = [bm.verts.new(g2b((centro[0] + radio * math.cos(giro + 2 * math.pi * k / lados), y,
+                            centro[1] + radio * math.sin(giro + 2 * math.pi * k / lados))))
+          for k in range(lados)]
+    f = bm.faces.new(vs)
+    f.normal_update()
+    if f.normal.z < 0:
+        f.normal_flip()
+    f.material_index = mat
+    return [f]
 
 
 def perfil_extruido(bm, perfil, largo, mat=0, tapas=True):
@@ -148,17 +179,67 @@ def m(texto):
 
 # ── Hoja de revisión ───────────────────────────────────────────────────
 
+# Vistas en perspectiva (dirección desde el objeto hacia la cámara, en ejes de Blender).
+PERSPECTIVAS = {
+    "tres_cuartos": Vector((1, -1.3, 0.8)),
+    "tres_cuartos_bajo": Vector((1, -1.3, 0.35)),   # objetos altos (farol, árboles)
+    "tres_cuartos_atras": Vector((-1, 1.3, 0.6)),
+}
+
+
+def encuadre_ajustado(objetos, vista, margen=1.1):
+    """Cámara en perspectiva que deja todo el objeto adentro del cuadro y lo llena (la de
+    comun.encuadrar corta los objetos altos y finitos)."""
+    esquinas = [o.matrix_world @ Vector(c) for o in objetos for c in o.bound_box]
+    d = PERSPECTIVAS[vista].normalized()
+    cam = comun._camara()
+    cam.data.type = "PERSP"
+    cam.data.lens = 50
+    escena = bpy.context.scene
+    aspecto = escena.render.resolution_x / escena.render.resolution_y
+    tan_h = cam.data.sensor_width / 2 / cam.data.lens
+    tan_v = tan_h / aspecto
+    rot = (-d).to_track_quat("-Z", "Y")
+    derecha, arriba = rot @ Vector((1, 0, 0)), rot @ Vector((0, 1, 0))
+    centro = sum(esquinas, Vector()) / len(esquinas)
+    for _ in range(4):  # centrar lo que se ve y alejar lo justo
+        dist = max(max((p - centro).dot(d) + abs((p - centro).dot(derecha)) * margen / tan_h,
+                       (p - centro).dot(d) + abs((p - centro).dot(arriba)) * margen / tan_v)
+                   for p in esquinas)
+        ojo = centro + d * dist
+        us = [(p - ojo).dot(derecha) / -(p - ojo).dot(d) for p in esquinas]
+        vs = [(p - ojo).dot(arriba) / -(p - ojo).dot(d) for p in esquinas]
+        prof = -(centro - ojo).dot(d)
+        centro = centro + derecha * (max(us) + min(us)) / 2 * prof + arriba * (max(vs) + min(vs)) / 2 * prof
+    cam.location = centro + d * dist
+    cam.rotation_euler = rot.to_euler()
+    cam.data.clip_start = 0.05
+    cam.data.clip_end = dist * 10 + 50
+
+
 def hoja(id_, titulo, cuadros_pedidos, revision, persona_en=None):
-    """cuadros_pedidos = [(etiqueta, objetos, vista, luz, de_cerca)] como comun.sacar_fotos;
-    en los objetos se puede poner el texto "persona" y se cambia por la silueta de 1,75 m,
-    ubicada en persona_en (posición de Godot)."""
+    """cuadros_pedidos = [(etiqueta, objetos, vista, luz, de_cerca)] como comun.sacar_fotos,
+    con las vistas en perspectiva de PERSPECTIVAS (ajustadas al objeto). En los objetos se
+    puede poner el texto "persona": se cambia por la silueta de 1,75 m, en persona_en (Godot)."""
+    import tempfile
     comun.preparar_revision()
     persona = bpy.data.objects["ref_persona_1,75m"]
     if persona_en is not None:
         persona.location = g2b(persona_en)
     pedidos = [(e, [persona if o == "persona" else o for o in objs], v, l, c)
                for e, objs, v, l, c in cuadros_pedidos]
-    cuadros = comun.sacar_fotos(pedidos)
+    tmp = Path(tempfile.mkdtemp())
+    todos = {o for _, objs, *_ in pedidos for o in objs}
+    cuadros = []
+    for etiqueta, objs, vista, luz, de_cerca in pedidos:
+        comun.poner_luz(luz)
+        for o in todos:
+            o.hide_render = o not in objs
+        if vista in PERSPECTIVAS:
+            encuadre_ajustado(objs, vista)
+        else:
+            comun.encuadrar(objs, vista, de_cerca=de_cerca)
+        cuadros.append((etiqueta, comun.render(tmp / f"{len(cuadros)}.png")))
     comun.componer_hoja(titulo, cuadros, revision, comun.RAIZ / f"docs/arte/revisiones/{id_}.jpg")
 
 

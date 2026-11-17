@@ -269,7 +269,7 @@ def construir():
         return (q[0], q[1] + pivote_g[1], q[2] + pivote_g[2])
 
     # 3) Pata trasera, enganchada detrás del marco a PATA_ALTO.
-    enganche = inclinado((0, PATA_ALTO, -MARCO[2] - PATA[1] / 2))
+    enganche = inclinado((0, PATA_ALTO, -MARCO[2] - PATA[1] / 2 + 0.002))  # 2 mm metida: sin luz
     pata(bm, enganche, 1)
     # 4) Se centra la huella en Z (origen = centro de la base, guía 2.4).
     zs = [-v.co.y for v in bm.verts]
