@@ -114,6 +114,7 @@ def main():
         c = [mod["cuerpo"]]
         # La pelota va apoyada en el piso para las fotos (el origen está en el centro).
         mod["cuerpo"].location.z = DIAMETRO / 2
+        bpy.context.view_layer.update()  # si no, la primera foto encuadra la pelota en z = 0
         plaza.hoja(ID, "pelota · Ø 0,22 m · con física", [
             ("Frente · día", c, "frente", "dia", True),
             ("Costado · día", c, "costado", "dia", True),
