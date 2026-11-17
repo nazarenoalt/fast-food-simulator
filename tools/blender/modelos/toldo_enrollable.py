@@ -60,7 +60,7 @@ def caja_enrollado(bm, w):
             (CAJA_ARRIBA + 0.006, 0.10), (2.08, z1 + 0.006), (CAJA_ABAJO - 0.006, z1 + 0.006)]
     for sx in (-1, 1):
         x0, x1 = sorted((sx * (w / 2 - TAPA), sx * w / 2))
-        t.prisma_x(bm, tapa, x0, x1, bisel=0.004, mat=3)
+        t.prisma_x(bm, tapa, x0, x1, mat=3)        # tapa de 2 cm: sin bisel
 
 
 def manivela(bm, x):
@@ -80,7 +80,7 @@ def construir(tam):
     azul, crema, acero, negro = comun.cargar_materiales(
         "M_AzulAcento", "M_BlancoCrema", "M_Acero", "M_PlasticoNegro")
     bm = bmesh.new()
-    t.lona_rayada(bm, r, LONA_ATRAS, (Y_FRENTE, Z_FRENTE), FALDON, FESTON)
+    t.lona_rayada(bm, r, LONA_ATRAS, (Y_FRENTE, Z_FRENTE), FALDON, FESTON, canto_atras=False)
     caja_enrollado(bm, b.w)
     col = t.mastiles(bm, b, xm, Z_MASTIL, CAJA_ABAJO + 0.005, 2, 3)
     barra = (Y_FRENTE - 0.016, Z_FRENTE - 0.021)                        # barra de carga

@@ -322,7 +322,7 @@ def rayas(b):
     return SimpleNamespace(n=n, s=s, modulo=2 * s, corte=b.w / 2 - 2 * s, ancho=b.w)
 
 
-def lona_rayada(bm, r, atras, adelante, faldon, feston, mat0=0):
+def lona_rayada(bm, r, atras, adelante, faldon, feston, mat0=0, canto_atras=True):
     """Lona plana con faldón festoneado al frente, de x = −ancho/2 a +ancho/2.
 
     atras = (y, z) del borde de atrás (cara de abajo); adelante = (y, z) de la esquina de
@@ -330,6 +330,7 @@ def lona_rayada(bm, r, atras, adelante, faldon, feston, mat0=0):
     los festones; feston = cuánto más baja en el medio de cada raya. Espesor LONA, dos caras
     (se ve de abajo). Superficie mat0 = rayas pares (la primera desde −X), mat0+1 = impares.
     Topología mínima: arriba y abajo, una cara por raya; el festón solo en el faldón.
+    canto_atras=False no hace el canto de atrás (cuando queda adentro de la caja del toldo).
     """
     yb, zb = atras
     yf, zf = adelante
@@ -354,10 +355,11 @@ def lona_rayada(bm, r, atras, adelante, faldon, feston, mat0=0):
         caras = [
             bm.faces.new((a[1], b[1], b[2], a[2])),                       # arriba
             bm.faces.new((a[0], a[5], b[5], b[0])),                       # abajo
-            bm.faces.new((a[0], b[0], b[1], a[1])),                       # canto de atrás
             bm.faces.new([a[2], b[2], b[3]] + afuera[::-1] + [a[3]]),     # faldón, afuera
             bm.faces.new([a[5], a[4]] + adentro + [b[4], b[5]]),          # faldón, adentro
         ]
+        if canto_atras:
+            caras.append(bm.faces.new((a[0], b[0], b[1], a[1])))          # canto de atrás
         fila_a = [a[3]] + afuera + [b[3]]
         fila_i = [a[4]] + adentro + [b[4]]
         for k in range(FESTON_PASOS):                                     # canto del festón
@@ -366,6 +368,8 @@ def lona_rayada(bm, r, atras, adelante, faldon, feston, mat0=0):
             f.material_index = mat
     for sec, mat in ((cortes[0], mat0), (cortes[-1], mat0 + (r.n - 1) % 2)):
         bm.faces.new(sec).material_index = mat                            # tapas de los costados
+    if not canto_atras:
+        bmesh.ops.recalc_face_normals(bm, faces=[f for f in bm.faces if f.material_index in (mat0, mat0 + 1)])
 
 
 def mastiles(bm, b, xm, zm, y_arriba, mat, mat_negro):
@@ -378,8 +382,8 @@ def mastiles(bm, b, xm, zm, y_arriba, mat, mat_negro):
         x = sx * xm
         varilla(bm, (x, y0, zm), (x, y_arriba, zm), 0.018, lados=12, mat=mat, tapas=(True, False))
         for y in (0.47, b.a - 0.09):
-            piezas.caja(bm, (0.045, 0.035, zm + 0.01), (x, y, (zm - 0.01) / 2), mat=mat_negro,
-                        bisel=0.004)
+            # Grapa de 4,5 cm: sin bisel (no se distingue a 2 m, guía 3.5).
+            piezas.caja(bm, (0.045, 0.035, zm + 0.01), (x, y, (zm - 0.01) / 2), mat=mat_negro)
         col.append(((x, y0, zm), (x, y_arriba, zm), 0.018))
     return col
 
@@ -749,9 +753,10 @@ def cambiar_colores(objetos, mat_a, mat_b):
     return antes
 
 
-def hoja_toldo(ID, construir, titulo, revision, variantes):
+def hoja_toldo(ID, construir, titulo, revision, variantes, telon=True):
     """Hoja estándar de un toldo. variantes = [(texto, mat_a, mat_b)]: la primera es la del
-    .glb; la segunda y la tercera se muestran en el mediano y el grande."""
+    .glb; la segunda y la tercera se muestran en el mediano y el grande. Con telon=True el
+    chico lleva puesto el telon_panchos (mismo anclaje `frente`), para ver que no choca."""
     import techo_plano
     esc = armar_escena(construir, "frente")
     persona = bpy.data.objects["ref_persona_1,75m"]
@@ -761,6 +766,11 @@ def hoja_toldo(ID, construir, titulo, revision, variantes):
     techo = techo_plano.construir("chico")
     techo["raiz"].location = Vector((ch["x"], 0, 0)) + g2b(b.anclajes["techo"])
     todo_ch = ch["carro"] + ch["modelo"]["visibles"]
+    if telon:
+        import telon_panchos
+        tel = telon_panchos.construir()
+        tel.location = Vector((ch["x"], 0, 0)) + g2b(b.anclajes["frente"])
+        todo_ch.append(tel)
     todo_me = me["carro"] + me["modelo"]["visibles"]
     todo_gr = gr["carro"] + gr["modelo"]["visibles"]
     fila = b.anclajes.get("frente")
