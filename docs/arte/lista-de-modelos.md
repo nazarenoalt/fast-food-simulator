@@ -24,9 +24,9 @@ Resumen: **106 modelos**. La etapa 1 tiene 28, y 23 de ellos (P1) reemplazan las
 
 | ID | Objeto | Medidas | Tris | Materiales | Notas | Prio. | Estado |
 |---|---|---|---|---|---|---|---|
-| `pan_pancho` | Pan de pancho | 0,17 × 0,045 × 0,055 | 300 | PanCorteza, PanMiga | Forma de "bollo" alargado con el corte arriba (más claro). Origen al centro. Hecho por código: `tools/blender/modelos/pan_pancho.py` (288 tris). [Hoja de revisión](revisiones/pan_pancho.jpg). | P1 | En revisión |
+| `pan_pancho` | Pan de pancho | 0,17 × 0,045 × 0,055 | 300 | PanCorteza, PanMiga | Pan abierto, como de panadería: cortado a lo largo casi hasta la base, con las mitades separadas y el fondo del corte en U para la salchicha. Origen al centro. Hecho por código: `tools/blender/modelos/pan_pancho.py` (280 tris). [Hoja de revisión](revisiones/pan_pancho.jpg). | P1 | En revisión |
 | `salchicha` | Salchicha | Ø 0,022 × 0,15 | 200 | SalchichaCruda | Cilindro de 8 lados con puntas redondeadas, apenas curvada. Pieza `pieza_salchicha` (el color lo cambia la cocción). | P1 | Pendiente |
-| `pancho` | Pancho armado | 0,17 × 0,06 × 0,055 | 500 | PanCorteza, PanMiga, SalchichaCruda | Se arma con `pan_pancho` + `salchicha` (no es un modelo nuevo). La salchicha queda medio hundida en el corte. | P1 | Pendiente |
+| `pancho` | Pancho armado | 0,17 × 0,06 × 0,055 | 500 | PanCorteza, PanMiga, SalchichaCruda | Se arma con `pan_pancho` + `salchicha` (no es un modelo nuevo). La salchicha va **hundida** entre las dos mitades: su centro a 0,004 m del centro del pan (hoy en `productos.ron` está a 0,024, apoyada arriba; cambiarlo cuando el juego cargue los `.glb`). | P1 | Pendiente |
 
 ### Bloques de stock (`stock/`)
 

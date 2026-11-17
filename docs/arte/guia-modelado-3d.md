@@ -220,7 +220,7 @@ base (el hex ya está en el espacio de color correcto; no copiar los números de
 | `M_PilotoApagado` | `#400D0D` | 0 | 0,4 | Luces piloto apagadas. **El juego las enciende.** |
 | **Comida y empaques** |||||
 | `M_PanCorteza` | `#DB9952` | 0 | 0,75 | Exterior de todos los panes. |
-| `M_PanMiga` | `#F7E0B2` | 0 | 0,8 | Corte / interior de los panes. |
+| `M_PanMiga` | `#E8C88E` | 0 | 0,8 | Corte / interior de los panes. |
 | `M_SalchichaCruda` | `#ED8C80` | 0 | 0,6 | Salchicha. **El juego cambia este color al cocinar.** |
 | *(ref.) salchicha cocida* | `#B84C33` | — | — | Solo referencia: lo pone el código. |
 | `M_Carton` | `#C79E6B` | 0 | 0,9 | Bandejas, cajas de cartón. |
@@ -305,6 +305,10 @@ con su material propio, para que el código las encuentre por nombre:
 - Proporciones reales (ver `productos.ron`), pero con formas un poco más "llenas" que la
   realidad: un pan levemente inflado se lee mejor que uno chato.
 - El interior (miga, corte) es un color más claro que el exterior (`M_PanMiga`).
+- **Panes abiertos, como los de panadería:** el corte va a lo largo casi hasta la base, las
+  dos mitades se separan hacia afuera y la miga se ve en las caras de adentro. Nada de una
+  franja clara "pintada" arriba. El fondo del corte tiene la forma del relleno (la salchicha,
+  el chorizo), para que quede **hundido** entre las dos mitades. Referencia: `pan_pancho`.
 - Los productos armados (pancho, hamburguesa) son las **mismas piezas** que los ingredientes,
   combinadas. El pancho = el modelo del pan + el de la salchicha, no un modelo nuevo.
 
@@ -492,3 +496,4 @@ revisión. Si alguno falla, el script termina con error. El resto se revisa a oj
 |---|---|
 | v1 | Primera versión: estilo low poly, paleta tomada de los colores actuales del juego. |
 | v1.1 | Biblioteca creada, paleta en `tools/arte/paleta.json`, revisión automática, hoja de revisión en `.jpg`, Git LFS postergado. |
+| v1.2 | Panes abiertos con el relleno hundido (5.1). `M_PanMiga` pasa de `#F7E0B2` a `#E8C88E` (se veía blanca). |

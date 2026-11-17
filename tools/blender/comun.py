@@ -307,8 +307,12 @@ def _camara():
     return cam
 
 
-def encuadrar(objetos, vista, margen=1.25):
-    """Ubica la cámara. vista: frente | costado | arriba | tres_cuartos."""
+def encuadrar(objetos, vista, margen=1.25, de_cerca=False):
+    """Ubica la cámara. vista: frente | costado | arriba | tres_cuartos.
+
+    Las vistas planas usan todas la misma escala (para comparar proporciones), salvo
+    con de_cerca=True, que llena el cuadro con lo que se ve desde esa vista.
+    """
     esquinas = [o.matrix_world @ Vector(c) for o in objetos for c in o.bound_box]
     minimo = Vector(map(min, *esquinas))
     maximo = Vector(map(max, *esquinas))
@@ -328,7 +332,8 @@ def encuadrar(objetos, vista, margen=1.25):
     if vista != "tres_cuartos":
         # Misma escala en las tres vistas planas, para comparar proporciones.
         cam.data.type = "ORTHO"
-        cam.data.ortho_scale = max(tam) * margen
+        visibles = {"frente": (tam.x, tam.z), "costado": (tam.y, tam.z), "arriba": (tam.x, tam.y)}[vista]
+        cam.data.ortho_scale = (max(visibles[0], visibles[1] * aspecto) if de_cerca else max(tam)) * margen
         cam.location = centro + d * (radio * 4 + 1)
     else:
         cam.data.type = "PERSP"

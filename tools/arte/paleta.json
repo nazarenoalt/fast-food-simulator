@@ -17,7 +17,7 @@
       "nombre": "Comida y empaques",
       "materiales": [
         {"nombre": "M_PanCorteza", "hex": "#DB9952", "metalico": 0.0, "rugosidad": 0.75},
-        {"nombre": "M_PanMiga", "hex": "#F7E0B2", "metalico": 0.0, "rugosidad": 0.8},
+        {"nombre": "M_PanMiga", "hex": "#E8C88E", "metalico": 0.0, "rugosidad": 0.8},
         {"nombre": "M_SalchichaCruda", "hex": "#ED8C80", "metalico": 0.0, "rugosidad": 0.6},
         {"nombre": "(ref) Salchicha cocida", "hex": "#B84C33", "solo_referencia": true},
         {"nombre": "M_Carton", "hex": "#C79E6B", "metalico": 0.0, "rugosidad": 0.9},
