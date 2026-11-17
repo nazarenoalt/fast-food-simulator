@@ -16,57 +16,34 @@ env:
   GODOT_VERSION: "4.7-stable"
 
 jobs:
-  libreria-macos:
-    name: Librería Rust (macOS universal)
-    runs-on: macos-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: aarch64-apple-darwin,x86_64-apple-darwin
-      - uses: Swatinem/rust-cache@v2
-        with:
-          workspaces: rust
-      - name: Compilar para Apple Silicon e Intel y unir
-        working-directory: rust
-        run: |
-          cargo build --release -p carrito_game --target aarch64-apple-darwin
-          cargo build --release -p carrito_game --target x86_64-apple-darwin
-          lipo -create -output libcarrito_game.dylib \
-            target/aarch64-apple-darwin/release/libcarrito_game.dylib \
-            target/x86_64-apple-darwin/release/libcarrito_game.dylib
-      - uses: actions/upload-artifact@v4
-        with:
-          name: libreria-macos
-          path: rust/libcarrito_game.dylib
-
   exportar:
     name: Exportar juego
-    needs: libreria-macos
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
         with:
-          targets: x86_64-pc-windows-gnu
+          targets: x86_64-pc-windows-gnu,aarch64-apple-darwin,x86_64-apple-darwin
       - uses: Swatinem/rust-cache@v2
         with:
           workspaces: rust
-      - name: Compilador para Windows
-        run: sudo apt-get update -q && sudo apt-get install -y -q gcc-mingw-w64-x86-64
-      - name: Compilar librerías (Linux y Windows)
+      - name: Compiladores cruzados (MinGW para Windows, zig para macOS)
+        run: |
+          sudo apt-get update -q && sudo apt-get install -y -q gcc-mingw-w64-x86-64
+          pip install ziglang
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-zigbuild
+      - name: Compilar librerías (Linux, Windows y macOS universal)
         working-directory: rust
         run: |
           cargo build --release -p carrito_game
           cargo build --release -p carrito_game --target x86_64-pc-windows-gnu
           cp target/x86_64-pc-windows-gnu/release/carrito_game.dll target/release/
+          cargo zigbuild --release -p carrito_game --target universal2-apple-darwin
+          cp target/universal2-apple-darwin/release/libcarrito_game.dylib target/release/
           # El editor de Godot que exporta carga la versión "debug": le damos la misma librería.
           mkdir -p target/debug && cp target/release/libcarrito_game.so target/debug/
-      - uses: actions/download-artifact@v4
-        with:
-          name: libreria-macos
-          path: rust/target/release
-
       - name: Plantillas de exportación (caché)
         id: cache-plantillas
         uses: actions/cache@v4
