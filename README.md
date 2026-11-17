@@ -28,7 +28,8 @@ abrilo.
 - **Linux:** `./Carrito.x86_64`.
 
 Cada cambio que se sube arma estos `.zip` automáticamente (acción **Builds**). Para
-publicar una versión nueva: `git tag v0.3.0 && git push origin v0.3.0`.
+publicar una versión nueva, cambiá el número del archivo `VERSION` (por ejemplo a `0.3.0`)
+y subilo a `main`: la acción crea la Release sola.
 
 ## Cómo se trabaja: specs primero
 
