@@ -245,6 +245,7 @@ impl IRigidBody3D for Comida {
         yo.set_mass(def.masa);
         // Objetos chicos: detección continua para que no atraviesen paredes finas.
         yo.set_use_continuous_collision_detection(true);
+        yo.set_collision_layer(1 | formas::CAPA_OBJETOS);
         yo.set_angular_damp(2.0);
         let mut mat = PhysicsMaterial::new_gd();
         mat.set_friction(0.9);
@@ -285,7 +286,7 @@ impl IRigidBody3D for Comida {
                 Colision::Caja { medidas } => medidas[1],
                 Colision::Capsula { radio, .. } => radio * 2.0,
             };
-            let mut zona = Area3D::new_alloc();
+            let mut zona = formas::zona_objetos();
             let mut s = BoxShape3D::new_gd();
             s.set_size(Vector3::new(0.16, 0.06, 0.06));
             zona.add_child(&formas::nodo_colision(s.upcast(), Transform3D::IDENTITY));

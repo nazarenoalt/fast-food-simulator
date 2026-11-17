@@ -26,6 +26,9 @@ nubes y un cielo con sol y luna.
   caminar (piernas y brazos).
 - **REQ-AMB-07** La red de caminos está conectada: desde cualquier punto se puede llegar a
   cualquier otro.
+- **REQ-AMB-13** La gente no se atraviesa: cada persona mantiene una distancia personal
+  (0,6 m) con las demás y con el jugador. Si alguien viene de frente, ambos se corren hacia
+  su derecha para cruzarse; si no hay lugar, frenan.
 
 ### Movimiento
 - **REQ-AMB-08** Autos que circulan por la calle en los dos sentidos (mano derecha), con
@@ -48,5 +51,5 @@ nubes y un cielo con sol y luna.
 
 ## Fuera de alcance
 
-- Que los peatones esquiven al jugador con inteligencia (lo atraviesan), semáforos, lluvia,
-  interiores de edificios.
+- Planificar rutas alrededor de multitudes (solo se esquiva a quien está cerca), semáforos,
+  lluvia, interiores de edificios.

@@ -127,10 +127,40 @@ impl INode3D for Gente {
         }
 
         self.atender_clientes(dt);
+        self.avisar_vecinos();
     }
 }
 
 impl Gente {
+    /// REQ-AMB-13: a cada peatón le pasa las posiciones de quienes tiene a menos de 2 m
+    /// (incluido el jugador), para que los esquive.
+    fn avisar_vecinos(&mut self) {
+        let yo = self.to_gd();
+        let mut posiciones: Vec<[f32; 2]> = self
+            .peatones
+            .iter()
+            .map(|p| {
+                let v = p.get_global_position();
+                [v.x, v.z]
+            })
+            .collect();
+        let n = posiciones.len();
+        if let Some(j) = util::unico::<Node3D>(&yo, "jugador") {
+            let v = j.get_global_position();
+            posiciones.push([v.x, v.z]);
+        }
+        for (i, p) in self.peatones.iter_mut().enumerate().take(n) {
+            let a = posiciones[i];
+            let cerca: Vec<[f32; 2]> = posiciones
+                .iter()
+                .enumerate()
+                .filter(|(k, b)| *k != i && (a[0] - b[0]).hypot(a[1] - b[1]) < 2.0)
+                .map(|(_, b)| *b)
+                .collect();
+            p.bind_mut().set_vecinos(cerca);
+        }
+    }
+
     fn pos(&self, nodo: usize) -> Vector3 {
         let p = self.red.pos[nodo];
         Vector3::new(p[0], 0.0, p[1])

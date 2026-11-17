@@ -14,6 +14,7 @@ use crate::lugar_deposito::LugarDeposito;
 use crate::negocio::Negocio;
 use crate::palomas::Palomas;
 use crate::paquete::Paquete;
+use crate::peaton::Peaton;
 use crate::transito::{Autos, Nubes};
 use crate::comida::Comida;
 use crate::dia_noche::DiaNoche;
@@ -41,6 +42,8 @@ pub struct PruebaHumo {
     perdidos_antes: u32,
     paquetes_antes: usize,
     lugar: Option<Gd<LugarDeposito>>,
+    superpuestos: usize,
+    muestras: usize,
 }
 
 fn todos<T: GodotClass + Inherits<Node>>(raiz: &Gd<Node>) -> Vec<Gd<T>> {
@@ -105,6 +108,20 @@ impl INode for PruebaHumo {
 
     fn physics_process(&mut self, _delta: f64) {
         self.cuadro += 1;
+        // REQ-AMB-13: mientras la plaza está llena (pasos 8 a 11), se cuenta cuántas veces
+        // dos personas quedan encimadas (a menos de 0,3 m).
+        if (8..=11).contains(&self.paso) {
+            let mundo = self.mundo();
+            let pos: Vec<Vector3> = todos::<Peaton>(&mundo).iter().map(|p| p.get_global_position()).collect();
+            self.muestras += 1;
+            for i in 0..pos.len() {
+                for j in (i + 1)..pos.len() {
+                    if Vector2::new(pos[i].x - pos[j].x, pos[i].z - pos[j].z).length() < 0.3 {
+                        self.superpuestos += 1;
+                    }
+                }
+            }
+        }
         if self.cuadro < self.espera_hasta {
             return;
         }
@@ -324,6 +341,11 @@ impl INode for PruebaHumo {
                 self.chequear(
                     saldo >= self.saldo_antes + 2500.0 && ventas == 1,
                     &format!("CA-CLI-01 / CA-ECO-01 el cliente pagó (caja {} → {saldo}, ventas {ventas})", self.saldo_antes),
+                );
+                let tasa = self.superpuestos as f32 / self.muestras.max(1) as f32;
+                self.chequear(
+                    tasa < 0.05,
+                    &format!("REQ-AMB-13 la gente no se atraviesa ({} encimadas en {} cuadros)", self.superpuestos, self.muestras),
                 );
                 // CA-CLI-02: el siguiente se cansa de esperar.
                 let mut gente = todos::<Gente>(&mundo).pop().unwrap();

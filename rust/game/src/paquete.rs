@@ -42,6 +42,7 @@ impl IRigidBody3D for Paquete {
         let mut yo = self.to_gd();
         yo.set_mass(masa_unidad * def.capacidad() as f32 + 0.05);
         yo.set_angular_damp(2.0);
+        yo.set_collision_layer(1 | formas::CAPA_OBJETOS);
         let mut mat = PhysicsMaterial::new_gd();
         mat.set_friction(1.0);
         mat.set_bounce(0.05);

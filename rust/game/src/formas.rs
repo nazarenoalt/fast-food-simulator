@@ -9,6 +9,19 @@ use godot::classes::{
 };
 use godot::prelude::*;
 
+/// Capa física de los objetos sueltos (comida y paquetes). Las zonas que los detectan
+/// (agua del hervidor, bandeja, lugares del depósito, encastre) solo miran esta capa.
+pub const CAPA_OBJETOS: u32 = 1 << 1;
+
+/// Zona que detecta solo comida y paquetes.
+pub fn zona_objetos() -> Gd<godot::classes::Area3D> {
+    let mut z = godot::classes::Area3D::new_alloc();
+    z.set_collision_layer(0);
+    z.set_collision_mask(CAPA_OBJETOS);
+    z.set_monitorable(false);
+    z
+}
+
 pub fn v3(a: [f32; 3]) -> Vector3 {
     Vector3::new(a[0], a[1], a[2])
 }

@@ -16,6 +16,20 @@ física real, frente a una plaza. Hecho con **Godot 4.7** y **Rust** (godot-rust
 
 *(Capturas con el renderizador de compatibilidad; en Godot con Vulkan se ve mejor.)*
 
+## Descargar y jugar
+
+En [**Releases**](https://github.com/nazarenoalt/fast-food-simulator/releases/latest) está
+el juego listo para Windows, macOS y Linux: bajá el `.zip` de tu sistema, descomprimilo y
+abrilo.
+
+- **Windows:** `Carrito.exe`. Si aparece "Windows protegió tu PC", tocá
+  *Más información → Ejecutar de todas formas* (el juego no está firmado).
+- **macOS:** la primera vez, clic derecho sobre `Carrito.app` → *Abrir*.
+- **Linux:** `./Carrito.x86_64`.
+
+Cada cambio que se sube arma estos `.zip` automáticamente (acción **Builds**). Para
+publicar una versión nueva: `git tag v0.3.0 && git push origin v0.3.0`.
+
 ## Cómo se trabaja: specs primero
 
 Este proyecto sigue *spec-driven development* ([SPEC-000](docs/specs/000-proceso.md)):
@@ -34,7 +48,7 @@ Este proyecto sigue *spec-driven development* ([SPEC-000](docs/specs/000-proceso
 - [Rust](https://rustup.rs) 1.94 o más nuevo.
 - [Godot 4.7](https://godotengine.org/download) (versión estándar, no la de .NET).
 
-## Compilar y jugar
+## Compilar y jugar desde el código
 
 ```bash
 cd rust

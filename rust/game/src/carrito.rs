@@ -87,7 +87,7 @@ impl Carrito {
                 formas::pieza(TipoPieza::Caja, [0.3, 0.02, 0.008], [0.0, 0.01, -0.11], [0.8, 0.12, 0.1]),
             ],
         );
-        let mut zona = Area3D::new_alloc();
+        let mut zona = formas::zona_objetos();
         let mut s = BoxShape3D::new_gd();
         s.set_size(Vector3::new(0.3, 0.14, 0.22));
         zona.add_child(&formas::nodo_colision(s.upcast(), Transform3D::IDENTITY));

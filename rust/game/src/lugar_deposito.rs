@@ -45,7 +45,7 @@ impl LugarDeposito {
 impl INode3D for LugarDeposito {
     fn ready(&mut self) {
         self.base_mut().add_to_group(GRUPO);
-        let mut zona = Area3D::new_alloc();
+        let mut zona = formas::zona_objetos();
         let mut s = BoxShape3D::new_gd();
         s.set_size(Vector3::new(0.22, 0.3, 0.4));
         zona.add_child(&formas::nodo_colision(s.upcast(), Transform3D::IDENTITY));

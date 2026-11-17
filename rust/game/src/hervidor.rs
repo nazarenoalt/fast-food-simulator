@@ -90,7 +90,7 @@ impl INode3D for Hervidor {
         yo.add_child(&agua);
         self.mat_agua = Some(mat_agua);
 
-        let mut zona = Area3D::new_alloc();
+        let mut zona = formas::zona_objetos();
         let mut s = BoxShape3D::new_gd();
         s.set_size(Vector3::new(w, alto_agua, d));
         zona.add_child(&formas::nodo_colision(s.upcast(), Transform3D::IDENTITY));

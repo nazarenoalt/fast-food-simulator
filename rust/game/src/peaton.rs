@@ -49,6 +49,8 @@ pub struct Peaton {
     perro: Option<Gd<Node3D>>,
     patas_perro: Vec<Gd<Node3D>>,
     comiendo: bool,
+    /// Dónde están las personas cercanas (y el jugador), para esquivarlas. REQ-AMB-13
+    vecinos: Vec<[f32; 2]>,
 }
 
 impl Peaton {
@@ -76,7 +78,13 @@ impl Peaton {
             perro: None,
             patas_perro: Vec::new(),
             comiendo: false,
+            vecinos: Vec::new(),
         })
+    }
+
+    /// REQ-AMB-13: `Gente` avisa, cada cuadro, quién anda cerca.
+    pub fn set_vecinos(&mut self, v: Vec<[f32; 2]>) {
+        self.vecinos = v;
     }
 
     pub fn reemplazar_acciones(&mut self, acciones: Vec<Accion>) {
@@ -256,11 +264,14 @@ impl Peaton {
         if dist < 0.08 {
             return true;
         }
-        let paso = (self.vel * dt).min(dist);
-        let dir = d / dist;
+        // REQ-AMB-13: se corre para no chocar y frena si tiene a alguien encima.
+        let (dir, factor) =
+            carrito_core::peatones::esquivar([pos.x, pos.z], [d.x / dist, d.z / dist], &self.vecinos);
+        let paso = (self.vel * factor * dt).min(dist);
+        let dir = Vector3::new(dir[0], 0.0, dir[1]);
         self.base_mut().set_global_position(Vector3::new(pos.x + dir.x * paso, 0.0, pos.z + dir.z * paso));
         self.mirar_hacia(dir, dt);
-        self.fase += dt * self.vel * 4.2;
+        self.fase += dt * self.vel * factor * 4.2;
         false
     }
 
