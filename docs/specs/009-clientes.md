@@ -34,7 +34,7 @@ y se van) y juzgan lo que les diste.
   esperando.
 - **REQ-CLI-08** Evaluación de lo entregado:
   - Otro producto, salchicha o chorizo crudos o quemados, pan del choripán blando o quemado
-    (SPEC-015) → lo **rechaza**: queda en la bandeja, dice por
+    (SPEC-015), carne echada a perder (SPEC-016) → lo **rechaza**: queda en la bandeja, dice por
     qué y pierde 20 s de paciencia.
   - Si lo acepta: estrellas = 5 − 1 por aderezo pedido que falta − 0,5 por aderezo que no
     pidió − 1,5 si la salchicha está pasada − hasta 1,5 según cuánta paciencia gastó.

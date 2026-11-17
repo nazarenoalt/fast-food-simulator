@@ -35,6 +35,7 @@
             nombre: "hamburguesa",
             masa: 0.12,
             por_lados: true, // REQ-PLA-04
+            perecedero: true, // REQ-HEL-03
             colision: Caja(medidas: (0.11, 0.025, 0.11)),
             forma: [
                 // Dos mitades: el color de cada una sale del avance de su lado (REQ-PLA-05).
@@ -55,6 +56,7 @@
             nombre: "chorizo",
             masa: 0.1,
             por_lados: true, // REQ-PAR-05
+            perecedero: true, // REQ-HEL-03
             colision: Capsula(radio: 0.016, largo: 0.16),
             forma: [
                 // Dos capas superpuestas: el color de cada una sale del avance de su lado.

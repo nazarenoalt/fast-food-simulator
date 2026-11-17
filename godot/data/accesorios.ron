@@ -30,6 +30,26 @@
         ],
         funcion: Some(Parrilla(superficie: (0.5, 0.4))),
     ),
+    (
+        id: "heladera_chica",
+        nombre: "Heladera chica",
+        categoria: Cocina,
+        precio: 90000,
+        forma: [
+            // Cuerpo hueco: el interior (0.54 × 1.1 × 0.52) queda libre para los paquetes.
+            (tipo: Caja, medidas: (0.6, 1.2, 0.03), pos: (0, 0.6, -0.285), color: (0.93, 0.94, 0.95), metal: true),
+            (tipo: Caja, medidas: (0.03, 1.2, 0.54), pos: (-0.285, 0.6, 0), color: (0.93, 0.94, 0.95), metal: true),
+            (tipo: Caja, medidas: (0.03, 1.2, 0.54), pos: (0.285, 0.6, 0), color: (0.93, 0.94, 0.95), metal: true),
+            (tipo: Caja, medidas: (0.6, 0.04, 0.6), pos: (0, 0.02, 0), color: (0.85, 0.86, 0.88), metal: true),
+            (tipo: Caja, medidas: (0.6, 0.04, 0.6), pos: (0, 1.18, 0), color: (0.93, 0.94, 0.95), metal: true),
+            // Estante intermedio.
+            (tipo: Caja, medidas: (0.54, 0.02, 0.52), pos: (0, 0.55, 0), color: (0.8, 0.82, 0.85), metal: true),
+        ],
+        funcion: Some(Heladera(
+            interior: (0.54, 1.1, 0.52),
+            lugares: [(-0.13, 0.56, -0.02), (0.13, 0.56, -0.02), (-0.13, 0.04, -0.02), (0.13, 0.04, -0.02)],
+        )),
+    ),
     // ── Depósito ────────────────────────────────────────────
     (
         id: "estante_deposito",

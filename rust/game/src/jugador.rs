@@ -12,6 +12,7 @@ use crate::aderecera::Pomo;
 use crate::bloque_stock::BloqueStock;
 use crate::comida::Comida;
 use crate::formas;
+use crate::heladera::Heladera;
 use crate::hervidor::Hervidor;
 use crate::hud::{self, Hud};
 use crate::paquete::Paquete;
@@ -39,6 +40,7 @@ pub enum Objetivo {
     Hervidor(Gd<Hervidor>),
     Plancha(Gd<Plancha>),
     Parrilla(Gd<Parrilla>),
+    Heladera(Gd<Heladera>),
     Bloque(Gd<BloqueStock>),
     Paquete(Gd<Paquete>),
     Pomo(Gd<Pomo>),
@@ -245,6 +247,10 @@ impl Jugador {
                 Ok(p) => return Some(Objetivo::Parrilla(p)),
                 Err(n) => n,
             };
+            let n = match n.try_cast::<Heladera>() {
+                Ok(h) => return Some(Objetivo::Heladera(h)),
+                Err(n) => n,
+            };
             let n = match n.try_cast::<BloqueStock>() {
                 Ok(b) => return Some(Objetivo::Bloque(b)),
                 Err(n) => n,
@@ -361,6 +367,8 @@ impl Jugador {
             Some(Objetivo::Hervidor(mut h)) => h.bind_mut().alternar(),
             // REQ-PLA-01
             Some(Objetivo::Plancha(mut p)) => p.bind_mut().alternar(),
+            // REQ-HEL-01
+            Some(Objetivo::Heladera(mut h)) => h.bind_mut().alternar(),
             // REQ-PAR-01
             Some(Objetivo::Parrilla(mut p)) => {
                 if let Err(e) = p.bind_mut().usar() {
@@ -370,10 +378,13 @@ impl Jugador {
             // REQ-PLA-07: E sobre una hamburguesa suelta la da vuelta.
             Some(Objetivo::Comida(mut c)) if c.bind().por_lados() => c.bind_mut().dar_vuelta(),
             Some(Objetivo::Bloque(mut b)) => {
+                // REQ-HEL-06: lo que sale del paquete conserva la temperatura del paquete.
+                let temp = b.bind().temperatura();
                 let sacado = b.bind_mut().sacar();
                 if let Some((producto, pos)) = sacado {
                     // REQ-DEP-05: aparece como objeto físico en la mano.
                     let mut c = Comida::crear(&producto);
+                    c.bind_mut().fijar_temperatura(temp);
                     c.set_position(pos);
                     if let Some(mut padre) = self.base().get_parent() {
                         padre.add_child(&c);
@@ -453,6 +464,7 @@ impl Jugador {
                 Some(Objetivo::Hervidor(h)) => h.bind().cartel(),
                 Some(Objetivo::Plancha(p)) => p.bind().cartel(),
                 Some(Objetivo::Parrilla(p)) => p.bind().cartel(),
+                Some(Objetivo::Heladera(h)) => h.bind().cartel(),
                 Some(Objetivo::Bloque(b)) => b.bind().cartel(),
                 Some(Objetivo::Paquete(p)) => format!("[Clic] Agarrar {}", p.bind().descripcion().to_lowercase()),
                 Some(Objetivo::Pomo(p)) => format!("{} — agarrá un pancho y apretá E para ponerle", p.bind().cartel()),

@@ -71,6 +71,12 @@ pub enum Funcion {
     Parrilla {
         superficie: [f32; 2],
     },
+    /// Heladera (SPEC-016): interior útil (ancho, alto, profundidad) y los lugares donde se
+    /// apoya cada bloque de stock, como en el depósito. La puerta mira a +Z del accesorio.
+    Heladera {
+        interior: [f32; 3],
+        lugares: Vec<[f32; 3]>,
+    },
     /// Posiciones (relativas al accesorio) donde se apoya cada bloque de stock.
     Deposito {
         lugares: Vec<[f32; 3]>,

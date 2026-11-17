@@ -12,6 +12,7 @@ mod datos;
 mod dia_noche; // SPEC-007
 mod formas;
 mod gente; // SPEC-009/013
+mod heladera; // SPEC-016
 mod hervidor; // SPEC-003
 mod hud;
 mod jugador; // SPEC-001/002

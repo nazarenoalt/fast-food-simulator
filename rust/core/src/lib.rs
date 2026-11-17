@@ -14,6 +14,7 @@ pub mod datos; // carga de archivos .ron
 pub mod deposito; // SPEC-004
 pub mod economia; // SPEC-010
 pub mod forma; // piezas visuales simples (compartido)
+pub mod heladera; // SPEC-016
 pub mod hervidor; // SPEC-003 (fuente de calor)
 pub mod lados; // SPEC-014 (cocción por lados)
 pub mod parrilla; // SPEC-015 (carbón)

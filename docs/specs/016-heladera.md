@@ -10,12 +10,15 @@ conserva; el jugador tiene que guardarla y no dejarla al sol.
 ## Requisitos
 
 - **REQ-HEL-01** La heladera es un accesorio del carrito (datos `.ron`). Su interior está a
-  4 °C mientras está cerrada y enchufada. Se abre y cierra con E.
+  4 °C mientras está cerrada y enchufada. Se abre y cierra con E. Tiene lugares para guardar
+  paquetes como el depósito (SPEC-004) y sitio para comida suelta. Cerrada, la puerta tapa lo
+  que hay adentro. (Por ahora siempre está enchufada: no hay forma de desenchufarla.)
 - **REQ-HEL-02** Cerrada y enchufada, su temperatura interior se acerca a 4 °C; con la puerta
   abierta o desenchufada se acerca a la del ambiente, más lento (constante 3 veces menor).
 - **REQ-HEL-03** Todo alimento perecedero (hamburguesa, chorizo cruda) tiene **frescura** de
-  100% a 0%. Mientras su temperatura supera 8 °C la frescura baja `(T − 8) × 0,02 % por segundo`;
-  por debajo de 8 °C no baja. La frescura nunca sube.
+  100% a 0%. Mientras su temperatura está entre 8 °C y 60 °C la frescura baja `(T − 8) × 0,02 % por
+  segundo`; por debajo de 8 °C no baja, y por encima de 60 °C (bien cocinado) tampoco. La
+  frescura nunca sube. (Sin el tope de 60 °C la carne se echaría a perder cocinándose.)
 - **REQ-HEL-04** Frescura menor a 40%: se ve verdosa y el cartel avisa. En 0% está **Echada
   a perder**: definitivo, y se rechaza al entregarla (REQ-CLI-08).
 - **REQ-HEL-05** La comida guardada en la heladera usa su temperatura interior como entorno,
@@ -39,6 +42,8 @@ conserva; el jugador tiene que guardarla y no dejarla al sol.
 
 ## Notas de diseño
 
+- Constantes: la heladera enfría con k = 0,01 1/s (abierta, 0,0033 1/s). Un paquete se acerca a la
+  temperatura de su entorno con k = 0,002 1/s.
 - Mismo modelo de calor que SPEC-003: la heladera solo define la temperatura del entorno.
 - El ambiente de la plaza depende del día/noche (SPEC-007); un valor fijo de 20 °C alcanza
   para esta etapa.

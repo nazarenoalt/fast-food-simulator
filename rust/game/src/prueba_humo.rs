@@ -12,6 +12,7 @@ use crate::carrito::Carrito;
 use crate::comida::Comida;
 use crate::dia_noche::DiaNoche;
 use crate::gente::Gente;
+use crate::heladera::Heladera;
 use crate::hervidor::Hervidor;
 use crate::jugador::Jugador;
 use crate::lugar_deposito::LugarDeposito;
@@ -554,6 +555,64 @@ impl INode for PruebaHumo {
                         &format!("CA-PAR-03 el cliente acepta el choripán ({:?})", ch.bind().detalle()),
                     );
                 }
+                // CA-HEL-01 / CA-HEL-02: una hamburguesa fría en la heladera cerrada y otra afuera.
+                let he = todos::<Heladera>(&mundo).pop().expect("REQ-HEL-01 el carrito tiene su heladera");
+                self.chequear(!he.bind().abierta() && he.bind().temperatura() < 5.0, "REQ-HEL-01 cerrada y a 4 °C");
+                let dentro = he.get_global_transform() * Vector3::new(0.0, 0.12, 0.0);
+                let mut a = self.agregar_comida("hamburguesa", dentro);
+                a.bind_mut().fijar_temperatura(4.0); // sale de un paquete frío (REQ-HEL-06)
+                self.hamburguesa = Some(a);
+                self.pan = Some(self.agregar_comida("hamburguesa", Vector3::new(-6.0, 0.3, plaza::Z_VEREDA)));
+                // 430 s de juego: a 20 °C la carne se echa a perder en unos 417 s.
+                self.esperar(430 * 60);
+            }
+            24 => {
+                let a = self.hamburguesa.clone().unwrap();
+                let fa = a.bind().frescura().map(|f| f.porcentaje).unwrap_or(0.0);
+                self.chequear(fa >= 99.9, &format!("CA-HEL-01 en la heladera sigue fresca ({fa:.1} %)"));
+                let b = self.pan.clone().unwrap();
+                let f = b.bind().frescura().expect("REQ-HEL-03 la hamburguesa es perecedera");
+                self.chequear(
+                    f.echada_a_perder(),
+                    &format!("CA-HEL-02 afuera se echó a perder ({:.1} %)", f.porcentaje),
+                );
+                self.chequear(b.bind().descripcion().contains("echada a perder"), "REQ-HEL-04 el cartel avisa");
+                let ped = carrito_core::clientes::Pedido { producto: "hamburguesa".into(), aderezos: vec![] };
+                let r = carrito_core::clientes::evaluar(&ped, &b.bind().entregado(), 4000.0, 0.0);
+                self.chequear(
+                    r == Err(carrito_core::clientes::Rechazo::EchadaAPerder),
+                    "REQ-HEL-04 el cliente rechaza lo echado a perder",
+                );
+                // REQ-HEL-07: con 30 % de frescura (y cocida) descuenta una estrella.
+                let mut c = a.clone();
+                c.bind_mut().set_frescura(30.0);
+                c.bind_mut().forzar_avance(7.0);
+                let r = carrito_core::clientes::evaluar(&ped, &c.bind().entregado(), 4000.0, 0.0);
+                self.chequear(
+                    r.map(|e| e.estrellas) == Ok(4.0),
+                    &format!("REQ-HEL-07 con frescura dudosa descuenta una estrella ({r:?})"),
+                );
+                // CA-HEL-03: dejo la puerta abierta.
+                let mut he = todos::<Heladera>(&mundo).pop().unwrap();
+                he.bind_mut().alternar();
+                self.esperar(120 * 60);
+            }
+            25 => {
+                let he = todos::<Heladera>(&mundo).pop().unwrap();
+                let t = he.bind().temperatura();
+                self.chequear(
+                    he.bind().abierta() && t > 6.0,
+                    &format!("CA-HEL-03 con la puerta abierta el interior sube ({t:.1} °C)"),
+                );
+                self.chequear(he.bind().cartel().contains("Cerrar"), "CA-HEL-03 el cartel lo muestra");
+                // REQ-HEL-06: la carne llega a 4 °C; lo demás, al ambiente.
+                let cat = crate::datos::catalogo();
+                let carne = Paquete::crear(cat.bloque("caja_hamburguesas_12").unwrap().clone());
+                let panes = Paquete::crear(cat.bloque("bolsa_panes_12").unwrap().clone());
+                self.chequear(
+                    carne.bind().temp == 4.0 && panes.bind().temp == 20.0,
+                    "REQ-HEL-06 los paquetes de carne vienen a 4 °C",
+                );
                 self.terminar();
             }
             _ => {}

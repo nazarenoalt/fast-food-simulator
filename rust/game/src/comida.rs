@@ -5,6 +5,7 @@ use carrito_core::TEMP_AMBIENTE;
 use carrito_core::armado;
 use carrito_core::coccion::{EstadoCoccion, PerfilCoccion};
 use carrito_core::datos::{Colision, DefProducto};
+use carrito_core::heladera::Frescura;
 use carrito_core::lados::CoccionLados;
 use carrito_core::plancha::{entorno_por_lados, lado_abajo};
 use carrito_core::tostado::{EstadoPan, estado_lado, estado_pan};
@@ -30,6 +31,10 @@ pub struct Comida {
     cocina: bool,
     /// Texto extra, ej. "salchicha cocida" en un pancho.
     detalle: Option<String>,
+    /// REQ-HEL-03: frescura de la carne (solo la perecedera, y la que heredó un armado).
+    frescura: Option<Frescura>,
+    /// Temperatura del aire que le da una heladera (en todos sus lados), y en qué cuadro. REQ-HEL-05
+    aire: Option<(f32, u64)>,
     /// REQ-PAR-07: estado guardado de un armado (choripán): chorizo y pan al encastrar.
     punto_fijo: Option<carrito_core::coccion::Punto>,
     pan_fijo: Option<EstadoPan>,
@@ -63,6 +68,7 @@ impl Comida {
         let coccion = def.coccion.clone().map(|p| (p, EstadoCoccion::default()));
         let cocina = coccion.is_some();
         let lados = if def.por_lados { Some(CoccionLados::default()) } else { None };
+        let frescura = def.perecedero.then(Frescura::default);
         Gd::from_init_fn(|base| Self {
             base,
             def,
@@ -70,6 +76,8 @@ impl Comida {
             lados,
             cocina,
             detalle: None,
+            frescura,
+            aire: None,
             punto_fijo: None,
             pan_fijo: None,
             sostenida: false,
@@ -96,6 +104,43 @@ impl Comida {
             return Some(l.punto(p));
         }
         self.coccion.as_ref().map(|(p, e)| e.punto(p))
+    }
+
+    /// REQ-HEL-06: un alimento recién sacado de un paquete trae la temperatura del paquete.
+    pub fn fijar_temperatura(&mut self, temp: f32) {
+        if let Some(l) = &mut self.lados {
+            for e in &mut l.lados {
+                e.temp = temp;
+            }
+        }
+        if let Some((_, e)) = &mut self.coccion {
+            e.temp = temp;
+        }
+    }
+
+    /// Temperatura del alimento (promedio de sus lados). REQ-HEL-03
+    pub fn temperatura(&self) -> Option<f32> {
+        if let Some(l) = &self.lados {
+            return Some((l.lados[0].temp + l.lados[1].temp) / 2.0);
+        }
+        self.coccion.as_ref().map(|(_, e)| e.temp)
+    }
+
+    /// Una heladera avisa que este cuadro el alimento está en aire a `temp`. REQ-HEL-05
+    pub fn exponer_aire(&mut self, temp: f32) {
+        self.aire = Some((temp, Engine::singleton().get_physics_frames()));
+    }
+
+    pub fn frescura(&self) -> Option<Frescura> {
+        self.frescura
+    }
+
+    /// Solo para pruebas.
+    pub fn set_frescura(&mut self, porcentaje: f32) {
+        if let Some(f) = &mut self.frescura {
+            f.porcentaje = porcentaje;
+        }
+        self.actualizar_color();
     }
 
     /// REQ-PAR-06: estado del pan (del pan suelto, o el guardado en un choripán).
@@ -165,6 +210,10 @@ impl Comida {
                 .collect();
             s += &format!(" con {}", carrito_core::aderezos::enumerar(&nombres));
         }
+        // REQ-HEL-04: el cartel avisa si se está echando a perder.
+        if let Some(t) = self.frescura.and_then(|f| f.texto()) {
+            s += &format!(" — {t}");
+        }
         s
     }
 
@@ -198,6 +247,7 @@ impl Comida {
             producto: self.def.id.clone(),
             punto: self.punto(),
             pan: self.estado_pan(),
+            frescura: self.frescura.map(|f| f.porcentaje),
             aderezos: self.aderezos.clone(),
         }
     }
@@ -257,10 +307,13 @@ impl Comida {
     }
 
     fn actualizar_color(&mut self) {
+        // REQ-HEL-04: con poca frescura se ve verdosa.
+        let verdor = self.frescura.map(|f| f.verdor() * 0.7).unwrap_or(0.0);
+        let verde = |c: [f32; 3]| carrito_core::coccion::mezclar(c, [0.4, 0.6, 0.2], verdor);
         // REQ-PLA-05: cada mitad toma el color de su propio lado.
         if let (Some((p, _)), Some(l)) = (&self.coccion, &self.lados) {
             for (i, mats) in self.tintes_lado.iter_mut().enumerate() {
-                let c = formas::color(l.color(p, i));
+                let c = formas::color(verde(l.color(p, i)));
                 for m in mats {
                     m.set_albedo(c);
                 }
@@ -268,7 +321,7 @@ impl Comida {
             return;
         }
         if let Some((p, e)) = &self.coccion {
-            let c = formas::color(e.color(p));
+            let c = formas::color(verde(e.color(p)));
             for m in &mut self.tintes {
                 m.set_albedo(c);
             }
@@ -287,7 +340,7 @@ impl Comida {
                 continue;
             }
             let Ok(mut otra) = cuerpo.try_cast::<Comida>() else { continue };
-            let (resultado, heredado, nombre_agregado, punto_agregado) = {
+            let (resultado, heredado, nombre_agregado, punto_agregado, frescura_agregado) = {
                 let o = otra.bind();
                 if o.sostenida || o.consumida {
                     continue;
@@ -296,7 +349,7 @@ impl Comida {
                 let Some(r) = armado::combinar(&catalogo().combinaciones, &self.def.id, &o.def.id) else {
                     continue;
                 };
-                (r.to_string(), o.coccion.clone(), o.def.nombre.clone(), o.punto())
+                (r.to_string(), o.coccion.clone(), o.def.nombre.clone(), o.punto(), o.frescura)
             };
 
             let mut nueva = Comida::crear(&resultado);
@@ -311,6 +364,8 @@ impl Comida {
                     let pan = self.estado_pan();
                     n.punto_fijo = punto_agregado;
                     n.pan_fijo = pan;
+                    // REQ-HEL-04: el choripán lleva la frescura que tenía el chorizo.
+                    n.frescura = frescura_agregado;
                     let punto = punto_agregado.map(|p| p.nombre_masculino()).unwrap_or("");
                     n.detalle =
                         Some(format!("{nombre_agregado} {punto}, pan {}", pan.map(|p| p.nombre()).unwrap_or("")));
@@ -413,14 +468,31 @@ impl IRigidBody3D for Comida {
                 Some((t, f)) if cuadro.saturating_sub(f) <= 1 => t,
                 _ => TEMP_AMBIENTE,
             };
+            // REQ-HEL-05: en una heladera, el aire de adentro rodea todos los lados.
+            let aire = match self.aire {
+                Some((t, f)) if cuadro.saturating_sub(f) <= 1 => Some(t),
+                _ => None,
+            };
             let abajo = self.lado_abajo();
             if let (Some((p, _)), Some(l)) = (&self.coccion, &mut self.lados) {
                 // REQ-PLA-03: solo el lado de abajo toma la temperatura de la fuente.
                 let fuente = (t_entorno != TEMP_AMBIENTE).then_some(t_entorno);
-                let (t_abajo, t_arriba) = entorno_por_lados(fuente);
-                l.paso(p, abajo, t_abajo, t_arriba, dt);
+                match (fuente, aire) {
+                    (None, Some(a)) => l.paso(p, abajo, a, a, dt),
+                    _ => {
+                        let (t_abajo, t_arriba) = entorno_por_lados(fuente);
+                        l.paso(p, abajo, t_abajo, t_arriba, dt);
+                    }
+                }
             } else if let Some((p, e)) = &mut self.coccion {
-                e.paso(p, t_entorno, dt);
+                let t = if t_entorno != TEMP_AMBIENTE { t_entorno } else { aire.unwrap_or(t_entorno) };
+                e.paso(p, t, dt);
+            }
+            // REQ-HEL-03: la carne perecedera pierde frescura según su temperatura.
+            if self.def.perecedero {
+                if let (Some(t), Some(f)) = (self.temperatura(), &mut self.frescura) {
+                    f.paso(t, dt);
+                }
             }
             // REQ-COC-06
             self.actualizar_color();

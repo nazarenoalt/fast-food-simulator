@@ -12,6 +12,7 @@ use crate::bloque_stock::BloqueStock;
 use crate::comida::Comida;
 use crate::datos::catalogo;
 use crate::formas;
+use crate::heladera::Heladera;
 use crate::hervidor::Hervidor;
 use crate::lugar_deposito::LugarDeposito;
 use crate::luz::LuzNocturna;
@@ -192,6 +193,10 @@ impl Carrito {
                 Some(Funcion::Parrilla { superficie }) => {
                     // REQ-PAR-01
                     nodo.add_child(&Parrilla::crear(*superficie));
+                }
+                Some(Funcion::Heladera { interior, lugares }) => {
+                    // REQ-HEL-01
+                    nodo.add_child(&Heladera::crear(*interior, lugares.clone()));
                 }
                 Some(Funcion::Deposito { lugares }) => {
                     // REQ-DEP-07: cada lugar es un nodo que guarda a lo sumo un bloque.

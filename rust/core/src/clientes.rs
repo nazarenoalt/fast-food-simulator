@@ -139,6 +139,8 @@ pub struct Entregado {
     pub punto: Option<Punto>,
     /// Estado del pan, si el producto lleva pan tostado (choripán). REQ-PAR-07
     pub pan: Option<EstadoPan>,
+    /// Frescura de la carne en % (SPEC-016), si es perecedera. REQ-HEL-04
+    pub frescura: Option<f32>,
     pub aderezos: Vec<String>,
 }
 
@@ -149,6 +151,7 @@ pub enum Rechazo {
     Quemado,
     PanBlando,
     PanQuemado,
+    EchadaAPerder,
 }
 
 impl Rechazo {
@@ -159,6 +162,7 @@ impl Rechazo {
             Rechazo::Quemado => "¡Está quemada!",
             Rechazo::PanBlando => "¡El pan está blando!",
             Rechazo::PanQuemado => "¡El pan está quemado!",
+            Rechazo::EchadaAPerder => "¡Esto está echado a perder!",
         }
     }
 }
@@ -180,6 +184,10 @@ pub fn evaluar(
     if entregado.producto != pedido.producto {
         return Err(Rechazo::OtroProducto);
     }
+    // REQ-HEL-04: carne echada a perder, rechazada.
+    if entregado.frescura.is_some_and(|f| f <= 0.0) {
+        return Err(Rechazo::EchadaAPerder);
+    }
     match entregado.punto {
         Some(Punto::Crudo) => return Err(Rechazo::Crudo),
         Some(Punto::Quemado) => return Err(Rechazo::Quemado),
@@ -194,8 +202,10 @@ pub fn evaluar(
     let faltan = pedido.aderezos.iter().filter(|a| !entregado.aderezos.contains(a)).count() as f32;
     let sobran = entregado.aderezos.iter().filter(|a| !pedido.aderezos.contains(a)).count() as f32;
     let pasado = if entregado.punto == Some(Punto::Pasado) { 1.5 } else { 0.0 };
+    // REQ-HEL-07: carne con frescura dudosa descuenta una estrella aunque esté bien cocida.
+    let dudosa = if entregado.frescura.is_some_and(|f| f < crate::heladera::FRESCURA_DUDOSA) { 1.0 } else { 0.0 };
     let espera = 1.5 * paciencia_usada.clamp(0.0, 1.0);
-    let estrellas = (5.0 - faltan - 0.5 * sobran - pasado - espera).clamp(1.0, 5.0);
+    let estrellas = (5.0 - faltan - 0.5 * sobran - pasado - dudosa - espera).clamp(1.0, 5.0);
     let propina = precio * PROPINA_MAX * ((estrellas - 3.0) / 2.0).max(0.0);
     Ok(Evaluacion { estrellas, pago: precio, propina })
 }
@@ -218,6 +228,7 @@ mod tests {
             producto: "pancho".into(),
             punto: Some(punto),
             pan: None,
+            frescura: None,
             aderezos: ad.iter().map(|s| s.to_string()).collect(),
         }
     }
@@ -287,7 +298,13 @@ mod tests {
         let ped = pedido(&["mostaza"]);
         assert_eq!(evaluar(&ped, &entregado(Punto::Crudo, &["mostaza"]), 2500.0, 0.0), Err(Rechazo::Crudo));
         assert_eq!(evaluar(&ped, &entregado(Punto::Quemado, &["mostaza"]), 2500.0, 0.0), Err(Rechazo::Quemado));
-        let otro = Entregado { producto: "salchicha".into(), punto: Some(Punto::Cocido), pan: None, aderezos: vec![] };
+        let otro = Entregado {
+            producto: "salchicha".into(),
+            punto: Some(Punto::Cocido),
+            pan: None,
+            frescura: None,
+            aderezos: vec![],
+        };
         assert_eq!(evaluar(&ped, &otro, 2500.0, 0.0), Err(Rechazo::OtroProducto));
         let mut pac = Paciencia::default();
         pac.penalizar(PENALIDAD_RECHAZO_S);
@@ -301,6 +318,7 @@ mod tests {
             producto: "choripan".into(),
             punto: Some(punto),
             pan: Some(pan),
+            frescura: None,
             aderezos: vec![],
         };
         assert_eq!(evaluar(&ped, &choripan(Punto::Cocido, EstadoPan::Blando), 3000.0, 0.0), Err(Rechazo::PanBlando));
@@ -316,6 +334,7 @@ mod tests {
             producto: "choripan".into(),
             punto: Some(Punto::Cocido),
             pan: Some(EstadoPan::Tostado),
+            frescura: None,
             aderezos: vec![],
         };
         assert!(evaluar(&ped, &e, 3000.0, 0.0).is_ok());

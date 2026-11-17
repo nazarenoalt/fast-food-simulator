@@ -63,16 +63,16 @@ impl INode3D for LugarDeposito {
         // REQ-PRO-06: un paquete suelto dentro de un lugar libre se acomoda solo.
         for cuerpo in zona.get_overlapping_bodies().iter_shared() {
             let Ok(mut paquete) = cuerpo.try_cast::<Paquete>() else { continue };
-            let def = {
+            let (def, temp) = {
                 let p = paquete.bind();
                 if p.sostenido || p.acomodado {
                     continue;
                 }
-                p.def().clone()
+                (p.def().clone(), p.temp)
             };
             paquete.bind_mut().acomodado = true;
             paquete.queue_free();
-            let bloque = BloqueStock::crear(def);
+            let bloque = BloqueStock::crear_con_temp(def, temp);
             self.base_mut().add_child(&bloque);
             return;
         }

@@ -47,6 +47,9 @@ pub struct DefProducto {
     /// REQ-ADE-05: si es un repuesto, qué aderezo repone.
     #[serde(default)]
     pub repone: Option<String>,
+    /// REQ-HEL-03: carne que se echa a perder si no se mantiene fría.
+    #[serde(default)]
+    pub perecedero: bool,
     /// REQ-PAR-06: pan que se tuesta por cada cara (pan del choripán).
     #[serde(default)]
     pub pan: bool,
@@ -232,6 +235,21 @@ pub(crate) mod tests {
         assert_eq!(h.coccion.clone().unwrap(), crate::lados::perfil_chorizo());
         let lados: Vec<_> = h.forma.iter().filter_map(|p| p.tinte_lado).collect();
         assert_eq!(lados, vec![0, 1]);
+    }
+
+    #[test]
+    fn req_hel_01_03_heladera_y_productos_perecederos_en_datos() {
+        let c = catalogo_real();
+        let a = c
+            .accesorios
+            .iter()
+            .find(|a| matches!(a.funcion, Some(crate::carrito::Funcion::Heladera { .. })))
+            .expect("hay una heladera");
+        assert_eq!(a.categoria, crate::carrito::Categoria::Cocina);
+        assert!(c.carrito_jugador.accesorios.values().any(|v| v == &a.id));
+        let perecederos: Vec<_> = c.productos.iter().filter(|p| p.perecedero).map(|p| p.id.as_str()).collect();
+        assert_eq!(perecederos, vec!["hamburguesa", "chorizo"]);
+        assert!(!c.producto("salchicha").unwrap().perecedero, "la salchicha viene envasada");
     }
 
     #[test]

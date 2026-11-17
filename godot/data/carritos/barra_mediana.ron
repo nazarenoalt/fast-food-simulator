@@ -14,6 +14,7 @@
         (id: "lateral", pos: (1.65, 0.0, -0.25), rot_y: 180, categorias: [Deposito, Decoracion]),
         // La parrilla va aparte del mostrador, del lado izquierdo (SPEC-015).
         (id: "parrilla", pos: (-1.65, 0.92, -0.25), categorias: [Cocina]),
+        (id: "heladera", pos: (2.4, 0.0, -0.25), rot_y: 180, categorias: [Cocina]),
         (id: "sombra", pos: (-1.4, 0.0, -1.0), categorias: [Sombrilla]),
         (id: "techo", pos: (0.0, 0.0, -0.1), categorias: [Carpa]),
         (id: "frente", pos: (0.0, 0.0, 0.41), categorias: [Telon, Cerco, Decoracion]),
