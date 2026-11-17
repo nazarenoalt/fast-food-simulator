@@ -24,7 +24,9 @@ Frente (+Z de Godot, −Y de Blender) = el lado donde uno se sienta, con el resp
 igual que en el juego (plaza.rs gira los bancos con rot_y para que +Z mire al camino;
 test req_mun_02_bancos_miran_al_camino).
 Origen: centro de la caja envolvente, a nivel del piso (las patas apoyan en Y = 0). El
-asiento queda corrido 2 cm hacia adelante del origen (hoy está centrado).
+asiento (de z = −0,15 a +0,28) queda corrido 7 cm hacia adelante del origen (hoy está
+centrado), porque el respaldo inclinado ocupa lugar atrás. Las patas inclinadas se hunden 2 mm
+en el piso (mejor eso que flotar).
 
 Biseles: la guía pide 2–3 cm en mobiliario urbano, pero las tablas tienen 4 cm de grueso y
 las barras de fundición 4–5 cm: un bisel de 2 cm las dejaría redondas. Se usa 1 cm en las

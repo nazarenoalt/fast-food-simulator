@@ -217,9 +217,10 @@ def girar_x(p, grados):
     return (p[0], p[1] * math.cos(a) - p[2] * math.sin(a), p[1] * math.sin(a) + p[2] * math.cos(a))
 
 
-def pata(bm, arriba, mat):
+def pata(bm, arriba, mat, plano=None):
     """Pata trasera: listón desde `arriba` (Godot, detrás del marco) hasta el piso, con el
-    pie cortado horizontal (apoya plano)."""
+    pie cortado horizontal (apoya plano). plano = (punto, normal) en Godot: la punta de
+    arriba se corta contra ese plano (la espalda de la pizarra), así apoya entera."""
     previas = set(bm.faces)
     a = math.radians(PATA_ANGULO)
     d = Vector((0, -math.cos(a), -math.sin(a)))          # hacia abajo y hacia atrás (Godot)
@@ -230,6 +231,9 @@ def pata(bm, arriba, mat):
     for sx in (-1, 1):
         for sn in (-1, 1):
             p = arriba + Vector((sx * ancho, 0, 0)) + n * (sn * esp)
+            if plano is not None:                          # sube hasta tocar el plano
+                q, m = Vector(plano[0]), Vector(plano[1])
+                p = p + d * ((q - p).dot(m) / d.dot(m))
             t = -p.y / d.y                                 # hasta y = 0
             vs.append((bm.verts.new(piezas.g2b(p)), bm.verts.new(piezas.g2b(p + d * t))))
     (a0, b0), (a1, b1), (a2, b2), (a3, b3) = vs           # (−x,−n) (−x,+n) (+x,−n) (+x,+n)
@@ -269,8 +273,10 @@ def construir():
         return (q[0], q[1] + pivote_g[1], q[2] + pivote_g[2])
 
     # 3) Pata trasera, enganchada detrás del marco a PATA_ALTO.
-    enganche = inclinado((0, PATA_ALTO, -MARCO[2] - PATA[1] / 2 + 0.002))  # 2 mm metida: sin luz
-    pata(bm, enganche, 1)
+    enganche = inclinado((0, PATA_ALTO, -MARCO[2] - PATA[1] / 2))
+    espalda = (inclinado((0, 0, -MARCO[2] + 0.002)),       # 2 mm metida: sin luz
+               girar_x((0, 0, -1), -INCLINACION))
+    pata(bm, enganche, 1, plano=espalda)
     # 4) Se centra la huella en Z (origen = centro de la base, guía 2.4).
     zs = [-v.co.y for v in bm.verts]
     dz = -(max(zs) + min(zs)) / 2

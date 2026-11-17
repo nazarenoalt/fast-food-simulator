@@ -116,6 +116,7 @@ def hoja_revision(raiz, cuerpo, lampara, revision):
     import pan_pancho
     comun.preparar_revision()
     raiz.location.z = 0.6  # colgado, solo para la foto
+    bpy.context.view_layer.update()  # si no, la primera foto encuadra la posición vieja
     pan = pan_pancho.construir("ref_pan")
     pan.location = piezas.g2b((0.0, 0.6 - LARGO - 0.03, 0.0))
     pan.location.x = 0.12

@@ -11,8 +11,9 @@ Uso:
 Forma (guía 5.4): fuente de piedra (M_Piedra) de plaza de barrio. Pileta redonda de Ø 6 m con
 pared gruesa (30 cm) y borde con alero; en el medio, un pedestal que asoma del agua, una
 columna con base y capitel y un plato (taza) arriba, con un remate en el centro. El agua
-(M_Agua, transparente) es un objeto aparte, `pieza_agua`: el espejo de la pileta, el del plato
-y la cortina que cae del borde del plato a la pileta.
+(M_Agua, transparente) es un objeto aparte, `pieza_agua`: el espejo de la pileta y el del
+plato. Se probó una cortina de agua cayendo del plato: con el alfa 0,7 de M_Agua parecía un
+tambor azul que tapaba la columna, así que no va (si se quiere, mejor con partículas en Godot).
 
 Medidas (lista-de-modelos: Ø 6,0 × 1,6): Ø 6,00 (el alero del borde) × 1,60 (punta del
 remate). Hoy el juego dibuja la pileta como un cilindro macizo de radio 3 y 0,5 m de alto, una
@@ -23,10 +24,10 @@ Sombreado "duro": es piedra tallada, no una roca (3.4 pide facetado para piedras
 
 Objetos (hijos del Empty `fuente`, origen = centro de la base, a nivel del piso):
     - fuente_piedra: pileta, pedestal, columna y plato.
-    - pieza_agua: espejos de agua y cortina (el código puede animarla o cambiarla).
+    - pieza_agua: los dos espejos de agua (el código puede animarlos o cambiarlos).
     - fuente-colonly: cilindro de la pileta (r 3, alto 0,51).
-    - fuente_columna-colonly: cilindro del pedestal, la columna y el plato (r 0,9 desde
-      1,25 m no hace falta: alcanza con r 0,55 hasta 1,6 m, el agua no deja llegar más cerca).
+    - fuente_columna-colonly: cilindro del pedestal y la columna (r 0,55 hasta 1,6 m; no
+      cubre el ala del plato: nadie llega hasta ahí sin meterse en el agua).
 """
 import sys
 from pathlib import Path
@@ -82,10 +83,6 @@ def construir():
     ba = bmesh.new()
     plaza.disco(ba, R_ADENTRO + 0.015, AGUA, LADOS_PILETA)
     plaza.disco(ba, R_PLATO - 0.06, AGUA_PLATO, LADOS_COLUMNA)
-    cortina = plaza.torno(ba, [(R_PLATO + 0.03, AGUA - 0.02), (R_PLATO + 0.01, 1.43)],
-                          lados=LADOS_COLUMNA, abierta=True)
-    for f in cortina:
-        f.smooth = True
     agua_obj = comun.objeto_desde_bmesh("pieza_agua", ba, [agua])
 
     cols = [
