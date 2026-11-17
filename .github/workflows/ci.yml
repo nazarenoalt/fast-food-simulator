@@ -1,8 +1,39 @@
-# Verifica las specs en cada push: tests de reglas, trazabilidad y prueba de humo en Godot.
+# Verifica en cada PR y en main: formato, lints, reglas, trazabilidad, docs y prueba de humo.
 name: CI
-on: [push, pull_request]
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
+  convenciones:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Rama, título y descripción del PR (formato en CLAUDE.md)
+        env:
+          TITULO: ${{ github.event.pull_request.title }}
+          RAMA: ${{ github.head_ref }}
+          BASE: ${{ github.base_ref }}
+          CUERPO: ${{ github.event.pull_request.body }}
+        run: |
+          tipos='feat|fix|docs|refactor|test|chore|ci|perf'
+          error=0
+          fallar() { echo "::error::$1"; error=1; }
+          [ "$BASE" = "main" ] || fallar "El PR tiene que apuntar a main (apunta a $BASE)."
+          [[ "$RAMA" =~ ^($tipos)/TASK-([0-9]{4})-[a-z0-9]+(-[a-z0-9]+)*$ ]] \
+            || fallar "Rama '$RAMA': usar tipo/TASK-0000-slug-en-minusculas."
+          tarea="${BASH_REMATCH[2]}"
+          [[ "$TITULO" =~ ^($tipos)\ \([a-z0-9-]+\):\ .{3,}$ ]] \
+            || fallar "Título '$TITULO': usar 'tipo (modulo): descripción'."
+          [ -z "$tarea" ] || grep -q "TASK-$tarea" <<<"$CUERPO" \
+            || fallar "La descripción debe mencionar TASK-$tarea (ver plantilla)."
+          exit $error
+
   specs:
     runs-on: ubuntu-latest
     env:
@@ -10,10 +41,18 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
       - uses: Swatinem/rust-cache@v2
         with:
           workspaces: rust
-      - name: Tests de reglas y trazabilidad
+      - name: Formato
+        working-directory: rust
+        run: cargo fmt --check
+      - name: Lints (errores; las advertencias se limpian en TASK-0002)
+        working-directory: rust
+        run: cargo clippy --all-targets
+      - name: Tests de reglas, trazabilidad y docs
         working-directory: rust
         run: cargo test
       - name: Descargar Godot
