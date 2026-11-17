@@ -267,8 +267,12 @@ def guardar_blend(ruta):
     print(f"Guardado {ruta.relative_to(RAIZ)}")
 
 
-def exportar_glb(objetos, ruta):
-    """Exporta con las opciones de la guía (sección 7.3)."""
+def exportar_glb(objetos, ruta, uvs=False):
+    """Exporta con las opciones de la guía (sección 7.3).
+
+    uvs=True exporta las coordenadas de textura: solo para modelos con cartel de texto
+    (imagen sobre un plano, guía 4.5). La imagen va embebida en el .glb.
+    """
     ruta = Path(ruta)
     ruta.parent.mkdir(parents=True, exist_ok=True)
     bpy.ops.object.select_all(action="DESELECT")
@@ -281,7 +285,7 @@ def exportar_glb(objetos, ruta):
         use_selection=True,
         export_yup=True,
         export_apply=True,
-        export_texcoords=False,
+        export_texcoords=uvs,
         export_normals=True,
         export_materials="EXPORT",
         export_cameras=False,
