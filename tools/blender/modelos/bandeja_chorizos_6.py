@@ -91,8 +91,8 @@ def revisar(m):
 
 def hoja(m, revision):
     unidades = eq.unidades(eq.ref_chorizo, GRILLA, SEPARACION, "ref_chorizo")
-    eq.hoja_stock(ID, f"{ID} · {MEDIDAS[0]:.3f} × {MEDIDAS[1]:.3f} × {MEDIDAS[2]:.2f} m · stock "
-                  "(chorizos de referencia)", [m["obj"]], [m["obj"]] + unidades, revision)
+    eq.hoja_stock(ID, f"{ID} · 0,172 × 0,038 × 0,20 m · stock (chorizos de referencia)",
+                  [m["obj"]], [m["obj"]] + unidades, revision)
 
 
 def main():
