@@ -98,9 +98,10 @@ def tubo(bm, puntos, radios, lados, mat=0, horizontal=False, tapa_inicio=True, r
     return nuevas
 
 
-def bollo(bm, rng, centro, radios, puntos, mat, otros, aplastar=0.65, piso=None):
+def bollo(bm, rng, centro, radios, puntos, mat, otros, aplastar=0.65, piso=None, tope=None):
     """Bollo irregular: envolvente convexa de `puntos` puntos sobre un elipsoide con ruido.
-    piso = altura (Godot) debajo de la cual se aplastan los puntos (arbustos en el suelo)."""
+    piso = altura (Godot) debajo de la cual se aplastan los puntos (arbustos en el suelo).
+    tope = ruido máximo hacia afuera en la parte de arriba (evita una punta en el polo)."""
     oro = math.pi * (3 - math.sqrt(5))
     giro = rng.uniform(0, 2 * math.pi)
     vs = []
@@ -110,7 +111,7 @@ def bollo(bm, rng, centro, radios, puntos, mat, otros, aplastar=0.65, piso=None)
         t = giro + oro * i
         d = V(r * math.cos(t), y, r * math.sin(t))
         d += V(rng.uniform(-1, 1), rng.uniform(-1, 1), rng.uniform(-1, 1)) * 0.13
-        d = d.normalized() * rng.uniform(0.88, 1.08)
+        d = d.normalized() * rng.uniform(0.88, 1.08 if tope is None or d.y < 0.7 else tope)
         if d.y < 0:
             d.y *= aplastar
         p = V(centro[0] + d.x * radios[0], centro[1] + d.y * radios[1], centro[2] + d.z * radios[2])

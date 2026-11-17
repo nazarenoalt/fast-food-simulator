@@ -115,6 +115,9 @@ def construir():
     relleno.location = piezas.g2b((0, Y_RELLENO, 0))
 
     col = piezas.colision_cilindro(ID, RADIO, ALTO, (0, ALTO / 2, 0), lados=LADOS)
+    e2.suavizar_hasta(envase, 31)
+    e2.suavizar_hasta(relleno, 31)
+    e2.suavizar_hasta(tapa, 46)   # el pico tiene 8 lados
     raiz = piezas.raiz(ID, [envase, tapa, relleno, col])
     return raiz, envase, tapa, relleno, col
 

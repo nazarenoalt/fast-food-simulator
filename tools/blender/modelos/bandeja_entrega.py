@@ -71,6 +71,7 @@ def construir():
     bm = bmesh.new()
     e2.torno_rr(bm, PERFIL, MEDIO_X, MEDIO_Z, RADIO, segs=3, mats=0, tapa_fin=True)
     cuerpo = piezas.terminar(f"{ID}_cuerpo", bm, [rojo])
+    e2.suavizar_hasta(cuerpo, 31)
     col = piezas.colision_caja(ID, (ANCHO, PISO, FONDO), (0, PISO / 2, 0))
     raiz = piezas.raiz(ID, [cuerpo, col])
     return raiz, cuerpo, col

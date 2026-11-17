@@ -93,6 +93,8 @@ def construir():
     e2.torno(bm, PERFIL_TAPA, LADOS, mats=1)
     resto = piezas.terminar(f"{ID}_tapa_etiqueta", bm, [m_etiqueta, m_tapa])
 
+    e2.suavizar_hasta(cuerpo, 31)
+    e2.suavizar_hasta(resto, 31)
     raiz = piezas.raiz(ID, [cuerpo, resto])
     return raiz, cuerpo, resto
 

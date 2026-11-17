@@ -99,10 +99,11 @@ def suavizar_material(obj, indice):
 def construir():
     m_carton, m_film = comun.cargar_materiales("M_Carton", "M_BolsaPlastica")
     bm = bmesh.new()
-    e2.torno_rr(bm, PERFIL_BANDEJA, MEDIO_X, MEDIO_Z, RADIO, segs=2, mats=0, tapa_fin=True)
+    e2.torno_rr(bm, PERFIL_BANDEJA, MEDIO_X, MEDIO_Z, RADIO, segs=3, mats=0, tapa_fin=True)
     e2.torno_rr(bm, PERFIL_FILM, MEDIO_X, MEDIO_Z, RADIO, segs=3, mats=1, tapa_fin=True)
     obj = piezas.terminar(ID, bm, [m_carton, m_film], sombreado="duro")
     suavizar_material(obj, 1)
+    e2.suavizar_hasta(obj, 31)
     return obj
 
 

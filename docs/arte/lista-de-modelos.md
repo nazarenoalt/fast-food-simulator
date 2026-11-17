@@ -66,17 +66,17 @@ sobresale 2 cm, zócalo, 4 ruedas, manija para empujar. Las posiciones de los an
 
 | ID | Objeto | Medidas | Tris | Materiales | Notas | Prio. | Estado |
 |---|---|---|---|---|---|---|---|
-| `banco` | Banco de plaza | 1,6 × 0,8 × 0,6 | 800 | Madera, Hierro | Tablas de madera con respaldo y patas laterales de hierro. Asiento a 0,45 m. | P1 | Pendiente |
-| `farol` | Farol de plaza | ≈ 0,5 × 3,9 × 0,5 | 800 | Hierro, LuzFarol | Columna con base decorada simple y farol con `pieza_lampara`. `punto_luz` a 3,62 m. | P1 | Pendiente |
-| `fuente` | Fuente central | Ø 6,0 × 1,6 | 2.500 | Piedra, Agua | Pileta redonda, columna central y plato superior. `pieza_agua` separada. | P1 | Pendiente |
-| `arbol_platano_a` | Árbol (plátano) A | ≈ 5 × 7 | 1.200 | Tronco, Hojas1/2/3 | Copa de 3–4 bollos facetados. | P1 | Pendiente |
-| `arbol_platano_b` | Árbol (plátano) B | ≈ 4 × 6 | 1.200 | ídem | Variante más chica e inclinada. | P1 | Pendiente |
-| `arbol_platano_c` | Árbol (plátano) C | ≈ 6 × 8 | 1.200 | ídem | Variante más grande. | P1 | Pendiente |
-| `cordon_vereda` | Cordón de vereda (tramo) | 2,0 × 0,15 × 0,15 | 50 | Vereda | Tramo que se repite a lo largo de la calle. | P2 | Pendiente |
-| `cantero` | Borde de cantero (tramo) | 2,0 × 0,1 × 0,1 | 50 | Piedra | Tramo para bordear el pasto de la plaza. | P3 | Pendiente |
+| `banco` | Banco de plaza | 1,6 × 0,8 × 0,6 | 800 | Madera, Hierro | Tablas de madera (4 en el asiento, 3 en el respaldo inclinado 15°) sobre dos patas laterales de hierro con apoyabrazos. Asiento a 0,45 m (arriba de la tabla), frente hacia +Z como pide `plaza.rs`. Colisión `banco-colonly` (asiento) + `banco_respaldo-colonly`. Hecho por código: `tools/blender/modelos/banco.py` (748 tris). [Hoja de revisión](revisiones/banco.jpg). | P1 | Hecho |
+| `farol` | Farol de plaza | 0,5 × 3,9 × 0,5 | 800 | Hierro, LuzFarol | Farola porteña de hierro: base torneada, columna apenas cónica con collar y farol de 4 caras con parantes, techo en pirámide con alero y remate. Vidrio = `pieza_lampara` (emisión), `punto_luz` a 3,62 m. Colisión de columna y base. Hecho por código: `tools/blender/modelos/farol.py` (576 tris). [Hoja de revisión](revisiones/farol.jpg). | P1 | Hecho |
+| `fuente` | Fuente central | Ø 6,0 × 1,6 | 2.500 | Piedra, Agua | Pileta de piedra de Ø 6 m con borde con alero (0,51 m), pedestal, columna con capitel, plato de Ø 1,8 a 1,47 m y remate. Agua aparte en `pieza_agua` (pileta y plato). Sin cortina de agua cayendo: con transparencia parecía un tambor; si se quiere, va con partículas en Godot. Colisión de pileta y columna. Hecho por código: `tools/blender/modelos/fuente.py` (1516 tris). [Hoja de revisión](revisiones/fuente.jpg). | P1 | Hecho |
+| `arbol_platano_a` | Árbol (plátano) A | 5 × 7 | 1.200 | Tronco, Hojas1/2/3 | Tronco de 6 caras, ramas que se ven entre los bollos y copa de 4 bollos facetados mezclando Hojas1/2/3, desde 2,85 m o más (se pasa caminando por abajo). Origen en la base del tronco. Colisión `-colonly` solo del tronco. Módulo común `_arbol.py`. Hecho por código: `tools/blender/modelos/arbol_platano_a.py` (396 tris). [Hoja de revisión](revisiones/arbol_platano_a.jpg). | P1 | Hecho |
+| `arbol_platano_b` | Árbol (plátano) B | 4 × 6 | 1.200 | ídem | Variante más chica, inclinada 9° hacia +X, copa de 3 bollos. Origen en la base del tronco. Colisión del tronco inclinado. Hecho por código: `tools/blender/modelos/arbol_platano_b.py` (292 tris). [Hoja de revisión](revisiones/arbol_platano_b.jpg). | P1 | Hecho |
+| `arbol_platano_c` | Árbol (plátano) C | 6 × 8 | 1.200 | ídem | Variante más grande, tronco más grueso, copa de 4 bollos más baja y extendida. La hoja muestra las tres variantes juntas. Hecho por código: `tools/blender/modelos/arbol_platano_c.py` (402 tris). [Hoja de revisión](revisiones/arbol_platano_c.jpg). | P1 | Hecho |
+| `cordon_vereda` | Cordón de vereda (tramo) | 2,0 × 0,12 × 0,20 | 50 | Vereda | Tramo de 2 m con chaflán de 3 cm del lado de la calle (−Z) y 2 cm del lado de la vereda, sin cara de abajo. Medidas del juego actual (`plaza.rs`). Sin colisión, como hoy. Hecho por código: `tools/blender/modelos/cordon_vereda.py` (18 tris). [Hoja de revisión](revisiones/cordon_vereda.jpg). | P2 | Hecho |
+| `cantero` | Borde de cantero (tramo) | 2,0 × 0,1 × 0,1 | 50 | Piedra | Tramo de 2 m de borde de piedra con chaflanes de 2 cm arriba, simétrico. Sin colisión. Hecho por código: `tools/blender/modelos/cantero.py` (18 tris). [Hoja de revisión](revisiones/cantero.jpg). | P3 | Hecho |
 | `arbol_jacaranda_a` | Árbol (jacarandá) A | ≈ 5 × 6 | 1.200 | Tronco, color lila *(agregar a la paleta)* | Toque de color en la plaza. | P3 | Pendiente |
 | `arbol_jacaranda_b` | Árbol (jacarandá) B | ≈ 4 × 5 | 1.200 | ídem | Variante. | P3 | Pendiente |
-| `arbusto` | Arbusto | ≈ 1,0 × 0,8 | 300 | Hojas1/2/3 | Para canteros. | P3 | Pendiente |
+| `arbusto` | Arbusto | 1,0 × 0,8 × 0,64 | 300 | Hojas1/2/3 | 3 bollos facetados apoyados en el piso (sin cara de abajo), con los tres verdes mezclados. Sin colisión. Hecho por código: `tools/blender/modelos/arbusto.py` (134 tris). [Hoja de revisión](revisiones/arbusto.jpg). | P3 | Hecho |
 
 Piso, pasto, caminos, vereda y calle **no se modelan**: son superficies planas con color que arma el código.
 
@@ -248,6 +248,6 @@ cuerpo + cabeza + pelo + ropa + accesorio, y de cambiar colores.
 1. ✔ **Biblioteca** (`materiales.blend`, `referencias.blend`) — sin esto no hay coherencia.
 2. ✔ **Comida de la etapa 1** (`pan_pancho`, `pan_pancho_cerrado`, `salchicha`, `pancho`), hecha: chicos, rápidos y se ven de cerca; definen el "sabor" del estilo.
 3. ✔ **`barra_chica` + `hervidor_chico`**: lo que el jugador ve todo el tiempo.
-4. Resto de accesorios de la etapa 1.
-5. Plaza de la etapa 1 (banco, farol, árboles, fuente).
+4. ✔ Resto de accesorios de la etapa 1.
+5. ✔ Plaza de la etapa 1 (banco, farol, árboles, fuente). Faltan los jacarandás (necesitan un color lila en la paleta).
 6. Después, cada etapa a medida que se escriben sus specs.

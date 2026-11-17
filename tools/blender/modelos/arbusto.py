@@ -40,9 +40,9 @@ SEMILLA = 512
 PISO = 0.08   # los puntos más bajos se aplastan acá: los tres bollos apoyan en el piso
 # centro (Godot), radios (x, y, z), puntos, verde (1, 2 o 3)
 BOLLOS = [
-    ((0.0, 0.34, 0.02), (0.42, 0.42, 0.4), 26, 2),
-    ((-0.27, 0.24, 0.12), (0.3, 0.27, 0.3), 20, 1),
-    ((0.27, 0.22, -0.1), (0.3, 0.26, 0.3), 20, 3),
+    ((0.0, 0.32, 0.02), (0.42, 0.36, 0.4), 30, 2),
+    ((-0.3, 0.24, 0.1), (0.32, 0.28, 0.3), 22, 1),
+    ((0.3, 0.22, -0.08), (0.32, 0.27, 0.3), 22, 3),
 ]
 
 
@@ -53,7 +53,7 @@ def construir():
     for centro, radios, puntos, verde in BOLLOS:
         m = verde - 1
         _arbol.bollo(bm, rng, centro, radios, puntos, m, [o for o in (0, 1, 2) if o != m],
-                     aplastar=0.8, piso=PISO)
+                     aplastar=0.8, piso=PISO, tope=0.94)
     # Ajuste de medidas: ancho X y alto justos, caja centrada en X y Z.
     xs = [v.co.x for v in bm.verts]
     ys = [v.co.y for v in bm.verts]   # Blender Y = −Z de Godot

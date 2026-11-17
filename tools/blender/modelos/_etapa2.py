@@ -256,3 +256,20 @@ def barra_chica():
     import _base_carrito
     m = _base_carrito.construir("barra_chica")
     return [m["pintura"], m["estructura"]]
+
+
+def suavizar_hasta(obj, grados):
+    """Suaviza las aristas entre caras del mismo material que doblan `grados` o menos.
+    piezas.terminar marca duras las de más de 30°, y un cilindro de 12 lados dobla justo
+    30° (por redondeo, a veces queda facetado); uno de 8 lados dobla 45°."""
+    lim = math.radians(grados)
+    bm = bmesh.new()
+    bm.from_mesh(obj.data)
+    bm.normal_update()
+    for e in bm.edges:
+        caras = e.link_faces
+        if len(caras) == 2 and caras[0].material_index == caras[1].material_index \
+                and caras[0].normal.angle(caras[1].normal, 0.0) <= lim:
+            e.smooth = True
+    bm.to_mesh(obj.data)
+    bm.free()
