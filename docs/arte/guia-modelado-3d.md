@@ -231,6 +231,8 @@ base (el hex ya está en el espacio de color correcto; no copiar los números de
 | `M_PlasticoNegro` | `#1A1A1A` | 0 | 0,5 | Perillas, mangos, cables. |
 | `M_MaderaClara` | `#B28C61` | 0 | 0,8 | Tablas de estantes, tablas de picar. |
 | `M_PilotoApagado` | `#400D0D` | 0 | 0,4 | Luces piloto apagadas. **El juego las enciende.** |
+| `M_Carbon` | `#262322` | 0 | 0,95 | Carbón apagado. |
+| `M_Brasa` | `#FF6A1F` | 0 | 0,8 | Brasas encendidas (emisión). **El juego cambia la intensidad según el fuego.** |
 | **Comida y empaques** |||||
 | `M_PanCorteza` | `#DB9952` | 0 | 0,75 | Exterior de todos los panes. |
 | `M_PanMiga` | `#E8C88E` | 0 | 0,8 | Corte / interior de los panes. |
@@ -239,6 +241,12 @@ base (el hex ya está en el espacio de color correcto; no copiar los números de
 | `M_Carton` | `#C79E6B` | 0 | 0,9 | Bandejas, cajas de cartón. |
 | `M_BolsaPlastica` | `#EBF0FF` | 0 | 0,3 | Bolsas. Transparente (alfa 0,35). |
 | `M_PlasticoClaro` | `#8C939A` | 0 | 0,15 | Plástico translúcido de pomos y film que deja ver lo de adentro con su color (alfa 0,15). El gris es a propósito: con transparencia, un color claro "lava" lo de atrás; este casi no suma y se ve incoloro. |
+| `M_CarneCruda` | `#B5474A` | 0 | 0,65 | Medallón y chorizo crudos. **El juego cambia este color al cocinar.** |
+| `M_Lechuga` | `#7DAA3C` | 0 | 0,7 | Hoja de lechuga. |
+| `M_Tomate` | `#C83A2A` | 0 | 0,5 | Rodaja de tomate. |
+| `M_Chimichurri` | `#55702E` | 0 | 0,6 | Chimichurri. |
+| `M_PapelMadera` | `#B98A57` | 0 | 0,9 | Bolsas de papel de panadería y de carbón. |
+| `M_Vidrio` | `#8C9A9C` | 0 | 0,1 | Frascos. Transparente (alfa 0,2); gris medio a propósito, como `M_PlasticoClaro`. |
 | **Plaza (fondo, colores apagados)** |||||
 | `M_Pasto` | `#3D662B` | 0 | 1,0 | Pasto. |
 | `M_Baldosa` | `#948C80` | 0 | 0,9 | Baldosas de la plaza. |
@@ -298,7 +306,8 @@ con su material propio, para que el código las encuentre por nombre:
 |---|---|---|
 | Cuerpo pintado del carrito | `M_PinturaCarrito` | Pone el color elegido por el jugador. |
 | Salchicha (sola o dentro del pancho) | `M_SalchichaCruda` | Le cambia el color según la cocción. |
-| Medallón, chorizo (etapa 4) | `M_CarneCruda` *(se agrega a la paleta en la etapa 4)* | Ídem. |
+| Medallón, chorizo (etapa 4) | `M_CarneCruda` | Ídem. |
+| Brasas de la parrilla (etapa 4) | `M_Brasa` | Cambia la intensidad según el fuego. |
 | Luz piloto del hervidor | `M_PilotoApagado` | Se enciende al prender. |
 | Agua del hervidor | `M_Agua` | Cambia color y transparencia con la temperatura. |
 
@@ -542,3 +551,4 @@ revisión. Si alguno falla, el script termina con error. El resto se revisa a oj
 | v1.4 | Nuevo material `M_PlasticoClaro` (`#8C939A`, alfa 0,15) para pomos y films: un plástico casi blanco lavaba el color del aderezo (la mostaza se veía crema), porque la transparencia se mezcla en luz lineal. Gris medio + alfa bajo deja ver el color real. |
 | v1.5 | Nuevos `M_FlorLila1` (`#6F5F99`) y `M_FlorLila2` (`#8574AE`) para la copa de los jacarandás. Los juegos infantiles de la plaza pueden usar los acentos vivos (rojo, azul, amarillo). La colisión de una pieza que se mueve va como hija de su `pieza_` (así la sigue). Cadenas: cilindro de 6 lados de 6 mm de radio, sin eslabones. |
 | v1.6 | Las pizarras van en blanco (`pieza_pizarra`, con UV para que el juego escriba); solo se pinta el texto fijo (4.5). |
+| v1.7 | Colores de la etapa 4: `M_CarneCruda`, `M_Lechuga`, `M_Tomate`, `M_Chimichurri`, `M_PapelMadera`, `M_Vidrio`, `M_Carbon`, `M_Brasa`. |
