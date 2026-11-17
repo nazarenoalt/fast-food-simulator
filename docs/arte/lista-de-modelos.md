@@ -14,7 +14,7 @@ Cada modelo sigue la [guía de modelado](guia-modelado-3d.md).
 - **Estado**: Pendiente → En progreso → En revisión → Hecho.
 - ⚠ = objeto que **no** está en ninguna spec todavía; es una propuesta y se confirma al escribir la spec de su etapa.
 
-Resumen: **107 modelos**. La etapa 1 tiene 29, y 23 de ellos (P1) reemplazan las piezas simples que el juego usa hoy.
+Resumen: **117 modelos** (más los tamaños de techos y toldos). La etapa 1 tiene 29, y 23 de ellos (P1) reemplazan las piezas simples que el juego usa hoy.
 
 ---
 
@@ -186,7 +186,6 @@ cuerpo + cabeza + pelo + ropa + accesorio, y de cambiar colores.
 |---|---|---|---|---|---|---|---|
 | `food_truck` | Base con interior caminable | ≈ 2,2 × 2,6 × 4,5 | 5.000 | PinturaCarrito, Acero, Goma, PlasticoNegro | Excede el tope de bases: se pide excepción al hacer la spec. Ventana de atención con toldo. | P2 | Pendiente |
 | `trailer` | Base remolque | ≈ 2,0 × 2,3 × 3,0 | 4.000 | ídem | ⚠ Mencionado como "remolque" en SPEC-006 (fuera de alcance). | P3 | Pendiente |
-| `toldo_rayado` | Toldo rebatible | ≈ 1,6 × 0,4 × 0,8 | 800 | Acero, RojoAcento, BlancoCrema | Nueva categoría o variante de Carpa. | P2 | Pendiente |
 | `cartel_luminoso` | Cartel luminoso | ≈ 0,8 × 0,3 × 0,1 | 400 | MetalOscuro, emisión | Texto en imagen con emisión de noche. | P2 | Pendiente |
 | `guirnalda_luces` | Guirnalda de lamparitas | ≈ 2,0 × 0,3 | 600 | PlasticoNegro, LuzCalida | Cable con 8–10 lamparitas. | P2 | Pendiente |
 | `banqueta` | Banqueta alta | Ø 0,35 × 0,75 | 400 | Acero, PinturaCarrito | Para que los clientes coman. | P2 | Pendiente |
@@ -197,6 +196,31 @@ cuerpo + cabeza + pelo + ropa + accesorio, y de cambiar colores.
 | `pizarra_grande` | Pizarra de menú grande | ≈ 0,6 × 0,9 × 0,05 | 400 | Pizarra, Madera | | P3 | Pendiente |
 | `cerco_metal` | Cerco de metal | 2,46 × 0,9 × 0,05 | 600 | Hierro | Variante del cerco. | P3 | Pendiente |
 | `heladera_bebidas` | Heladera exhibidora de bebidas | ≈ 0,6 × 1,8 × 0,6 | 1.500 | BlancoCrema, vidrio, emisión | ⚠ Si se agregan bebidas. | P3 | Pendiente |
+
+### Alacenas bajo mesada (`accesorios/`)
+
+⚠ Pedido nuevo: depósitos de metal que se **encastran** debajo de la mesada, del lado del vendedor, y forman parte del carrito (como los muebles bajo mesada de los food trucks). Cada base tiene huecos de medida estándar ("bahías": 2 en la barra chica, 3 en la mediana, 4 en el carro grande) con un *Empty* `punto_bahia_<n>`; lo que hoy tapa el hueco (las puertitas) pasa a ser `pieza_tapa_bahia_<n>`, que el juego esconde cuando hay una alacena. Todas las alacenas miden lo mismo, así entran en cualquier bahía de cualquier carrito. Puertas `pieza_puerta_<n>` y cajones `pieza_cajon_<n>` aparte (se abren), lugares de depósito `punto_lugar_<n>` adentro. **Para que el juego las use hace falta una spec** (anclajes `bahia_<n>` en los `.ron` de carritos, categoría Depósito).
+
+| ID | Objeto | Medidas | Tris | Materiales | Notas | Prio. | Estado |
+|---|---|---|---|---|---|---|---|
+| `alacena_puertas` | Alacena de 2 puertas | ≈ medida de bahía | 1.000 | Acero, PlasticoNegro, MetalOscuro | 2 puertas batientes con tirador y un estante adentro. | P2 | Pendiente |
+| `alacena_cajones` | Cajonera de 3 cajones | ídem | 1.000 | ídem | 3 cajones con tirador corrido. | P2 | Pendiente |
+| `alacena_abierta` | Alacena abierta | ídem | 1.000 | ídem | Sin puertas, 2 estantes a la vista. | P3 | Pendiente |
+| `alacena_mixta` | Alacena puerta + cajones | ídem | 1.000 | ídem | 1 puerta y una columna de 2–3 cajones. | P3 | Pendiente |
+
+### Techos y toldos para los carritos (`accesorios/`)
+
+⚠ Pedido nuevo. Se enganchan en el anclaje `techo` (categoría Carpa, como `carpa_2x2`) o en el `frente` (toldos). Los techos van sobre parantes propios y tienen que cubrir la mesada: como las bases miden distinto, cada techo tiene **tres tamaños** con sufijo `_chico` (barra chica, ≈ 1,7 m de ancho), `_mediano` (barra mediana, ≈ 2,5 m) y `_grande` (carro grande, ≈ 3,5 m); la tabla da el chico. Lona y chapa sin colisión; parantes con `-colonly`. Colores por material (guía 4.2, regla 5): el paño o la chapa como `pieza_` con superficies para las rayas, como `pieza_pano` de la sombrilla. **Para que el juego los use hace falta una spec** (tamaños por base y la categoría Toldo, si se separa de Carpa).
+
+| ID | Objeto | Medidas | Tris | Materiales | Notas | Prio. | Estado |
+|---|---|---|---|---|---|---|---|
+| `techo_plano` | Techo plano de chapa sobre 4 caños | ≈ 1,7 × 2,3 × 1,0 | 1.500 | MetalOscuro, Acero, PinturaCarrito | Chapa plana con borde pintado y un faldón al frente (como el carrito de la foto de referencia). 4 caños de acero desde el piso o desde la mesada. Tubo de luz debajo (`punto_luz`). Tres tamaños. | P2 | Pendiente |
+| `techo_dos_aguas` | Techo de chapa a dos aguas | ≈ 1,8 × 2,5 × 1,1 | 1.500 | MetalOscuro, Acero, PinturaCarrito | Chapa a dos aguas con alero, estilo puesto de feria. Tres tamaños. | P3 | Pendiente |
+| `techo_curvo` | Techo curvo de chapa | ≈ 1,8 × 2,4 × 1,1 | 1.500 | MetalOscuro, Acero, PinturaCarrito | Chapa curva en arco, estilo food truck clásico. Tres tamaños. | P3 | Pendiente |
+| `toldo_rayado` | Toldo rebatible | ≈ 1,6 × 0,4 × 0,8 | 800 | Acero, RojoAcento, BlancoCrema | Lona rayada sobre brazos articulados, inclinada hacia el cliente. Tres tamaños. | P2 | Pendiente |
+| `toldo_enrollable` | Toldo enrollable con faldón | ≈ 1,6 × 0,5 × 1,0 | 800 | Acero, PlasticoNegro, RojoAcento / BlancoCrema / AzulAcento | Caja de enrollado pegada al techo o a los parantes, lona desplegada con faldón festoneado y manivela. Tres tamaños. | P2 | Pendiente |
+| `toldo_frente` | Toldito fijo de frente | ≈ 1,6 × 0,3 × 0,4 | 400 | Acero, RojoAcento / BlancoCrema | Alerito corto sobre el mostrador, del lado del cliente, sin parantes (va en el anclaje `frente` o colgado de la mesada). Tres tamaños. | P3 | Pendiente |
+| `marquesina` | Techo con cartel al frente | ≈ 1,7 × 2,4 × 1,0 | 1.500 | MetalOscuro, Acero, Amarillo, LuzCalida | Techo plano con un cartel frontal grande (texto en imagen, guía 4.5) y lamparitas de emisión. Tres tamaños. | P3 | Pendiente |
 
 ---
 
