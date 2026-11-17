@@ -30,7 +30,7 @@ Cada etapa abre con sus specs (SPEC-000) y cierra con docs al día. Formato en [
 ## Etapa 3 · Plancha y parrilla (`feat (cocina)`) · PR TASK-0300
 | ID | Tarea | Spec | Estado |
 |---|---|---|---|
-| 0301 | Escribir specs 014 Plancha, 015 Parrilla, 016 Heladera | 014, 015, 016 | ⬜ |
+| 0301 | Escribir specs 014 Plancha, 015 Parrilla, 016 Heladera | 014, 015, 016 | ✅ |
 | 0302 | Plancha: hamburguesa se cocina por lados | 014 | ⬜ |
 | 0303 | Parrilla: choripán y carbón que se gasta | 015 | ⬜ |
 | 0304 | Pan tostado | 015 | ⬜ |
