@@ -823,26 +823,37 @@ def pelo(estilo, material, nombre=None):
     def front(a):  # 1 adelante, 0 atrás
         return (math.cos(a) + 1) / 2
 
+    # arriba/borde: grosor del pelo arriba y en el borde; frente/lados/atras: hasta qué ángulo
+    # polar baja (rad, desde arriba); patilla: cuánto más baja adelante de las orejas;
+    # pelos: irregularidad del grosor (0–1).
     estilos = {
-        "corto":  dict(grosor=0.011, frente=0.95, lados=1.55, atras=1.85, rulo=0.0),
-        "rapado": dict(grosor=0.005, frente=1.05, lados=1.55, atras=1.90, rulo=0.0),
-        "raya":   dict(grosor=0.014, frente=0.85, lados=1.50, atras=1.85, rulo=0.0, flequillo=0.012),
-        "largo":  dict(grosor=0.013, frente=0.95, lados=1.95, atras=2.0, rulo=0.0, cortina=0.17),
-        "colita": dict(grosor=0.010, frente=0.98, lados=1.62, atras=1.90, rulo=0.0, cola=True),
-        "rodete": dict(grosor=0.010, frente=0.98, lados=1.62, atras=1.88, rulo=0.0, rodete=True),
-        "rulos":  dict(grosor=0.030, frente=0.92, lados=1.62, atras=1.88, rulo=0.010),
-        "pelado": dict(grosor=0.008, frente=1.55, lados=1.62, atras=1.95, rulo=0.0, coronilla=1.05),
+        "corto":  dict(arriba=0.017, borde=0.006, frente=0.98, lados=1.42, atras=1.80, patilla=0.22, pelos=0.30),
+        "rapado": dict(arriba=0.006, borde=0.004, frente=1.06, lados=1.45, atras=1.82, patilla=0.15, pelos=0.15),
+        "raya":   dict(arriba=0.022, borde=0.008, frente=0.86, lados=1.50, atras=1.84, patilla=0.15, pelos=0.25,
+                       flequillo=0.016),
+        "largo":  dict(arriba=0.015, borde=0.013, frente=0.92, lados=1.90, atras=2.0, patilla=0.0, pelos=0.15,
+                       cortina=0.17),
+        "colita": dict(arriba=0.010, borde=0.006, frente=0.98, lados=1.58, atras=1.88, patilla=0.10, pelos=0.15,
+                       cola=True),
+        "rodete": dict(arriba=0.010, borde=0.006, frente=0.98, lados=1.58, atras=1.86, patilla=0.10, pelos=0.15,
+                       rodete=True),
+        "rulos":  dict(arriba=0.036, borde=0.020, frente=0.92, lados=1.60, atras=1.86, patilla=0.0, pelos=0.55),
+        "pelado": dict(arriba=0.008, borde=0.007, frente=1.55, lados=1.62, atras=1.92, patilla=0.0, pelos=0.2,
+                       coronilla=1.05),
     }
     E = estilos[estilo]
 
     def limite(a):
         f = front(a)
-        # mezcla suave entre frente, lados y atrás
         if f > 0.5:
             t = (f - 0.5) * 2
-            return E["lados"] * (1 - t) + E["frente"] * t
-        t = (0.5 - f) * 2
-        return E["lados"] * (1 - t) + E["atras"] * t
+            lim = E["lados"] * (1 - t) + E["frente"] * t
+        else:
+            t = (0.5 - f) * 2
+            lim = E["lados"] * (1 - t) + E["atras"] * t
+        # patilla: delante de la oreja (azimut ≈ ±65°)
+        cerca = max(0.0, 1 - abs(abs(math.degrees(math.atan2(math.sin(a), math.cos(a)))) - 68) / 16)
+        return lim + E["patilla"] * cerca
 
     filas = 6
     anillos = []
@@ -856,10 +867,11 @@ def pelo(estilo, material, nombre=None):
                 phi = E["coronilla"] + (phi_max - E["coronilla"]) * (j - 1) / (filas - 1)
             d = V((math.sin(phi) * math.sin(a), -math.sin(phi) * math.cos(a), math.cos(phi)))
             p = _superficie(bvh, centro, d)
-            gro = E["grosor"] * (0.55 + 0.45 * min(1.0, j / 2.5))
-            if E.get("flequillo") and front(a) > 0.75 and j >= filas - 1:
-                gro += E["flequillo"] * (1 if math.sin(a) > -0.2 else 0.4)
-            gro += E["rulo"] * (rnd.random() - 0.3)
+            tt = (j - 1) / (filas - 1)
+            gro = E["arriba"] * (1 - tt) + E["borde"] * tt
+            if E.get("flequillo") and front(a) > 0.72 and j >= filas - 2:
+                gro += E["flequillo"] * (1.0 if math.sin(a) > -0.3 else 0.35)
+            gro *= 1 + E["pelos"] * (rnd.random() - 0.5)
             fila.append(p + (p - centro).normalized() * gro)
         anillos.append(fila)
     # Borde: se mete hacia adentro de la cabeza (no se ve) y se cierra.
@@ -870,7 +882,7 @@ def pelo(estilo, material, nombre=None):
         tapa_ini = centro + V((0, 0, 0.06))
     else:
         anillos = anillos + [borde]
-        tapa_ini = centro + V((0, 0.004, 0.124 + E["grosor"]))
+        tapa_ini = centro + V((0, 0.004, 0.126 + E["arriba"]))
     if E.get("cortina"):
         _cortina(m, bvh, centro, E, material)
     pesos = [{"Head": 1.0}] * len(anillos)
@@ -889,6 +901,8 @@ def pelo(estilo, material, nombre=None):
         a = [anillo_eje(c + d * t, d, r, r, 8, ref=IZQ) for t, r in perf]
         m.loft(a, [{"Head": 1.0}] * len(a), [0] * (len(a) - 1), tapa_ini=c - d * 0.03, tapa_fin=c + d * 0.034)
     obj = m.objeto(nombre or f"pelo_{estilo}", [material])
+    for f in obj.data.polygons:      # facetado: se lee como mechones, no como gorro
+        f.use_smooth = estilo == "rapado"
     for g in list(obj.vertex_groups):
         obj.vertex_groups.remove(g)
     # Origen en la base del cráneo (cabeza del hueso Head de escala 1).
