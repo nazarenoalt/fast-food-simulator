@@ -238,6 +238,7 @@ base (el hex ya está en el espacio de color correcto; no copiar los números de
 | *(ref.) salchicha cocida* | `#B84C33` | — | — | Solo referencia: lo pone el código. |
 | `M_Carton` | `#C79E6B` | 0 | 0,9 | Bandejas, cajas de cartón. |
 | `M_BolsaPlastica` | `#EBF0FF` | 0 | 0,3 | Bolsas. Transparente (alfa 0,35). |
+| `M_PlasticoClaro` | `#8C939A` | 0 | 0,15 | Plástico translúcido de pomos y film que deja ver lo de adentro con su color (alfa 0,15). El gris es a propósito: con transparencia, un color claro "lava" lo de atrás; este casi no suma y se ve incoloro. |
 | **Plaza (fondo, colores apagados)** |||||
 | `M_Pasto` | `#3D662B` | 0 | 1,0 | Pasto. |
 | `M_Baldosa` | `#948C80` | 0 | 0,9 | Baldosas de la plaza. |
@@ -536,3 +537,4 @@ revisión. Si alguno falla, el script termina con error. El resto se revisa a oj
 | v1.1 | Biblioteca creada, paleta en `tools/arte/paleta.json`, revisión automática, hoja de revisión en `.jpg`, Git LFS postergado. |
 | v1.2 | Panes abiertos con el relleno hundido (5.1). `M_PanMiga` pasa de `#F7E0B2` a `#E8C88E` (se veía blanca). |
 | v1.3 | Lo aprendido con la etapa 1 completa: origen de objetos no simétricos y chequeos propios (2.4), radio de cilindros a las caras planas (3.2), biseles en piezas finas (3.3), carteles opacos con material `T_<id>` (4.5), copa de árboles desde 2,5 m y agua en movimiento (5.4), `-colonly` de varias cajas y cuándo no lleva (6.1), variantes de color por superficies (6.2), `piezas.py`. |
+| v1.4 | Nuevo material `M_PlasticoClaro` (`#8C939A`, alfa 0,15) para pomos y films: un plástico casi blanco lavaba el color del aderezo (la mostaza se veía crema), porque la transparencia se mezcla en luz lineal. Gris medio + alfa bajo deja ver el color real. |

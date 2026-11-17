@@ -86,7 +86,8 @@ LUZ_Y = (0.035, 0.58)               # abajo / arriba de la abertura
 JUEGO = 0.003                       # entre puertas / cajones y el marco
 FRENTE = 0.02                       # espesor de puertas y frentes de cajón
 Z_FRENTE = -0.018                   # cara de afuera de puertas y frentes (3 mm delante del marco)
-SALE_TIRADOR = 0.03                 # cuánto sale el tirador desde la puerta
+SALE_TIRADOR = 0.03                 # cuánto sale el tirador de las puertas
+SALE_CORRIDO = 0.022                # cuánto sale el tirador corrido de los cajones
 EPS = 0.001                         # encastre entre piezas (evita vértices que coinciden)
 
 # Interior de la caja (Godot).
@@ -154,27 +155,49 @@ def objeto_en(nombre, bm, materiales, origen_godot):
     return obj
 
 
-def caja_y_marco(a, bm, montante=False):
-    """La caja (por fuera y forro de adentro) y el marco de afuera."""
-    w, h, d = CAJA
-    # La capa que marca el forro se crea antes de hacer caras (crearla después invalida las
-    # referencias a las caras ya hechas).
-    capa = bm.faces.layers.int.get("forro") or bm.faces.layers.int.new("forro")
-    # Por fuera: caja con bisel, sin la cara de adelante (la tapa el marco) ni la de abajo.
-    c = a.caja(bm, CAJA, (0, h / 2, d / 2), ACERO, 0.005, solido=False, sin_abajo=True)
-    borrar_cara(bm, c, (0, 0, -1))
-    # Forro de adentro: caja sin bisel con las normales hacia adentro (se dan vuelta en
-    # terminar_cuerpo) y el fondo oscuro. Su boca queda 1 mm delante de la caja, tapada por
-    # el marco.
-    forro = piezas.caja(bm, (2 * IN_X, IN_Y[1] - IN_Y[0], IN_Z + EPS),
-                        (0, (IN_Y[0] + IN_Y[1]) / 2, (IN_Z - EPS) / 2), mat=ACERO)
-    borrar_cara(bm, forro, (0, 0, -1))
-    for f in forro:
-        if f.is_valid:
-            f[capa] = 1
+def caja_hueca(bm, medidas, centro, pared, abierta, mat, bisel, mat_fondo=None):
+    """Caja de chapa abierta de un lado (Godot): por fuera con bisel, por dentro sin bisel,
+    unidas por un borde plano en la boca. Queda cerrada (sin bordes sueltos), así las normales
+    del forro miran solas hacia adentro. abierta = "-z" (la caja de la alacena) o "+y" (los
+    cajones). mat_fondo = material de la cara de adentro opuesta a la boca."""
+    eje, signo = {"-z": (2, -1), "+y": (1, 1)}[abierta]
+    normal = [0, 0, 0]
+    normal[eje] = signo
+    afuera = piezas.caja(bm, medidas, centro, mat=mat, bisel=bisel)
+    # Adentro: `pared` menos por lado, salvo en la boca (llega al mismo plano que afuera).
+    med_in = [m - 2 * pared for m in medidas]
+    cen_in = list(centro)
+    med_in[eje] = medidas[eje] - pared
+    cen_in[eje] = centro[eje] + signo * pared / 2
+    adentro = piezas.caja(bm, tuple(med_in), tuple(cen_in), mat=mat)
+    n = g2b(normal)
+    bocas = []
+    for caras in (afuera, adentro):
+        for f in caras:
             f.normal_update()
-            if f.normal.dot(g2b((0, 0, 1))) > 0.999:
-                f.material_index = OSCURO
+        boca = next(f for f in caras if f.normal.dot(n) > 0.999)
+        bocas.append(list(boca.verts))
+        if mat_fondo is not None and caras is adentro:
+            fondo = next(f for f in caras if f.normal.dot(n) < -0.999)
+            fondo.material_index = mat_fondo
+        bmesh.ops.delete(bm, geom=[boca], context="FACES_ONLY")
+    # Borde plano de la boca: cada esquina de afuera con la de adentro del mismo lado, en orden
+    # alrededor del centro (bridge_loops las cruza).
+    c = g2b(centro)
+    ejes = [i for i in range(3) if abs(n[i]) < 0.5]
+
+    def angulo(v):
+        return math.atan2(v.co[ejes[1]] - c[ejes[1]], v.co[ejes[0]] - c[ejes[0]])
+    fuera, dentro = (sorted(vs, key=angulo) for vs in bocas)
+    for k in range(4):
+        f = bm.faces.new((fuera[k], fuera[(k + 1) % 4], dentro[(k + 1) % 4], dentro[k]))
+        f.material_index = mat
+
+
+def caja_y_marco(a, bm, montante=False):
+    """La caja (chapa de acero por fuera y por dentro, fondo oscuro) y el marco de afuera."""
+    w, h, d = CAJA
+    caja_hueca(bm, CAJA, (0, h / 2, d / 2), PARED, "-z", ACERO, 0.005, mat_fondo=OSCURO)
     # Paredes como sólidos (para los chequeos y la colisión).
     a.solidos += [
         (Vector((-w / 2, 0, 0)), Vector((w / 2, IN_Y[0], d)), "fijo"),
@@ -194,8 +217,10 @@ def caja_y_marco(a, bm, montante=False):
         a.caja(bm, (mw / 2 - LUZ_X, alto, me), (sx * (mw / 2 + LUZ_X) / 2, yc, zc), ACERO, 0.0035)
     if montante:  # mixta: montante al medio (puerta | cajones) y tabique adentro
         a.caja(bm, (0.02, alto, me), (0, yc, zc), ACERO, 0.0035)
+        # El tabique toca piso, techo y fondo, y su canto de adelante queda detrás del
+        # montante: ninguna arista se ve, va sin bisel.
         a.caja(bm, (PARED, IN_Y[1] - IN_Y[0] + 2 * EPS, IN_Z + EPS),
-               (0, (IN_Y[0] + IN_Y[1]) / 2, (IN_Z - EPS) / 2), ACERO, 0.003)
+               (0, (IN_Y[0] + IN_Y[1]) / 2, (IN_Z - EPS) / 2), ACERO, 0.0)
 
 
 def estante(a, bm, x0, x1, y_arriba):
@@ -239,23 +264,24 @@ def cajon(a, nombre, x0, x1, y0, y1, mats):
     xc = (x0 + x1) / 2
     a.caja(bm, (x1 - x0, y1 - y0, FRENTE), (xc, (y0 + y1) / 2, Z_FRENTE + FRENTE / 2),
            ACERO, 0.005, etiqueta=nombre)
-    tirador(bm, (xc, y1 - 0.03), min(0.36, (x1 - x0) - 0.09), vertical=False)
-    # Caja: costados, fondo y piso de chapa (el frente hace de cuarta pared).
+    # Tirador corrido: una barra negra a lo largo del canto de arriba del frente.
+    largo = min(0.40, (x1 - x0) - 0.06)
+    piezas.caja(bm, (largo, 0.022, SALE_CORRIDO + EPS),
+                (xc, y1 - 0.011 - 0.006, Z_FRENTE - (SALE_CORRIDO - EPS) / 2), mat=NEGRO,
+                bisel=0.004)
+    # Caja de chapa abierta arriba, detrás del frente.
     e = CAJON_PARED
     bx0, bx1 = x0 + 0.012, x1 - 0.012
     yb, hb = y0 + 0.012, (y1 - y0) - 0.03
     z0, z1 = CAJON_Z
-    for x in (bx0 + e / 2, bx1 - e / 2):
-        a.caja(bm, (e, hb, z1 - z0), (x, yb + hb / 2, (z0 + z1) / 2), ACERO, 0.002,
-               etiqueta=nombre)
-    a.caja(bm, (bx1 - bx0 - 0.002, hb, e), ((bx0 + bx1) / 2, yb + hb / 2, z1 - e / 2), ACERO,
-           0.002, etiqueta=nombre)
-    a.caja(bm, (bx1 - bx0 - 2 * e + 2 * EPS, e, z1 - z0 - e), ((bx0 + bx1) / 2, yb + e / 2,
-                                                              (z0 + z1 - e) / 2),
-           ACERO, 0.002, etiqueta=nombre)
+    caja_hueca(bm, (bx1 - bx0, hb, z1 - z0), ((bx0 + bx1) / 2, yb + hb / 2, (z0 + z1) / 2), e, "+y",
+               ACERO, 0.002)
+    for p0, p1 in (((bx0, yb, z0), (bx0 + e, yb + hb, z1)), ((bx1 - e, yb, z0), (bx1, yb + hb, z1)),
+                   ((bx0, yb, z0), (bx1, yb + hb, z0 + e)), ((bx0, yb, z1 - e), (bx1, yb + hb, z1)),
+                   ((bx0, yb, z0), (bx1, yb + e, z1))):
+        a.solidos.append((Vector(p0), Vector(p1), nombre))
     obj = objeto_en(nombre, bm, mats, (xc, (y0 + y1) / 2, Z_FRENTE))
-    piso = yb + e
-    return obj, (bx0 + e, bx1 - e), piso
+    return obj, (bx0 + e, bx1 - e), yb + e
 
 
 def frentes_cajones(n, y0=LUZ_Y[0], y1=LUZ_Y[1]):
@@ -263,28 +289,6 @@ def frentes_cajones(n, y0=LUZ_Y[0], y1=LUZ_Y[1]):
     h = (y1 - y0 - (n + 1) * JUEGO) / n
     return [(y0 + JUEGO + k * (h + JUEGO), y0 + JUEGO + k * (h + JUEGO) + h)
             for k in reversed(range(n))]
-
-
-def terminar_cuerpo(nombre, bm, mats):
-    """piezas.terminar recalcula las normales hacia afuera; después se dan vuelta las del
-    forro, que tienen que mirar hacia adentro de la caja (desde ahí se ven)."""
-    obj = piezas.terminar(nombre, bm, mats)
-    malla = obj.data
-    capa = malla.attributes.get("forro")
-    if capa is not None:
-        marcadas = {i for i, v in enumerate(capa.data) if v.value}
-        b = bmesh.new()
-        b.from_mesh(malla)
-        b.faces.ensure_lookup_table()
-        centro = g2b((0, CAJA[1] / 2, CAJA[2] / 2))
-        for i in marcadas:
-            f = b.faces[i]
-            if f.normal.dot(centro - f.calc_center_median()) < 0:
-                f.normal_flip()
-        b.to_mesh(malla)
-        b.free()
-        malla.attributes.remove(malla.attributes["forro"])
-    return obj
 
 
 def construir(variante, id_alacena=None):
@@ -334,7 +338,7 @@ def construir(variante, id_alacena=None):
     for f in bm.faces:
         if f.material_index == OSCURO:
             f.material_index = 1
-    cuerpo = terminar_cuerpo(f"{id_alacena}_cuerpo", bm, [mats[ACERO], mats[OSCURO]])
+    cuerpo = piezas.terminar(f"{id_alacena}_cuerpo", bm, [mats[ACERO], mats[OSCURO]])
 
     # Puntos de los lugares (los de los cajones, hijos del cajón).
     puntos = []
@@ -381,7 +385,8 @@ def exportables(m):
 
 def medidas(variante):
     """Medida total (Godot) con marco, puertas y tiradores."""
-    afuera = MARCO[2] if variante == "abierta" else -Z_FRENTE + SALE_TIRADOR
+    afuera = {"abierta": MARCO[2], "cajones": -Z_FRENTE + SALE_CORRIDO}.get(
+        variante, -Z_FRENTE + SALE_TIRADOR)
     return (MARCO[0], MARCO[1], CAJA[2] + afuera)
 
 
@@ -400,7 +405,7 @@ def chequeo_origen(m):
     envolvente se corre hacia el vendedor por el marco, las puertas y los tiradores."""
     vs = _verts_godot([m["cuerpo"]])
     por_fuera = [v for v in vs if IN_X + 0.001 < abs(v.x) <= CAJA[0] / 2 + 1e-4 and v.z > -0.0015]
-    marco = [v for v in vs if v.z < -0.0015]
+    marco = [v for v in vs if abs(v.x) > CAJA[0] / 2 + 0.001]  # lo que sale de la caja
     cx = (max(v.x for v in marco) + min(v.x for v in marco)) / 2
     piso = min(v.y for v in vs)
     boca = min(v.z for v in por_fuera)
@@ -559,6 +564,7 @@ def hoja_revision(m, revision):
     # Puesta en la bahía 1 de la barra chica (otra copia de la alacena, armada de nuevo).
     carro = base.construir("barra_chica")
     otra = construir(m["variante"])
+    bpy.context.view_layer.update()
     bahia = next(e for e in carro["puntos"] if e.name == "punto_bahia_1")
     otra["raiz"].location = bahia.matrix_world.translation
     bpy.context.view_layer.update()

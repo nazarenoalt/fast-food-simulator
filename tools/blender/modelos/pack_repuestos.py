@@ -14,7 +14,8 @@ Forma: solo el paquete (los 2 repuestos los pone el código, REQ-DEP-03, con el 
 `repuesto_aderezo`). Bandeja de cartón de esquinas redondeadas, paredes apenas abiertas y
 una pestaña arriba; y un film termocontraíble transparente que sale de la pestaña, abraza
 las dos botellas (de costado tiene forma de "estadio": dos medias vueltas unidas) y se
-cierra arriba sobre las tapas.
+cierra arriba sobre las tapas. El film es M_PlasticoClaro (alfa 0,15), no M_BolsaPlastica:
+con el blanco de la bolsa los repuestos se veían desteñidos.
 
 Un solo modelo para los tres packs: los tres bloques tienen la misma grilla, separación y
 `color_empaque` (el cartón); lo que cambia es el color de los repuestos de adentro.
@@ -97,7 +98,7 @@ def suavizar_material(obj, indice):
 
 
 def construir():
-    m_carton, m_film = comun.cargar_materiales("M_Carton", "M_BolsaPlastica")
+    m_carton, m_film = comun.cargar_materiales("M_Carton", "M_PlasticoClaro")
     bm = bmesh.new()
     e2.torno_rr(bm, PERFIL_BANDEJA, MEDIO_X, MEDIO_Z, RADIO, segs=3, mats=0, tapa_fin=True)
     e2.torno_rr(bm, PERFIL_FILM, MEDIO_X, MEDIO_Z, RADIO, segs=3, mats=1, tapa_fin=True)

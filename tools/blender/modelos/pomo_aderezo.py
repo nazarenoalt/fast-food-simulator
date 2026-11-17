@@ -21,12 +21,14 @@ relleno con los usos (REQ-ADE-02). Por eso:
   mostaza); el juego les pone el color del aderezo (`color` de aderezos.ron).
 - `pieza_relleno` tiene el origen en su base (y = 0,006): el código le cambia la escala en Y
   según el nivel (0 a 1) y lo oculta si está vacío, sin moverlo.
-- `pomo_aderezo_envase` (M_BolsaPlastica, alfa 0,35, como el envase de hoy): no cambia.
+- `pomo_aderezo_envase` (M_PlasticoClaro, alfa 0,15): no cambia. Hoy el envase es blanco con
+  alfa 0,35 y "lava" el color del relleno (la mostaza se veía crema); M_PlasticoClaro es un gris
+  casi incoloro que deja ver el aderezo con su color.
 
 Medidas = lo que arma hoy aderecera.rs: envase de radio 0,028 y alto 0,17, pico hasta
 0,235 → caja 0,056 × 0,235 × 0,056. Relleno de 0,006 a 0,156 (alto − 0,02, como el código),
-de radio 0,0255 (el código usa 0,85 × 0,028 = 0,0238; se agranda un poco para que se lea
-mejor a través del plástico).
+de radio 0,0265 (el código usa 0,85 × 0,028 = 0,0238; acá queda casi pegado al plástico para
+que se lea mejor).
 Origen: centro de la base, a nivel de apoyo (aderecera.rs pone cada pomo a y = 0,015, arriba
 de la chapa de la aderecera).
 
@@ -54,7 +56,7 @@ PRESUPUESTO = 500  # utensilios y objetos chicos: "pomo de aderezo" (guía 3.1)
 RADIO, ALTO = 0.028, 0.17         # envase (aderecera.rs)
 PUNTA = 0.235                     # arriba del pico (ALTO + 0.055 + 0.01)
 Y_RELLENO, ALTO_RELLENO = 0.006, ALTO - 0.02
-R_RELLENO = 0.0255
+R_RELLENO = 0.0265
 LADOS, LADOS_PICO = 12, 8         # guía 3.2: radio 1,5–5 cm → 12; menos de 1,5 cm → 8
 
 MEDIDAS = (2 * RADIO, PUNTA, 2 * RADIO)
@@ -98,7 +100,7 @@ PERFIL_RELLENO = [         # relativo a su origen (y = Y_RELLENO)
 
 
 def construir():
-    m_envase, m_color = comun.cargar_materiales("M_BolsaPlastica", "M_Amarillo")
+    m_envase, m_color = comun.cargar_materiales("M_PlasticoClaro", "M_Amarillo")
 
     bm = bmesh.new()
     e2.torno(bm, PERFIL_ENVASE, LADOS)

@@ -66,6 +66,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import bpy  # noqa: E402  (antes que bmesh)
 import bmesh  # noqa: E402
 from mathutils import Matrix, Vector  # noqa: E402
+from mathutils.bvhtree import BVHTree  # noqa: E402
 
 import comun  # noqa: E402
 import piezas  # noqa: E402
@@ -470,6 +471,13 @@ def revisar(m, tol=0.002):
     return nuevos
 
 
+def rayo(arboles, origen_godot, dir_godot):
+    """Distancia al primer choque (los objetos están en el origen, sin giro) o None."""
+    hits = [t.ray_cast(piezas.g2b(origen_godot), piezas.g2b(dir_godot)) for t in arboles]
+    dists = [h[3] for h in hits if h[0] is not None]
+    return min(dists) if dists else None
+
+
 def chequeo_bahias(m):
     """Cada bahía: su punto_bahia y su pieza_tapa_bahia, el hueco libre (ningún vértice del
     cuerpo ni de la estructura adentro), con piso, paredes, fondo y techo (la mesada), y la
@@ -477,6 +485,8 @@ def chequeo_bahias(m):
     d = m["datos"]
     n = BAHIAS[m["raiz"].name]
     vs = [Vector((v.x, v.z, -v.y)) for o in (m["pintura"], m["estructura"]) for v in _verts_mundo(o)]
+    dg = bpy.context.evaluated_depsgraph_get()
+    arboles = [BVHTree.FromObject(o, dg) for o in (m["pintura"], m["estructura"])]
     problemas = []
     if len(m["bahias"]) != n or len(m["tapas"]) != n:
         problemas.append("cantidad")
@@ -491,18 +501,16 @@ def chequeo_bahias(m):
         if adentro:
             problemas.append(f"hueco {i + 1} ocupado")
 
-        def hay(cond):
-            return any(cond(v) for v in vs)
-        en_boca = lambda v: zb - 1e-3 <= v.z <= z1 + 1e-3  # noqa: E731
-        paredes = [
-            hay(lambda v: abs(v.y - yp) < 1e-4 and x0 - 1e-3 <= v.x <= x1 + 1e-3 and en_boca(v)),
-            hay(lambda v: abs(v.y - y1) < 1e-4 and x0 <= v.x and v.x <= x1 + 0.1),  # mesada
-            hay(lambda v: abs(v.x - x0) < 1e-4 and en_boca(v)),
-            hay(lambda v: abs(v.x - x1) < 1e-4 and en_boca(v)),
-            hay(lambda v: abs(v.z - z1) < 1e-4 and x0 - 0.02 <= v.x <= x1 + 0.02),
-        ]
-        if not all(paredes):
-            problemas.append(f"hueco {i + 1} abierto")
+        # Desde el centro del hueco: piso, mesada, paredes y fondo a la distancia justa, y la
+        # boca (hacia el vendedor) libre.
+        centro = (xc, yp + BAHIA_H / 2, zb + BAHIA_D / 2)
+        esperado = {(0, -1, 0): BAHIA_H / 2, (0, 1, 0): BAHIA_H / 2, (-1, 0, 0): BAHIA_W / 2,
+                    (1, 0, 0): BAHIA_W / 2, (0, 0, 1): BAHIA_D / 2, (0, 0, -1): None}
+        for dirg, dist in esperado.items():
+            hit = rayo(arboles, centro, dirg)
+            if (dist is None and hit is not None and hit < 1.0) or \
+                    (dist is not None and (hit is None or abs(hit - dist) > 1e-3)):
+                problemas.append(f"hueco {i + 1} {dirg}: {hit}")
     entra = all(c < b for c, b in zip(_alacena.CAJA, _alacena.BAHIA))
     texto = ("Bahías: %d de %.2f × %.2f × %.2f con punto_bahia y pieza_tapa_bahia, huecos libres y "
              "cerrados; entra la alacena (caja %.2f × %.2f × %.2f)" % (

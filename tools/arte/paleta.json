@@ -21,7 +21,8 @@
         {"nombre": "M_SalchichaCruda", "hex": "#ED8C80", "metalico": 0.0, "rugosidad": 0.6},
         {"nombre": "(ref) Salchicha cocida", "hex": "#B84C33", "solo_referencia": true},
         {"nombre": "M_Carton", "hex": "#C79E6B", "metalico": 0.0, "rugosidad": 0.9},
-        {"nombre": "M_BolsaPlastica", "hex": "#EBF0FF", "metalico": 0.0, "rugosidad": 0.3, "alfa": 0.35}
+        {"nombre": "M_BolsaPlastica", "hex": "#EBF0FF", "metalico": 0.0, "rugosidad": 0.3, "alfa": 0.35},
+        {"nombre": "M_PlasticoClaro", "hex": "#8C939A", "metalico": 0.0, "rugosidad": 0.15, "alfa": 0.15}
       ]
     },
     {
