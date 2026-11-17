@@ -60,6 +60,8 @@ jobs:
           cargo build --release -p carrito_game
           cargo build --release -p carrito_game --target x86_64-pc-windows-gnu
           cp target/x86_64-pc-windows-gnu/release/carrito_game.dll target/release/
+          # El editor de Godot que exporta carga la versión "debug": le damos la misma librería.
+          mkdir -p target/debug && cp target/release/libcarrito_game.so target/debug/
       - uses: actions/download-artifact@v4
         with:
           name: libreria-macos
