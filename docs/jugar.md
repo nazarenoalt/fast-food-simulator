@@ -9,7 +9,7 @@
 | Espacio | Saltar |
 | Clic izquierdo | Agarrar / soltar |
 | Clic derecho | Tirar lo que tenés en la mano |
-| E | Usar: prender el hervidor, sacar del depósito, poner aderezo (con el pancho en la mano), recargar un pomo (con el repuesto en la mano) |
+| E | Usar: prender el hervidor o la plancha, dar vuelta una hamburguesa, sacar del depósito, poner aderezo (con el pancho en la mano), recargar un pomo (con el repuesto en la mano) |
 | Tab | Panel del proveedor (comprar mercadería) |
 | T | Tiempo ×30 (para ver el atardecer rápido) |
 | C | Traer un cliente al instante (para probar) |
@@ -33,3 +33,6 @@ carrito; llevá el paquete a un lugar libre del estante y queda guardado.
 - **Un accesorio:** agregalo en `godot/data/accesorios.ron` (categoría, forma, función).
 - **Tu carrito:** editá `godot/data/carrito_jugador.ron` (base, color, anclajes, stock inicial).
   Si algo no encaja, el juego muestra el error arriba del carrito.
+
+**Hamburguesa:** E sobre la plancha para prenderla, apoyá una hamburguesa del estante y
+dale vuelta con E antes de que se pase. Se cocina el lado que toca la plancha.

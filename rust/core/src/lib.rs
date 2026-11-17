@@ -15,7 +15,9 @@ pub mod deposito; // SPEC-004
 pub mod economia; // SPEC-010
 pub mod forma; // piezas visuales simples (compartido)
 pub mod hervidor; // SPEC-003 (fuente de calor)
+pub mod lados; // SPEC-014 (cocción por lados)
 pub mod peatones; // SPEC-013
+pub mod plancha; // SPEC-014 (fuente de calor)
 pub mod plaza; // SPEC-008
 pub mod proveedor; // SPEC-011
 pub mod reloj; // SPEC-007

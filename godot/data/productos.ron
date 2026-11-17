@@ -31,6 +31,26 @@
             )),
         ),
         (
+            id: "hamburguesa",
+            nombre: "hamburguesa",
+            masa: 0.12,
+            por_lados: true, // REQ-PLA-04
+            colision: Caja(medidas: (0.11, 0.025, 0.11)),
+            forma: [
+                // Dos mitades: el color de cada una sale del avance de su lado (REQ-PLA-05).
+                (tipo: Cilindro, medidas: (0.055, 0.0125, 0), pos: (0, -0.00625, 0), color: (0.62, 0.3, 0.27), tinte_lado: Some(0)),
+                (tipo: Cilindro, medidas: (0.055, 0.0125, 0), pos: (0, 0.00625, 0), color: (0.62, 0.3, 0.27), tinte_lado: Some(1)),
+            ],
+            coccion: Some((
+                k: 0.03, t_min: 60, velocidad: 0.0012, punto: 6, pasado: 14,
+                t_quemado: 210, segundos_quemado: 15,
+                color_crudo: (0.62, 0.3, 0.27),
+                color_cocido: (0.45, 0.25, 0.14),
+                color_pasado: (0.3, 0.17, 0.1),
+                color_quemado: (0.1, 0.07, 0.06),
+            )),
+        ),
+        (
             id: "pancho",
             nombre: "pancho",
             masa: 0.09,

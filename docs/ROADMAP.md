@@ -31,7 +31,7 @@ Cada etapa abre con sus specs (SPEC-000) y cierra con docs al día. Formato en [
 | ID | Tarea | Spec | Estado |
 |---|---|---|---|
 | 0301 | Escribir specs 014 Plancha, 015 Parrilla, 016 Heladera | 014, 015, 016 | ✅ |
-| 0302 | Plancha: hamburguesa se cocina por lados | 014 | ⬜ |
+| 0302 | Plancha: hamburguesa se cocina por lados | 014 | ✅ |
 | 0303 | Parrilla: choripán y carbón que se gasta | 015 | ⬜ |
 | 0304 | Pan tostado | 015 | ⬜ |
 | 0305 | Heladera y cadena de frío (la comida se echa a perder) | 016 | ⬜ |

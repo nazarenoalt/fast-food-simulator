@@ -35,6 +35,9 @@ pub struct DefProducto {
     pub forma: Vec<Pieza>,
     #[serde(default)]
     pub coccion: Option<PerfilCoccion>,
+    /// REQ-PLA-04: se cocina por lados (hamburguesa): cada lado tiene su propio estado.
+    #[serde(default)]
+    pub por_lados: bool,
     /// REQ-ECO-03: precio de venta (solo productos que se venden).
     #[serde(default)]
     pub precio: Option<f32>,
@@ -202,6 +205,26 @@ pub(crate) mod tests {
         let c = catalogo_real();
         let perfil = c.producto("salchicha").unwrap().coccion.clone().unwrap();
         assert_eq!(perfil, crate::coccion::perfil_salchicha());
+    }
+
+    #[test]
+    fn req_pla_04_06_hamburguesa_se_cocina_por_lados_con_el_perfil_testeado() {
+        let c = catalogo_real();
+        let h = c.producto("hamburguesa").unwrap();
+        assert!(h.por_lados);
+        assert_eq!(h.coccion.clone().unwrap(), crate::lados::perfil_hamburguesa());
+        // REQ-PLA-05: una mitad por lado, para teñirlas por separado.
+        let lados: Vec<_> = h.forma.iter().filter_map(|p| p.tinte_lado).collect();
+        assert_eq!(lados, vec![0, 1]);
+    }
+
+    #[test]
+    fn req_pla_01_plancha_en_el_carrito_del_jugador() {
+        let c = catalogo_real();
+        let a =
+            c.accesorios.iter().find(|a| matches!(a.funcion, Some(crate::carrito::Funcion::Plancha { .. }))).unwrap();
+        assert_eq!(a.categoria, crate::carrito::Categoria::Cocina);
+        assert!(c.carrito_jugador.accesorios.values().any(|v| v == &a.id));
     }
 
     #[test]

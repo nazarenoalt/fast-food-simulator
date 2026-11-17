@@ -22,6 +22,16 @@
         precio: 3200,
     ),
     (
+        id: "caja_hamburguesas_12",
+        nombre: "caja de hamburguesas",
+        producto: "hamburguesa",
+        grilla: (2, 3, 2),
+        separacion: (0.115, 0.03, 0.115),
+        empaque: Bandeja,
+        color_empaque: (0.78, 0.62, 0.42),
+        precio: 4800,
+    ),
+    (
         id: "pack_mostaza",
         nombre: "pack de repuestos de mostaza",
         producto: "repuesto_mostaza",

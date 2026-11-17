@@ -5,6 +5,8 @@ use carrito_core::TEMP_AMBIENTE;
 use carrito_core::armado;
 use carrito_core::coccion::{EstadoCoccion, PerfilCoccion};
 use carrito_core::datos::{Colision, DefProducto};
+use carrito_core::lados::CoccionLados;
+use carrito_core::plancha::{entorno_por_lados, lado_abajo};
 use godot::classes::{
     Area3D, BoxShape3D, CapsuleShape3D, Engine, IRigidBody3D, MeshInstance3D, PhysicsMaterial, RigidBody3D,
     StandardMaterial3D,
@@ -21,6 +23,8 @@ pub struct Comida {
     def: DefProducto,
     /// Perfil y estado de cocción (propio, o heredado si es un armado como el pancho).
     coccion: Option<(PerfilCoccion, EstadoCoccion)>,
+    /// REQ-PLA-04: si se cocina por lados (hamburguesa), el estado de cada lado.
+    lados: Option<CoccionLados>,
     /// Si sigue cocinándose (un pancho armado no).
     cocina: bool,
     /// Texto extra, ej. "salchicha cocida" en un pancho.
@@ -32,6 +36,8 @@ pub struct Comida {
     /// Temperatura del entorno que le dio una fuente de calor, y en qué cuadro.
     entorno: Option<(f32, u64)>,
     tintes: Vec<Gd<StandardMaterial3D>>,
+    /// Materiales que tiñe cada lado (REQ-PLA-05).
+    tintes_lado: [Vec<Gd<StandardMaterial3D>>; 2],
     /// Aderezos puestos (SPEC-012) y su dibujo.
     aderezos: Vec<String>,
     dibujo_aderezos: Option<Gd<godot::classes::Node3D>>,
@@ -52,16 +58,19 @@ impl Comida {
         let def = catalogo().producto(producto).unwrap_or_else(|| panic!("producto inexistente: {producto}")).clone();
         let coccion = def.coccion.clone().map(|p| (p, EstadoCoccion::default()));
         let cocina = coccion.is_some();
+        let lados = if def.por_lados { Some(CoccionLados::default()) } else { None };
         Gd::from_init_fn(|base| Self {
             base,
             def,
             coccion,
+            lados,
             cocina,
             detalle: None,
             sostenida: false,
             consumida: false,
             entorno: None,
             tintes: Vec::new(),
+            tintes_lado: [Vec::new(), Vec::new()],
             aderezos: Vec::new(),
             dibujo_aderezos: None,
             zona_encastre: None,
@@ -73,7 +82,40 @@ impl Comida {
     }
 
     pub fn punto(&self) -> Option<carrito_core::coccion::Punto> {
+        // REQ-PLA-05: el más grave de los dos lados.
+        if let (Some((p, _)), Some(l)) = (&self.coccion, &self.lados) {
+            return Some(l.punto(p));
+        }
         self.coccion.as_ref().map(|(p, e)| e.punto(p))
+    }
+
+    /// REQ-PLA-04
+    pub fn por_lados(&self) -> bool {
+        self.lados.is_some()
+    }
+
+    /// Qué lado (0 o 1) mira hacia abajo ahora. REQ-PLA-07
+    fn lado_abajo(&self) -> usize {
+        lado_abajo(self.base().get_global_transform().basis.col_b().y)
+    }
+
+    /// REQ-PLA-07: la da vuelta en el lugar (medio giro sobre su eje X) y la levanta un poquito.
+    pub fn dar_vuelta(&mut self) {
+        if self.lados.is_none() {
+            return;
+        }
+        let t = self.base().get_global_transform();
+        let giro = Basis::from_axis_angle(t.basis.col_a().normalized(), std::f32::consts::PI);
+        let nueva = Transform3D::new(giro * t.basis, t.origin + Vector3::new(0.0, 0.02, 0.0));
+        let mut yo = self.to_gd();
+        yo.set_global_transform(nueva);
+        yo.set_linear_velocity(Vector3::ZERO);
+        yo.set_angular_velocity(Vector3::ZERO);
+    }
+
+    /// Solo para pruebas: estado de cada lado.
+    pub fn estado_lados(&self) -> Option<CoccionLados> {
+        self.lados
     }
 
     /// Nombre para mostrar con su estado. REQ-INT-08
@@ -81,6 +123,8 @@ impl Comida {
         let mut s = capitalizar(&self.def.nombre);
         if let Some(d) = &self.detalle {
             s += &format!(" ({d})");
+        } else if let (Some((p, _)), Some(l)) = (&self.coccion, &self.lados) {
+            s += &format!(" ({})", l.descripcion(p, self.lado_abajo()));
         } else if let Some((p, e)) = &self.coccion {
             s += &format!(" ({}, {:.0} °C)", e.punto(p).nombre(), e.temp);
         }
@@ -126,7 +170,12 @@ impl Comida {
 
     /// Solo para pruebas: deja la parte cocinable con este avance de cocción.
     pub fn forzar_avance(&mut self, avance: f32) {
-        if let Some((_, e)) = &mut self.coccion {
+        if let Some(l) = &mut self.lados {
+            for e in &mut l.lados {
+                e.avance = avance;
+                e.temp = 70.0;
+            }
+        } else if let Some((_, e)) = &mut self.coccion {
             e.avance = avance;
             e.temp = 70.0;
         }
@@ -174,6 +223,16 @@ impl Comida {
     }
 
     fn actualizar_color(&mut self) {
+        // REQ-PLA-05: cada mitad toma el color de su propio lado.
+        if let (Some((p, _)), Some(l)) = (&self.coccion, &self.lados) {
+            for (i, mats) in self.tintes_lado.iter_mut().enumerate() {
+                let c = formas::color(l.color(p, i));
+                for m in mats {
+                    m.set_albedo(c);
+                }
+            }
+            return;
+        }
         if let Some((p, e)) = &self.coccion {
             let c = formas::color(e.color(p));
             for m in &mut self.tintes {
@@ -257,6 +316,11 @@ impl IRigidBody3D for Comida {
                     self.tintes.push(m.cast::<StandardMaterial3D>());
                 }
             }
+            if let Some(lado) = p.tinte_lado.filter(|l| *l < 2) {
+                if let Some(m) = mi.get_material_override() {
+                    self.tintes_lado[lado].push(m.cast::<StandardMaterial3D>());
+                }
+            }
             yo.add_child(&mi);
         }
 
@@ -305,7 +369,13 @@ impl IRigidBody3D for Comida {
                 Some((t, f)) if cuadro.saturating_sub(f) <= 1 => t,
                 _ => TEMP_AMBIENTE,
             };
-            if let Some((p, e)) = &mut self.coccion {
+            let abajo = self.lado_abajo();
+            if let (Some((p, _)), Some(l)) = (&self.coccion, &mut self.lados) {
+                // REQ-PLA-03: solo el lado de abajo toma la temperatura de la fuente.
+                let fuente = (t_entorno != TEMP_AMBIENTE).then_some(t_entorno);
+                let (t_abajo, t_arriba) = entorno_por_lados(fuente);
+                l.paso(p, abajo, t_abajo, t_arriba, dt);
+            } else if let Some((p, e)) = &mut self.coccion {
                 e.paso(p, t_entorno, dt);
             }
             // REQ-COC-06

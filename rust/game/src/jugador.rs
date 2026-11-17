@@ -15,6 +15,7 @@ use crate::formas;
 use crate::hervidor::Hervidor;
 use crate::hud::{self, Hud};
 use crate::paquete::Paquete;
+use crate::plancha::Plancha;
 use crate::tienda;
 
 const VEL_CAMINAR: f32 = 3.5; // REQ-JUG-03
@@ -35,6 +36,7 @@ const SENSIBILIDAD: f32 = 0.0025;
 pub enum Objetivo {
     Comida(Gd<Comida>),
     Hervidor(Gd<Hervidor>),
+    Plancha(Gd<Plancha>),
     Bloque(Gd<BloqueStock>),
     Paquete(Gd<Paquete>),
     Pomo(Gd<Pomo>),
@@ -233,6 +235,10 @@ impl Jugador {
                 Ok(h) => return Some(Objetivo::Hervidor(h)),
                 Err(n) => n,
             };
+            let n = match n.try_cast::<Plancha>() {
+                Ok(p) => return Some(Objetivo::Plancha(p)),
+                Err(n) => n,
+            };
             let n = match n.try_cast::<BloqueStock>() {
                 Ok(b) => return Some(Objetivo::Bloque(b)),
                 Err(n) => n,
@@ -335,6 +341,10 @@ impl Jugador {
         }
         match self.objetivo() {
             Some(Objetivo::Hervidor(mut h)) => h.bind_mut().alternar(),
+            // REQ-PLA-01
+            Some(Objetivo::Plancha(mut p)) => p.bind_mut().alternar(),
+            // REQ-PLA-07: E sobre una hamburguesa suelta la da vuelta.
+            Some(Objetivo::Comida(mut c)) if c.bind().por_lados() => c.bind_mut().dar_vuelta(),
             Some(Objetivo::Bloque(mut b)) => {
                 let sacado = b.bind_mut().sacar();
                 if let Some((producto, pos)) = sacado {
@@ -406,8 +416,15 @@ impl Jugador {
             }
         } else {
             match objetivo {
-                Some(Objetivo::Comida(c)) => format!("[Clic] Agarrar {}", c.bind().descripcion().to_lowercase()),
+                Some(Objetivo::Comida(c)) => {
+                    let mut t = format!("[Clic] Agarrar {}", c.bind().descripcion().to_lowercase());
+                    if c.bind().por_lados() {
+                        t += " · [E] Dar vuelta";
+                    }
+                    t
+                }
                 Some(Objetivo::Hervidor(h)) => h.bind().cartel(),
+                Some(Objetivo::Plancha(p)) => p.bind().cartel(),
                 Some(Objetivo::Bloque(b)) => b.bind().cartel(),
                 Some(Objetivo::Paquete(p)) => format!("[Clic] Agarrar {}", p.bind().descripcion().to_lowercase()),
                 Some(Objetivo::Pomo(p)) => format!("{} — agarrá un pancho y apretá E para ponerle", p.bind().cartel()),

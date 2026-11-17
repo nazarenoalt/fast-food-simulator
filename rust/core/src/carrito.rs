@@ -63,6 +63,10 @@ pub enum Funcion {
     Hervidor {
         interior: [f32; 3],
     },
+    /// Plancha de cocina (SPEC-014): superficie (ancho, profundidad) en metros.
+    Plancha {
+        superficie: [f32; 2],
+    },
     /// Posiciones (relativas al accesorio) donde se apoya cada bloque de stock.
     Deposito {
         lugares: Vec<[f32; 3]>,

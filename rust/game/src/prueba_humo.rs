@@ -20,6 +20,7 @@ use crate::negocio::Negocio;
 use crate::palomas::Palomas;
 use crate::paquete::Paquete;
 use crate::peaton::Peaton;
+use crate::plancha::Plancha;
 use crate::transito::{Autos, Nubes};
 
 #[derive(GodotClass)]
@@ -32,6 +33,7 @@ pub struct PruebaHumo {
     fallas: Vec<String>,
     salchicha: Option<Gd<Comida>>,
     pan: Option<Gd<Comida>>,
+    hamburguesa: Option<Gd<Comida>>,
     mundo: Option<Gd<Node>>,
     autos_antes: Vec<f32>,
     nube_antes: Option<Vector3>,
@@ -447,6 +449,45 @@ impl INode for PruebaHumo {
             16 => {
                 let palomas = todos::<Palomas>(&mundo).pop().unwrap();
                 self.chequear(palomas.bind().volando() >= 1, "CA-AMB-02 la paloma salió volando");
+                self.esperar(1);
+            }
+            17 => {
+                // CA-PLA-01: plancha encendida, apoyo una hamburguesa.
+                self.chequear(todos::<Plancha>(&mundo).len() == 1, "REQ-PLA-01 el carrito tiene su plancha");
+                let mut pl = todos::<Plancha>(&mundo).pop().unwrap();
+                pl.bind_mut().alternar();
+                pl.bind_mut().set_temperatura(200.0);
+                let encima = pl.get_global_position() + Vector3::new(0.0, 0.06, 0.0);
+                self.hamburguesa = Some(self.agregar_comida("hamburguesa", encima));
+                // 75 s de juego.
+                self.esperar(75 * 60);
+            }
+            18 => {
+                let h = self.hamburguesa.clone().unwrap();
+                let l = h.bind().estado_lados().expect("la hamburguesa se cocina por lados");
+                self.chequear(
+                    l.lados[0].avance > 6.0 && l.lados[1].avance == 0.0,
+                    &format!(
+                        "CA-PLA-01 se cocina el lado de abajo ({:.1}) y el de arriba sigue crudo ({:.1})",
+                        l.lados[0].avance, l.lados[1].avance
+                    ),
+                );
+                self.chequear(h.bind().punto() == Some(Punto::Crudo), "REQ-PLA-05 con un lado crudo está cruda");
+                // CA-PLA-02: la doy vuelta (E) y espero.
+                h.clone().bind_mut().dar_vuelta();
+                self.esperar(75 * 60);
+            }
+            19 => {
+                let h = self.hamburguesa.clone().unwrap();
+                let l = h.bind().estado_lados().unwrap();
+                self.chequear(
+                    l.lados[1].avance > 6.0 && l.lados[0].avance < 14.0,
+                    &format!(
+                        "REQ-PLA-07 dada vuelta se cocinó el otro lado ({:.1}) y el primero no se pasó ({:.1})",
+                        l.lados[1].avance, l.lados[0].avance
+                    ),
+                );
+                self.chequear(h.bind().punto() == Some(Punto::Cocido), "CA-PLA-02 queda cocida de los dos lados");
                 self.terminar();
             }
             _ => {}

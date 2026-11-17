@@ -177,6 +177,7 @@ pub fn caja_solida(padre: &mut Gd<Node3D>, medidas: [f32; 3], pos: [f32; 3], c: 
             emision: 0.0,
             colision: true,
             tinte_coccion: false,
+            tinte_lado: None,
         }],
     );
 }
@@ -195,5 +196,6 @@ pub fn pieza(tipo: TipoPieza, medidas: [f32; 3], pos: [f32; 3], c: [f32; 3]) -> 
         emision: 0.0,
         colision: false,
         tinte_coccion: false,
+        tinte_lado: None,
     }
 }
