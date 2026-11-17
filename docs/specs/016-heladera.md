@@ -1,6 +1,6 @@
 # SPEC-016 · Heladera y cadena de frío
 
-Estado: **Borrador**
+Estado: **Implementada (etapa 3: heladera)**
 
 ## Objetivo
 

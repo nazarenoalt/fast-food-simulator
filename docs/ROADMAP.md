@@ -32,12 +32,12 @@ Cada etapa abre con sus specs (SPEC-000) y cierra con docs al día. Formato en [
 |---|---|---|---|
 | 0301 | Escribir specs 014 Plancha, 015 Parrilla, 016 Heladera | 014, 015, 016 | ✅ |
 | 0302 | Plancha: hamburguesa se cocina por lados | 014 | ✅ |
-| 0303 | Parrilla: choripán y carbón que se gasta | 015 | ⬜ |
-| 0304 | Pan tostado | 015 | ⬜ |
-| 0305 | Heladera y cadena de frío (la comida se echa a perder) | 016 | ⬜ |
-| 0306 | Aderezos nuevos: papas pay, chimichurri | 012 | ⬜ |
-| 0307 | Clientes piden hamburguesa y choripán (menú de varios productos) | 009 | ⬜ |
-| 0308 | Datos `.ron` y prueba de humo ampliada | — | ⬜ |
+| 0303 | Parrilla: choripán y carbón que se gasta | 015 | ✅ |
+| 0304 | Pan tostado | 015 | ✅ |
+| 0305 | Heladera y cadena de frío (la comida se echa a perder) | 016 | ✅ |
+| 0306 | Aderezos nuevos: papas pay, chimichurri | 012 | ✅ |
+| 0307 | Clientes piden hamburguesa y choripán (menú de varios productos) | 009 | ✅ |
+| 0308 | Datos `.ron` y prueba de humo ampliada | — | ✅ |
 
 ## Etapa 4 · Carritos y mejoras (`feat (carrito)`) · PR TASK-0400
 | ID | Tarea | Spec | Estado |

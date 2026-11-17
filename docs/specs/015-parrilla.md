@@ -1,6 +1,6 @@
 # SPEC-015 · Parrilla con carbón y pan tostado
 
-Estado: **Borrador**
+Estado: **Implementada (etapa 3: parrilla y pan tostado)**
 
 ## Objetivo
 
