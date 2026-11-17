@@ -259,6 +259,7 @@ base (el hex ya está en el espacio de color correcto; no copiar los números de
 | `M_Hojas1/2/3` | `#336B2E` `#3D7833` `#2E6629` | 0 | 0,9 | Copas de árboles (mezclar los tres por árbol). |
 | `M_FlorLila1/2` | `#6F5F99` `#8574AE` | 0 | 0,9 | Copa de los jacarandás en flor (mezclar los dos, con algo de `M_Hojas2`). Lila apagado: se lee como jacarandá sin gritar. |
 | `M_Piedra` | `#B2B2AD` | 0 | 0,9 | Fuente, monumentos, bordes de cantero. |
+| `M_Terracota` | `#B4623E` | 0 | 0,9 | Macetas de barro cocido. |
 | `M_Agua` | `#4C80B2` | 0 | 0,1 | Agua de la fuente (alfa 0,7). |
 | **Acentos y luces** |||||
 | `M_Amarillo` | `#FACC1A` | 0 | 0,6 | Telones, carteles, detalles de marca. |
