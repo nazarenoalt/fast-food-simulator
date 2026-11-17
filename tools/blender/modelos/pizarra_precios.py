@@ -1,7 +1,6 @@
 """Modelo: pizarra de precios (id `pizarra_precios`, godot/data/accesorios.ron).
 
 Genera:
-    godot/modelos/accesorios/texturas/pizarra_precios.png   ← lo escrito con tiza (guía 4.5)
     arte/fuentes/accesorios/pizarra_precios.blend
     godot/modelos/accesorios/pizarra_precios.glb
     docs/arte/revisiones/pizarra_precios.jpg
@@ -12,15 +11,17 @@ Uso:
 
 Forma: pizarrita de mostrador tipo atril. Marco de madera de 0,36 × 0,44 con la pizarra
 adentro, inclinado 12° hacia atrás como hoy (accesorios.ron), con un apoyo de madera atrás
-(pata trasera) y una repisita para la tiza abajo, adelante. Lo escrito no es geometría: es
-una imagen sobre la cara de adelante de la pizarra (guía 4.5), con el fondo del color de
-M_Pizarra y la tiza en colores de la paleta. El precio del pancho se lee de productos.ron.
+(pata trasera) y una repisita para la tiza abajo, adelante. La pizarra va **en blanco**
+(sin nada escrito): es un objeto aparte, `pieza_pizarra` (M_Pizarra), con la cara de adelante
+mapeada (UV de 0 a 1), para que más adelante el juego pueda escribir encima lo que haga falta
+(precios que cambian, menú del día).
+Este archivo también guarda las funciones de carteles con texto (guía 4.5) que usa
+telon_panchos.py.
 Medidas: 0,36 de ancho y 0,434 de alto; de fondo, 0,234 con la pata (el marco solo, 0,11).
 Origen: centro de la base (del apoyo de las patas), a nivel del mostrador.
 Colisión: una caja `pizarra_precios-colonly` inclinada como el marco.
 """
 import math
-import re
 import sys
 from pathlib import Path
 
@@ -48,8 +49,6 @@ PATA = (0.035, 0.014)              # ancho y espesor de la pata trasera
 PATA_ALTO = 0.40                   # dónde se engancha la pata, medido sobre el marco
 PATA_ANGULO = 14.0                 # grados de la pata respecto de la vertical, hacia atrás
 MEDIDAS = (0.36, 0.434, 0.234)     # con la pata y la repisa
-TEXTURA = comun.RAIZ / f"godot/modelos/{FAMILIA}/texturas/{ID}.png"
-TEXTURA_TAM = (400, 500)           # misma proporción que la pizarra (0,32 × 0,40)
 
 
 # ── Carteles con texto (guía 4.5): compartido con telon_panchos ───────────
@@ -142,45 +141,6 @@ def revisar_cartel(res, materiales_cartel):
 
 # ── La pizarra ────────────────────────────────────────────────────────────
 
-def precio_pancho():
-    texto = (comun.RAIZ / "godot/data/productos.ron").read_text()
-    m = re.search(r'id:\s*"pancho".*?precio:\s*Some\((\d+)\)', texto, re.S)
-    return int(m.group(1)) if m else None
-
-
-def dibujar_textura():
-    """Lo escrito con tiza: título, el pancho con su precio y un dibujito."""
-    w, h = TEXTURA_TAM
-    img, dib = lienzo(TEXTURA_TAM, "M_Pizarra")
-    tiza, amarillo = color_paleta("M_BlancoCrema"), color_paleta("M_Amarillo")
-    rojo, pan = color_paleta("M_RojoAcento"), color_paleta("M_PanCorteza")
-    dib.rectangle((14, 14, w - 15, h - 15), outline=tiza, width=4)          # guarda de tiza
-    for x, y in ((14, 14), (w - 15, 14), (14, h - 15), (w - 15, h - 15)):
-        dib.ellipse((x - 9, y - 9, x + 9, y + 9), fill=amarillo)
-    def texto(y, cadena, color, tam_max, ancho_max=w - 70):
-        tam = tam_max
-        while tam > 10 and dib.textlength(cadena, font=fuente(tam)) > ancho_max:
-            tam -= 2
-        dib.text((w / 2, y), cadena, font=fuente(tam), fill=color, anchor="mm")
-
-    texto(78, "PANCHOS", amarillo, 74)
-    dib.line((70, 124, w - 70, 124), fill=amarillo, width=6)
-    # Dibujito: salchicha que asoma de las dos puntas del pan, con mostaza en zigzag.
-    cx, cy = w / 2, 205
-    dib.ellipse((cx - 130, cy - 20, cx + 130, cy + 22), fill=rojo)                # salchicha
-    dib.chord((cx - 112, cy - 40, cx + 112, cy + 58), 0, 180, fill=pan)           # pan
-    zig = [(cx - 100 + i * 20, cy - 12 + (7 if i % 2 else -7)) for i in range(11)]
-    dib.line(zig, fill=amarillo, width=6)
-    precio = precio_pancho()
-    texto(305, "PANCHO", tiza, 52)
-    if precio is not None:
-        texto(372, f"$ {precio}", amarillo, 64)
-    for x in range(70, w - 70, 22):  # renglón punteado
-        dib.line((x, 414, x + 10, 414), fill=tiza, width=3)
-    texto(448, "CALENTITOS", tiza, 40)
-    guardar_textura(img, TEXTURA)
-
-
 def marco(bm, mat):
     """Moldura del marco: anillo rectangular de una sola malla (sin caras ocultas en las
     esquinas), con todos los cantos biselados."""
@@ -248,25 +208,22 @@ def pata(bm, arriba, mat, plano=None):
 
 
 def construir():
-    dibujar_textura()
     m_pizarra, m_madera = comun.cargar_materiales("M_Pizarra", "M_Madera")
-    m_tiza = material_cartel(f"T_{ID}", TEXTURA)
-    bm = bmesh.new()
+    bm = bmesh.new()        # madera: marco, repisa y pata (material 0 sin usar, ver abajo)
+    bm_piz = bmesh.new()    # pieza_pizarra
     # 1) Marco, pizarra y repisa, parados, con el frente en z = 0 y la base en y = 0.
     marco(bm, 1)
     zp = -PIZARRA_HUNDIDA - PIZARRA[2] / 2
-    caras_piz = piezas.caja(bm, PIZARRA, (0, MARCO[1] / 2, zp), mat=0)
+    caras_piz = piezas.caja(bm_piz, PIZARRA, (0, MARCO[1] / 2, zp), mat=0)
     frente = max(caras_piz, key=lambda f: -f.calc_center_median().y)   # −Y Blender = +Z Godot
-    frente.material_index = 2
     piezas.caja(bm, REPISA, (0, MARCO_ANCHO * 0.5, REPISA[2] / 2), mat=1, bisel=0.003)
-    parado = list(bm.faces)
     # 2) Se inclina hacia atrás girando sobre el canto de abajo de atrás del marco
     #    (rot X = −INCLINACION de Godot = la misma rotación alrededor de X en Blender).
     giro = Matrix.Rotation(math.radians(-INCLINACION), 3, "X")
     pivote_g = (0, 0, -MARCO[2])
-    vs = list({v for f in parado for v in f.verts})
-    bmesh.ops.rotate(bm, verts=vs, cent=piezas.g2b(pivote_g), matrix=giro)
-    mapear_cara(bm, frente, Vector((1, 0, 0)), giro @ Vector((0, 0, 1)))
+    for b in (bm, bm_piz):
+        bmesh.ops.rotate(b, verts=list(b.verts), cent=piezas.g2b(pivote_g), matrix=giro)
+    mapear_cara(bm_piz, frente, Vector((1, 0, 0)), giro @ Vector((0, 0, 1)))
 
     def inclinado(p):
         q = girar_x((p[0], p[1] - pivote_g[1], p[2] - pivote_g[2]), -INCLINACION)
@@ -278,23 +235,27 @@ def construir():
                girar_x((0, 0, -1), -INCLINACION))
     pata(bm, enganche, 1, plano=espalda)
     # 4) Se centra la huella en Z (origen = centro de la base, guía 2.4).
-    zs = [-v.co.y for v in bm.verts]
+    zs = [-v.co.y for b in (bm, bm_piz) for v in b.verts]
     dz = -(max(zs) + min(zs)) / 2
-    bmesh.ops.translate(bm, vec=piezas.g2b((0, 0, dz)), verts=bm.verts)
-    cuerpo = piezas.terminar(f"{ID}_cuerpo", bm, [m_pizarra, m_madera, m_tiza], sombreado="duro")
+    for b in (bm, bm_piz):
+        bmesh.ops.translate(b, vec=piezas.g2b((0, 0, dz)), verts=b.verts)
+    for f in bm.faces:          # el cuerpo es todo madera
+        f.material_index = 0
+    cuerpo = piezas.terminar(f"{ID}_cuerpo", bm, [m_madera], sombreado="duro")
+    pizarra = piezas.terminar("pieza_pizarra", bm_piz, [m_pizarra], sombreado="duro")
     # Colisión: el marco inclinado (la pata no hace falta).
     c = inclinado((0, MARCO[1] / 2, -MARCO[2] / 2))
     col = piezas.colision_caja(ID, MARCO, (c[0], c[1], c[2] + dz), rot=(-INCLINACION, 0, 0))
-    raiz = piezas.raiz(ID, [cuerpo, col])
-    return raiz, cuerpo, col
+    raiz = piezas.raiz(ID, [cuerpo, pizarra, col])
+    return raiz, cuerpo, pizarra, col
 
 
-def hoja_revision(cuerpo, revision):
+def hoja_revision(piezas_vis, revision):
     import pan_pancho
     comun.preparar_revision()
     pan = pan_pancho.construir("ref_pan")
     pan.location = piezas.g2b((0.28, pan_pancho.MEDIO_ALTO, 0.05))
-    solo, con_pan = [cuerpo], [cuerpo, pan]
+    solo, con_pan = list(piezas_vis), list(piezas_vis) + [pan]
     cuadros = comun.sacar_fotos([
         ("Frente (cliente, +Z) · día", solo, "frente", "dia", True),
         ("Costado: inclinada 12°, con la pata atrás · día", solo, "costado", "dia", True),
@@ -303,22 +264,23 @@ def hoja_revision(cuerpo, revision):
         ("3/4 · atardecer", solo, "tres_cuartos", "atardecer", False),
     ])
     comun.componer_hoja(
-        f"{ID} · 0,36 × 0,434 × 0,234 m (con la pata) · accesorio",
+        f"{ID} · 0,36 × 0,434 × 0,234 m (con la pata) · accesorio, pizarra en blanco",
         cuadros, revision, comun.RAIZ / f"docs/arte/revisiones/{ID}.jpg",
     )
 
 
 def main():
     comun.escena_vacia()
-    raiz, cuerpo, col = construir()
+    raiz, cuerpo, pizarra, col = construir()
     bpy.context.view_layer.update()
-    revision = comun.revisar(cuerpo, PRESUPUESTO, MEDIDAS, origen="base")
-    revision = revisar_cartel(revision, [bpy.data.materials[f"T_{ID}"]])
+    revision = comun.revisar([cuerpo, pizarra], PRESUPUESTO, MEDIDAS, origen="base")
     ok = comun.imprimir_revision(ID, revision)
     comun.guardar_blend(comun.RAIZ / f"arte/fuentes/{FAMILIA}/{ID}.blend")
-    comun.exportar_glb([raiz, cuerpo, col], comun.RAIZ / f"godot/modelos/{FAMILIA}/{ID}.glb", uvs=True)
+    # Con UV: la cara de adelante de pieza_pizarra queda lista para que el juego escriba.
+    comun.exportar_glb([raiz, cuerpo, pizarra, col],
+                       comun.RAIZ / f"godot/modelos/{FAMILIA}/{ID}.glb", uvs=True)
     if "--sin-hoja" not in sys.argv:
-        hoja_revision(cuerpo, revision)
+        hoja_revision([cuerpo, pizarra], revision)
     if not ok:
         sys.exit(1)
 
