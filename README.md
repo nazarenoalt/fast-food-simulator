@@ -74,6 +74,7 @@ GODOT=/ruta/a/godot tools/prueba_humo.sh       # prueba de humo en el motor
 
 ```
 docs/specs/        ← las specs (qué tiene que pasar)
+docs/arte/         ← guía de modelado 3D, paleta y lista de modelos a hacer
 rust/core/         ← reglas puras, sin Godot: cocción, depósito, carrito, reloj, plaza
 rust/game/         ← nodos de Godot en Rust: jugador, comida, hervidor, carrito, HUD…
 godot/data/        ← contenido en archivos .ron: productos, bloques, accesorios, carritos
@@ -95,7 +96,8 @@ tools/             ← scripts (prueba de humo)
 - Física: **Jolt** (incluida en Godot). Las unidades guardadas en el depósito no tienen
   física hasta que se sacan, para que un depósito lleno no haga lento el juego.
 - Los modelos son piezas simples (cajas, cilindros) definidas en los datos; se van a
-  reemplazar por modelos de Blender (`.glb`) más adelante. Cuando haya modelos, conviene
+  reemplazar por modelos de Blender (`.glb`) más adelante, siguiendo la
+  [guía de modelado 3D](docs/arte/guia-modelado-3d.md) y la [lista de modelos](docs/arte/lista-de-modelos.md). Cuando haya modelos, conviene
   activar Git LFS para los archivos pesados.
 - Al exportar el juego, agregá `data/*.ron` en "Filtros para exportar archivos que no son
   recursos", para que se incluyan los datos.
