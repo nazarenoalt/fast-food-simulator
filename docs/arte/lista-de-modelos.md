@@ -14,7 +14,7 @@ Cada modelo sigue la [guía de modelado](guia-modelado-3d.md).
 - **Estado**: Pendiente → En progreso → En revisión → Hecho.
 - ⚠ = objeto que **no** está en ninguna spec todavía; es una propuesta y se confirma al escribir la spec de su etapa.
 
-Resumen: **117 modelos** (más los tamaños de techos y toldos). La etapa 1 tiene 29, y 23 de ellos (P1) reemplazan las piezas simples que el juego usa hoy.
+Resumen: **119 modelos** (más los tamaños de techos y toldos). La etapa 1 tiene 29, y 23 de ellos (P1) reemplazan las piezas simples que el juego usa hoy.
 
 ---
 
@@ -84,20 +84,27 @@ Piso, pasto, caminos, vereda y calle **no se modelan**: son superficies planas c
 
 ## Etapa 2 · Rutina de venta
 
+La etapa 2 ya está programada (SPEC-009 a SPEC-013). Esta tabla se rehízo mirando lo que el juego
+dibuja de verdad con piezas simples. Cambios respecto de la versión anterior: los tres pomos son
+**un solo modelo** (`pomo_aderezo`, el juego le pone el color); la `caja_reparto` no va (el pedido
+llega como el bloque de stock mismo, `paquete.rs`); `cliente_base` pasa a la etapa 3 (los clientes
+son los peatones); la plata, la servilleta, el papel y la camioneta no están en el juego y bajan a P3.
+
 | ID | Objeto | Medidas | Tris | Materiales | Notas | Prio. | Estado |
 |---|---|---|---|---|---|---|---|
-| `caja_dinero` | Caja de dinero | ≈ 0,30 × 0,10 × 0,25 | 500 | MetalOscuro, Acero | Caja metálica con tapa (tapa como `pieza_tapa`, se abre). | P2 | Pendiente |
-| `billete` | Billete | 0,15 × 0,002 × 0,065 | 20 | color por valor *(agregar a la paleta)* | Un modelo, distinto material por valor. Diseño inventado. | P2 | Pendiente |
-| `moneda` | Moneda | Ø 0,024 × 0,003 | 40 | Acero | 12 lados. | P3 | Pendiente |
-| `pomo_mostaza` | Pomo de mostaza | Ø 0,06 × 0,20 | 300 | Amarillo, PlasticoNegro | Pomo apretable con pico. Marca inventada. | P2 | Pendiente |
-| `pomo_ketchup` | Pomo de kétchup | Ø 0,06 × 0,20 | 300 | RojoAcento, PlasticoNegro | Mismo modelo que la mostaza, otro material. | P2 | Pendiente |
-| `pomo_mayonesa` | Pomo de mayonesa | Ø 0,06 × 0,20 | 300 | BlancoCrema, PlasticoNegro | Ídem. | P2 | Pendiente |
-| `chorrito_aderezo` | Chorrito de aderezo | ≈ 0,15 × 0,01 × 0,02 | 100 | color del aderezo | Línea en zigzag que se pone arriba del pancho. | P2 | Pendiente |
-| `servilleta` | Servilleta | 0,15 × 0,003 × 0,15 | 20 | BlancoCrema | Para envolver o entregar. | P3 | Pendiente |
-| `papel_envoltorio` | Papel para envolver | ≈ 0,20 × 0,005 × 0,20 | 50 | BlancoCrema | ⚠ Si la spec de clientes pide entregar envuelto. | P3 | Pendiente |
-| `caja_reparto` | Caja de reparto del proveedor | ≈ 0,50 × 0,35 × 0,40 | 200 | Carton | Caja con la que llegan los bloques (SPEC 011). | P2 | Pendiente |
-| `camioneta_proveedor` | Camioneta del proveedor | ≈ 1,9 × 2,0 × 4,8 | 3.000 | colores de la paleta | ⚠ Depende de cómo llegue el proveedor (a pie, en moto, en camioneta). | P3 | Pendiente |
-| `cliente_base` | Cliente (cuerpo base) | ≈ 0,5 × 1,75 × 0,3 | 3.000 | ropa *(agregar a la paleta)* | Ver etapa 3: es el mismo personaje base que los NPC. | P2 | Pendiente |
+| `pomo_aderezo` | Pomo de aderezo (mostaza, ketchup, mayonesa) | Ø 0,056 × 0,235 | 500 | PlasticoClaro, Amarillo | Pomo de plástico translúcido con tapa a rosca y pico. Un solo modelo para los tres aderezos: el juego pinta `pieza_tapa` y `pieza_relleno` con el color de `aderezos.ron` y achica el relleno (origen en su base, se escala en Y) a medida que se usa. Colisión `-colonly`. Hecho por código: `tools/blender/modelos/pomo_aderezo.py` (436 tris). [Hoja de revisión](revisiones/pomo_aderezo.jpg). | P2 | En progreso |
+| `aderecera_tres` | Aderecera de tres pomos | 0,30 × 0,085 × 0,10 | 1.000 | Acero | Soporte de acero en U con bandeja de tres agujeros, abierto adelante y atrás para ver el nivel. Origen en el anclaje; base en z = −0,22 como el dato. *Empties* `punto_pomo_1..3`. Colisión `-colonly` solo de la base (la bandeja de arriba no tapa la mira a los pomos). Los pomos los pone el código. Hecho por código: `tools/blender/modelos/aderecera_tres.py` (426 tris). [Hoja de revisión](revisiones/aderecera_tres.jpg). | P2 | Hecho |
+| `repuesto_aderezo` | Repuesto de aderezo | Ø 0,078 × 0,19 | 400 | Amarillo, BlancoCrema, PlasticoNegro | Botella petisa de medio kilo con etiqueta lisa (texto pendiente, nombre inventado) y tapa negra. Un modelo para los tres repuestos: el juego pinta `pieza_cuerpo`. Hecho por código: `tools/blender/modelos/repuesto_aderezo.py` (324 tris). [Hoja de revisión](revisiones/repuesto_aderezo.jpg). | P2 | Hecho |
+| `pack_repuestos` | Pack de 2 repuestos | 0,188 × 0,194 × 0,098 | 400 | Carton, PlasticoClaro | Bandeja de cartón con film termocontraíble: el empaque de los tres `pack_*` (las botellas las pone el código). Pared de 0,05 (no 0,45 × alto, para no tapar la etiqueta). Sin colisión en el modelo, como los otros bloques. Hecho por código: `tools/blender/modelos/pack_repuestos.py` (364 tris). [Hoja de revisión](revisiones/pack_repuestos.jpg). | P3 | En progreso |
+| `bandeja_entrega` | Bandeja de entrega del carrito | 0,30 × 0,02 × 0,228 | 400 | RojoAcento | Bandeja roja de plástico con borde en los cuatro lados, en el punto `entrega` de cada base. Colisión `-colonly` del piso (hoy la comida se hunde 8 mm). Hecho por código: `tools/blender/modelos/bandeja_entrega.py` (238 tris). [Hoja de revisión](revisiones/bandeja_entrega.jpg). | P2 | Hecho |
+| `pallet` | Pallet del proveedor | 0,80 × 0,12 × 0,60 | 800 | MaderaClara, Madera | Pallet de tacos (3 tablas abajo, 9 tacos, 5 tablas arriba) donde el proveedor deja los paquetes. Colisión `-colonly`: una caja. Hecho por código: `tools/blender/modelos/pallet.py` (706 tris). [Hoja de revisión](revisiones/pallet.jpg). | P3 | Hecho |
+| `chorrito_aderezo` | Chorrito de aderezo | 0,152 × 0,006 × 0,021 | 300 | color del aderezo (en el archivo, Amarillo) | Hilo ondulado que se apoya sobre la salchicha (`pieza_chorrito`, el juego le pone el color). En el `pancho` modelado va a y = 0,0152, +0,003 por cada aderezo extra (hoy el código lo pone a 0,037). 6 lados (excepción de cables). Hecho por código: `tools/blender/modelos/chorrito_aderezo.py` (216 tris). [Hoja de revisión](revisiones/chorrito_aderezo.jpg). | P2 | Hecho |
+| `caja_dinero` | Caja de dinero | ≈ 0,30 × 0,10 × 0,25 | 500 | MetalOscuro, Acero | No está en el juego (la plata es solo el número del HUD). Caja metálica con tapa (`pieza_tapa`). | P3 | Pendiente |
+| `billete` | Billete | 0,15 × 0,002 × 0,065 | 20 | color por valor *(agregar a la paleta)* | No está en el juego. Un modelo, distinto material por valor. Diseño inventado. | P3 | Pendiente |
+| `moneda` | Moneda | Ø 0,024 × 0,003 | 40 | Acero | No está en el juego. 12 lados. | P3 | Pendiente |
+| `servilleta` | Servilleta | 0,15 × 0,003 × 0,15 | 20 | BlancoCrema | No está en el juego (SPEC-009 entrega en la bandeja). | P3 | Pendiente |
+| `papel_envoltorio` | Papel para envolver | ≈ 0,20 × 0,005 × 0,20 | 50 | BlancoCrema | ⚠ No está en el juego. | P3 | Pendiente |
+| `camioneta_proveedor` | Camioneta del proveedor | ≈ 1,9 × 2,0 × 4,8 | 3.000 | colores de la paleta | ⚠ Hoy el proveedor no se ve: el pedido aparece en el pallet. | P3 | Pendiente |
 
 ---
 
@@ -110,6 +117,7 @@ cuerpo + cabeza + pelo + ropa + accesorio, y de cambiar colores.
 
 | ID | Objeto | Medidas | Tris | Materiales | Notas | Prio. | Estado |
 |---|---|---|---|---|---|---|---|
+| `cliente_base` | Cliente (cuerpo base) | ≈ 0,5 × 1,75 × 0,3 | 3.000 | ropa *(agregar a la paleta)* | Los clientes son los peatones (`peaton.rs`): es el mismo personaje base que los NPC (pasó de la etapa 2). | P2 | Pendiente |
 | `persona_adulto_a` | Adulto, contextura A | alto ≈ 1,75 | 3.000 | piel, ropa | Cuerpo base con ropa por partes (remera, pantalón, zapatillas). | P2 | Pendiente |
 | `persona_adulto_b` | Adulto, contextura B | alto ≈ 1,65 | 3.000 | ídem | Otra contextura y altura. | P2 | Pendiente |
 | `persona_mayor` | Persona mayor | alto ≈ 1,65 | 3.000 | ídem | Postura un poco encorvada. | P2 | Pendiente |
