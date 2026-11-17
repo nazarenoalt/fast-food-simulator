@@ -613,6 +613,105 @@ impl INode for PruebaHumo {
                     carne.bind().temp == 4.0 && panes.bind().temp == 20.0,
                     "REQ-HEL-06 los paquetes de carne vienen a 4 °C",
                 );
+                // Llega un cliente nuevo para probar el menú (REQ-CLI-04).
+                let mut gente = todos::<Gente>(&mundo).pop().unwrap();
+                if gente.bind().largo_fila() == 0 {
+                    gente.bind_mut().forzar_cliente();
+                }
+                self.esperar(20 * 60);
+            }
+            26 => {
+                let mut gente = todos::<Gente>(&mundo).pop().unwrap();
+                let pidio = gente.bind().pedido_del_primero();
+                self.chequear(pidio.is_some(), &format!("REQ-CLI-04 el cliente pidió: {pidio:?}"));
+                // REQ-ADE-07: al choripán le entra chimichurri, pero no papas pay ni ketchup.
+                let mut choripan = todos::<Comida>(&mundo)
+                    .into_iter()
+                    .find(|c| c.bind().producto() == "choripan")
+                    .expect("hay un choripán");
+                let mut pomo = |id: &str| todos::<Pomo>(&mundo).into_iter().find(|p| p.bind().aderezo() == id);
+                let mut chimi = pomo("chimichurri").expect("REQ-ADE-01 hay pomo de chimichurri");
+                let antes = chimi.bind().usos();
+                let ok = chimi.bind_mut().aplicar(&mut choripan).is_ok() && chimi.bind().usos() == antes - 1;
+                self.chequear(ok, "REQ-ADE-07 el choripán admite chimichurri");
+                let mut papas = pomo("papas_pay").expect("REQ-ADE-01 hay pomo de papas pay");
+                let mut ketchup = pomo("ketchup").unwrap();
+                self.chequear(
+                    papas.bind_mut().aplicar(&mut choripan).is_err()
+                        && ketchup.bind_mut().aplicar(&mut choripan).is_err(),
+                    "REQ-ADE-07 el choripán no admite papas pay ni ketchup",
+                );
+                // CA-CLI: pide choripán con chimichurri y se lo entrego.
+                let pedido = carrito_core::clientes::Pedido {
+                    producto: "choripan".into(),
+                    aderezos: vec!["chimichurri".into()],
+                };
+                gente.bind_mut().set_pedido_del_primero(pedido);
+                let negocio = todos::<Negocio>(&mundo).pop().unwrap();
+                self.saldo_antes = negocio.bind().saldo();
+                let carrito = todos::<Carrito>(&mundo).pop().unwrap();
+                let bandeja = carrito.bind().pos_bandeja();
+                choripan.set_global_position(bandeja + Vector3::new(0.0, 0.05, 0.0));
+                choripan.set_global_rotation(Vector3::ZERO);
+                choripan.set_linear_velocity(Vector3::ZERO);
+                self.esperar(120);
+            }
+            27 => {
+                let negocio = todos::<Negocio>(&mundo).pop().unwrap();
+                let saldo = negocio.bind().saldo();
+                self.chequear(
+                    saldo >= self.saldo_antes + 3000.0,
+                    &format!("CA-CLI-01 el cliente pagó el choripán (caja {} → {saldo})", self.saldo_antes),
+                );
+                // CA-PLA-03: el siguiente pide hamburguesa.
+                let mut gente = todos::<Gente>(&mundo).pop().unwrap();
+                if gente.bind().largo_fila() == 0 {
+                    gente.bind_mut().forzar_cliente();
+                }
+                self.esperar(20 * 60);
+            }
+            28 => {
+                let mut gente = todos::<Gente>(&mundo).pop().unwrap();
+                gente.bind_mut().set_pedido_del_primero(carrito_core::clientes::Pedido {
+                    producto: "hamburguesa".into(),
+                    aderezos: vec![],
+                });
+                let negocio = todos::<Negocio>(&mundo).pop().unwrap();
+                self.saldo_antes = negocio.bind().saldo();
+                let carrito = todos::<Carrito>(&mundo).pop().unwrap();
+                let bandeja = carrito.bind().pos_bandeja();
+                let mut h = self.agregar_comida("hamburguesa", bandeja + Vector3::new(0.0, 0.05, 0.0));
+                h.bind_mut().fijar_temperatura(4.0);
+                h.bind_mut().forzar_quemado();
+                self.hamburguesa = Some(h);
+                self.esperar(120);
+            }
+            29 => {
+                let gente = todos::<Gente>(&mundo).pop().unwrap();
+                let negocio = todos::<Negocio>(&mundo).pop().unwrap();
+                let sigue = gente.bind().pedido_del_primero().is_some_and(|p| p.producto == "hamburguesa");
+                self.chequear(
+                    negocio.bind().saldo() == self.saldo_antes && sigue,
+                    "CA-PLA-03 el cliente rechaza la hamburguesa quemada y sigue esperando",
+                );
+                // La saco y le doy una bien cocida.
+                if let Some(mut h) = self.hamburguesa.take() {
+                    h.queue_free();
+                }
+                let carrito = todos::<Carrito>(&mundo).pop().unwrap();
+                let bandeja = carrito.bind().pos_bandeja();
+                let mut h = self.agregar_comida("hamburguesa", bandeja + Vector3::new(0.0, 0.05, 0.0));
+                h.bind_mut().fijar_temperatura(4.0);
+                h.bind_mut().forzar_avance(7.0);
+                self.esperar(120);
+            }
+            30 => {
+                let negocio = todos::<Negocio>(&mundo).pop().unwrap();
+                let saldo = negocio.bind().saldo();
+                self.chequear(
+                    saldo >= self.saldo_antes + 3500.0,
+                    &format!("REQ-CLI-04 la hamburguesa cocida se paga (caja {} → {saldo})", self.saldo_antes),
+                );
                 self.terminar();
             }
             _ => {}

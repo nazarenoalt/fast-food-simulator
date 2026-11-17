@@ -218,7 +218,12 @@ impl Comida {
     }
 
     pub fn admite_aderezos(&self) -> bool {
-        self.def.admite_aderezos
+        self.def.admite_aderezos()
+    }
+
+    /// REQ-ADE-07
+    pub fn admite_aderezo(&self, id: &str) -> bool {
+        self.def.admite_aderezo(id)
     }
 
     pub fn aderezos(&self) -> &[String] {
@@ -262,6 +267,18 @@ impl Comida {
         } else if let Some((_, e)) = &mut self.coccion {
             e.avance = avance;
             e.temp = 70.0;
+        }
+        self.actualizar_color();
+    }
+
+    /// Solo para pruebas: deja la parte cocinable quemada.
+    pub fn forzar_quemado(&mut self) {
+        if let Some(l) = &mut self.lados {
+            for e in &mut l.lados {
+                e.quemado = true;
+            }
+        } else if let Some((_, e)) = &mut self.coccion {
+            e.quemado = true;
         }
         self.actualizar_color();
     }

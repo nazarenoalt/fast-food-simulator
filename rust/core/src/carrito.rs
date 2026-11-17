@@ -94,6 +94,25 @@ pub enum Funcion {
     },
 }
 
+impl Funcion {
+    /// Nombres de todas las funciones (los usa `requiere` de los productos).
+    pub const NOMBRES: [&'static str; 7] =
+        ["Hervidor", "Plancha", "Parrilla", "Heladera", "Deposito", "Luz", "Aderezos"];
+
+    /// REQ-CLI-04: nombre de la función, tal cual se escribe en los datos.
+    pub fn nombre(&self) -> &'static str {
+        match self {
+            Funcion::Hervidor { .. } => "Hervidor",
+            Funcion::Plancha { .. } => "Plancha",
+            Funcion::Parrilla { .. } => "Parrilla",
+            Funcion::Heladera { .. } => "Heladera",
+            Funcion::Deposito { .. } => "Deposito",
+            Funcion::Luz { .. } => "Luz",
+            Funcion::Aderezos { .. } => "Aderezos",
+        }
+    }
+}
+
 /// REQ-CAR-05
 #[derive(Debug, Clone, PartialEq, Deserialize)]
 pub struct Accesorio {

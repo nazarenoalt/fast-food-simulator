@@ -72,19 +72,27 @@ pub struct Pedido {
     pub aderezos: Vec<String>,
 }
 
-/// REQ-CLI-04: un producto del menú y de 0 a 2 aderezos disponibles (25% sin aderezos).
-pub fn generar_pedido(azar: &mut Azar, menu: &[String], aderezos: &[String]) -> Pedido {
-    let producto = azar.elegir(menu).cloned().unwrap_or_default();
+/// Un producto del menú con los aderezos que admite (SPEC-012). REQ-CLI-04
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ItemMenu {
+    pub producto: String,
+    pub aderezos: Vec<String>,
+}
+
+/// REQ-CLI-04: un producto del menú (todos con la misma chance) y de 0 a 2 aderezos que ese
+/// producto admite y el carrito tiene disponibles (25% sin aderezos).
+pub fn generar_pedido(azar: &mut Azar, menu: &[ItemMenu], disponibles: &[String]) -> Pedido {
+    let Some(item) = azar.elegir(menu) else { return Pedido { producto: String::new(), aderezos: Vec::new() } };
+    let mut posibles: Vec<String> = item.aderezos.iter().filter(|a| disponibles.contains(a)).cloned().collect();
     let mut elegidos = Vec::new();
-    if !aderezos.is_empty() && !azar.chance(0.25) {
-        let cuantos = if aderezos.len() >= 2 && azar.chance(0.5) { 2 } else { 1 };
-        let mut disponibles = aderezos.to_vec();
+    if !posibles.is_empty() && !azar.chance(0.25) {
+        let cuantos = if posibles.len() >= 2 && azar.chance(0.5) { 2 } else { 1 };
         for _ in 0..cuantos {
-            let i = azar.entero(disponibles.len());
-            elegidos.push(disponibles.remove(i));
+            let i = azar.entero(posibles.len());
+            elegidos.push(posibles.remove(i));
         }
     }
-    Pedido { producto, aderezos: elegidos }
+    Pedido { producto: item.producto.clone(), aderezos: elegidos }
 }
 
 /// Paciencia de un cliente. REQ-CLI-06
@@ -257,10 +265,14 @@ mod tests {
         assert!(!f.llena());
     }
 
+    fn item(p: &str, ad: &[&str]) -> ItemMenu {
+        ItemMenu { producto: p.into(), aderezos: ad.iter().map(|s| s.to_string()).collect() }
+    }
+
     #[test]
     fn req_cli_04_pedido_con_0_a_2_aderezos_disponibles() {
         let mut azar = Azar::new(1);
-        let menu = vec!["pancho".to_string()];
+        let menu = vec![item("pancho", &["mostaza", "ketchup", "mayonesa"])];
         let ad: Vec<String> = ["mostaza", "ketchup", "mayonesa"].iter().map(|s| s.to_string()).collect();
         let mut sin = 0;
         for _ in 0..2000 {
@@ -278,6 +290,40 @@ mod tests {
         assert!((400..600).contains(&sin), "25% sin aderezos: {sin}");
         // Sin aderecera, nunca pide aderezos.
         assert!(generar_pedido(&mut azar, &menu, &[]).aderezos.is_empty());
+    }
+
+    #[test]
+    fn req_cli_04_menu_de_varios_productos_con_sus_aderezos() {
+        let mut azar = Azar::new(7);
+        let menu = vec![
+            item("pancho", &["mostaza", "papas_pay"]),
+            item("hamburguesa", &[]),
+            item("choripan", &["chimichurri", "mostaza"]),
+        ];
+        let disponibles: Vec<String> =
+            ["mostaza", "papas_pay", "chimichurri", "ketchup"].iter().map(|s| s.to_string()).collect();
+        let (mut p, mut h, mut c) = (0, 0, 0);
+        for _ in 0..3000 {
+            let ped = generar_pedido(&mut azar, &menu, &disponibles);
+            let admitidos = &menu.iter().find(|i| i.producto == ped.producto).unwrap().aderezos;
+            assert!(ped.aderezos.iter().all(|a| admitidos.contains(a)), "{ped:?}");
+            match ped.producto.as_str() {
+                "pancho" => p += 1,
+                "hamburguesa" => {
+                    h += 1;
+                    assert!(ped.aderezos.is_empty(), "la hamburguesa no lleva aderezos");
+                }
+                _ => c += 1,
+            }
+        }
+        for n in [p, h, c] {
+            assert!((850..1150).contains(&n), "reparto parejo: {p}/{h}/{c}");
+        }
+        // Un aderezo que el carrito no tiene no se pide aunque el producto lo admita.
+        let sin_chimi: Vec<String> = vec!["mostaza".into()];
+        for _ in 0..500 {
+            assert!(!generar_pedido(&mut azar, &menu, &sin_chimi).aderezos.contains(&"chimichurri".to_string()));
+        }
     }
 
     #[test]

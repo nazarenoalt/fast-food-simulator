@@ -34,6 +34,8 @@
             id: "hamburguesa",
             nombre: "hamburguesa",
             masa: 0.12,
+            precio: Some(3500), // REQ-ECO-03
+            requiere: Some("Plancha"), // REQ-CLI-04
             por_lados: true, // REQ-PLA-04
             perecedero: true, // REQ-HEL-03
             colision: Caja(medidas: (0.11, 0.025, 0.11)),
@@ -97,6 +99,9 @@
             id: "choripan",
             nombre: "choripán",
             masa: 0.18,
+            precio: Some(3000), // REQ-ECO-03
+            aderezos: ["chimichurri", "mostaza"], // REQ-ADE-07
+            requiere: Some("Parrilla"), // REQ-CLI-04
             colision: Caja(medidas: (0.2, 0.07, 0.065)),
             forma: [
                 (tipo: Caja, medidas: (0.2, 0.05, 0.065), color: (0.72, 0.46, 0.2)),
@@ -108,7 +113,8 @@
             nombre: "pancho",
             masa: 0.09,
             precio: Some(2500), // REQ-ECO-03
-            admite_aderezos: true,
+            aderezos: ["mostaza", "ketchup", "mayonesa", "papas_pay"], // REQ-ADE-07
+            requiere: Some("Hervidor"), // REQ-CLI-04
             colision: Caja(medidas: (0.17, 0.06, 0.055)),
             forma: [
                 (tipo: Capsula, medidas: (0.027, 0.17, 0), rot: (0, 0, 90), escala: (1, 0.85, 1), color: (0.86, 0.6, 0.32)),
@@ -158,6 +164,30 @@
             colision: Caja(medidas: (0.08, 0.19, 0.08)),
             forma: [
                 (tipo: Cilindro, medidas: (0.038, 0.17, 0), pos: (0, -0.01, 0), color: (0.97, 0.94, 0.78)),
+                (tipo: Cilindro, medidas: (0.039, 0.05, 0), pos: (0, 0.0, 0), color: (0.95, 0.95, 0.95)),
+                (tipo: Cilindro, medidas: (0.018, 0.025, 0), pos: (0, 0.085, 0), color: (0.2, 0.2, 0.2)),
+            ],
+        ),
+        (
+            id: "repuesto_papas_pay",
+            nombre: "repuesto de papas pay",
+            masa: 0.5,
+            repone: Some("papas_pay"),
+            colision: Caja(medidas: (0.08, 0.19, 0.08)),
+            forma: [
+                (tipo: Cilindro, medidas: (0.038, 0.17, 0), pos: (0, -0.01, 0), color: (0.9, 0.75, 0.35)),
+                (tipo: Cilindro, medidas: (0.039, 0.05, 0), pos: (0, 0.0, 0), color: (0.95, 0.95, 0.95)),
+                (tipo: Cilindro, medidas: (0.018, 0.025, 0), pos: (0, 0.085, 0), color: (0.2, 0.2, 0.2)),
+            ],
+        ),
+        (
+            id: "repuesto_chimichurri",
+            nombre: "repuesto de chimichurri",
+            masa: 0.5,
+            repone: Some("chimichurri"),
+            colision: Caja(medidas: (0.08, 0.19, 0.08)),
+            forma: [
+                (tipo: Cilindro, medidas: (0.038, 0.17, 0), pos: (0, -0.01, 0), color: (0.25, 0.5, 0.12)),
                 (tipo: Cilindro, medidas: (0.039, 0.05, 0), pos: (0, 0.0, 0), color: (0.95, 0.95, 0.95)),
                 (tipo: Cilindro, medidas: (0.018, 0.025, 0), pos: (0, 0.085, 0), color: (0.2, 0.2, 0.2)),
             ],

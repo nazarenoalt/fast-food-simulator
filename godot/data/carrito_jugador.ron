@@ -6,7 +6,7 @@
     accesorios: {
         "mostrador_izq": "hervidor_chico",
         "mostrador_centro": "plancha_chica",
-        "mostrador_der": "aderecera_tres",
+        "mostrador_der": "aderecera_cinco",
         "parrilla": "parrilla_chica",
         "heladera": "heladera_chica",
         "lateral": "estante_deposito",

@@ -165,6 +165,16 @@
         funcion: Some(Aderezos(tipos: ["mostaza", "ketchup", "mayonesa"], separacion: 0.09)),
     ),
     (
+        id: "aderecera_cinco",
+        nombre: "Aderecera de cinco pomos",
+        categoria: Equipamiento,
+        precio: 18000,
+        forma: [
+            (tipo: Caja, medidas: (0.48, 0.015, 0.1), pos: (0, 0.0075, -0.22), color: (0.75, 0.75, 0.78), metal: true),
+        ],
+        funcion: Some(Aderezos(tipos: ["mostaza", "ketchup", "mayonesa", "papas_pay", "chimichurri"], separacion: 0.09)),
+    ),
+    (
         id: "servilletero",
         nombre: "Servilletero",
         categoria: Equipamiento,

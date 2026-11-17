@@ -19,9 +19,11 @@ y se van) y juzgan lo que les diste.
   llegan más clientes. Cuando alguien se va, los de atrás avanzan.
 
 ### Pedido
-- **REQ-CLI-04** Cuando el primero de la fila llega a su lugar, pide: un producto del menú
-  (etapa 2: pancho) y entre 0 y 2 aderezos entre los que el carrito tiene disponibles.
-  Un 25% lo pide sin aderezos.
+- **REQ-CLI-04** Cuando el primero de la fila llega a su lugar, pide: un producto del menú y
+  entre 0 y 2 aderezos entre los que ese producto admite (SPEC-012) y el carrito tiene
+  disponibles. Un 25% lo pide sin aderezos. El **menú** son los productos con precio que el
+  carrito puede cocinar: pancho (con hervidor), hamburguesa (con plancha) y choripán (con
+  parrilla). Cada uno tiene la misma chance.
 - **REQ-CLI-05** El pedido se muestra en un globo sobre su cabeza (ej. "Pancho con
   mostaza y ketchup"). El color del globo muestra la paciencia: verde, amarillo, rojo.
 - **REQ-CLI-06** Paciencia: 100 s desde que pide. Mientras espera en la fila (sin pedir

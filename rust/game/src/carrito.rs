@@ -31,6 +31,8 @@ pub struct Carrito {
     base_forzada: GString,
     base_def: Option<BaseCarrito>,
     bandeja: Option<Gd<Area3D>>,
+    /// Funciones de los accesorios colocados (REQ-CLI-04: qué se puede cocinar).
+    funciones: Vec<&'static str>,
 }
 
 impl Carrito {
@@ -69,6 +71,11 @@ impl Carrito {
     }
 
     /// Aderezos que el carrito tiene (para los pedidos). REQ-CLI-04
+    /// REQ-CLI-04: productos que se pueden pedir en este carrito, con los aderezos que admiten.
+    pub fn menu(&self) -> Vec<carrito_core::clientes::ItemMenu> {
+        crate::datos::catalogo().menu_para(&self.funciones)
+    }
+
     pub fn aderezos_disponibles(&self) -> Vec<String> {
         let yo = self.to_gd();
         crate::util::todos::<aderecera::Pomo>(&yo, aderecera::GRUPO)
@@ -254,6 +261,8 @@ impl INode3D for Carrito {
                 self.construir_base(&armado);
                 self.construir_bandeja(&armado.base);
                 self.construir_accesorios(&armado);
+                self.funciones =
+                    armado.colocados.iter().filter_map(|c| c.accesorio.funcion.as_ref()).map(|f| f.nombre()).collect();
                 self.base_def = Some(armado.base.clone());
             }
             Err(e) => {
