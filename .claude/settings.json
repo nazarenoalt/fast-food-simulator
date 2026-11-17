@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "deny": [
+      "Read(./docs/capturas/**)",
+      "Read(./rust/Cargo.lock)",
+      "Read(./rust/target/**)",
+      "Read(./godot/.godot/**)"
+    ]
+  }
+}

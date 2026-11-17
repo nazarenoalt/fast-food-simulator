@@ -231,7 +231,12 @@ impl Gente {
                 }
                 let p = self.agregar(
                     if desde_salida { inicio } else { asiento },
-                    vec![Accion::Caminar(ida), Accion::Sentarse { rot_y, segundos }, Accion::Caminar(vuelta), Accion::Desaparecer],
+                    vec![
+                        Accion::Caminar(ida),
+                        Accion::Sentarse { rot_y, segundos },
+                        Accion::Caminar(vuelta),
+                        Accion::Desaparecer,
+                    ],
                     plan,
                 );
                 let id = p.bind().id;
@@ -252,7 +257,12 @@ impl Gente {
                     let empieza = if desde_salida { inicio } else { lugar };
                     let mut p = self.agregar(
                         empieza,
-                        vec![Accion::Caminar(ida), Accion::Charlar { mirar: otro, segundos }, Accion::Caminar(vuelta), Accion::Desaparecer],
+                        vec![
+                            Accion::Caminar(ida),
+                            Accion::Charlar { mirar: otro, segundos },
+                            Accion::Caminar(vuelta),
+                            Accion::Desaparecer,
+                        ],
                         plan,
                     );
                     if !desde_salida {

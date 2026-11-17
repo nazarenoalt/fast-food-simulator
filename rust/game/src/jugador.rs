@@ -10,12 +10,12 @@ use godot::prelude::*;
 
 use crate::aderecera::Pomo;
 use crate::bloque_stock::BloqueStock;
-use crate::paquete::Paquete;
-use crate::tienda;
 use crate::comida::Comida;
 use crate::formas;
 use crate::hervidor::Hervidor;
 use crate::hud::{self, Hud};
+use crate::paquete::Paquete;
+use crate::tienda;
 
 const VEL_CAMINAR: f32 = 3.5; // REQ-JUG-03
 const VEL_CORRER: f32 = 6.0; // REQ-JUG-03
@@ -87,16 +87,18 @@ impl ICharacterBody3D for Jugador {
     fn ready(&mut self) {
         registrar_acciones();
         self.base_mut().add_to_group("jugador");
-        self.gravedad = ProjectSettings::singleton()
-            .get_setting("physics/3d/default_gravity")
-            .try_to::<f64>()
-            .unwrap_or(9.8) as f32;
+        self.gravedad =
+            ProjectSettings::singleton().get_setting("physics/3d/default_gravity").try_to::<f64>().unwrap_or(9.8)
+                as f32;
 
         // REQ-JUG-05: cápsula de 1,75 m y radio 0,3; ojos a 1,65 m.
         let mut forma = CapsuleShape3D::new_gd();
         forma.set_radius(RADIO);
         forma.set_height(ALTO);
-        let col = formas::nodo_colision(forma.upcast(), Transform3D::new(Basis::IDENTITY, Vector3::new(0.0, ALTO / 2.0, 0.0)));
+        let col = formas::nodo_colision(
+            forma.upcast(),
+            Transform3D::new(Basis::IDENTITY, Vector3::new(0.0, ALTO / 2.0, 0.0)),
+        );
         self.base_mut().add_child(&col);
 
         let mut camara = Camera3D::new_alloc();

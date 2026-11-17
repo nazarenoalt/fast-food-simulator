@@ -106,7 +106,8 @@ impl INode3D for Hervidor {
         perilla.set_position(Vector3::new(-w / 4.0, alto * 0.55, -d / 2.0 - e - 0.01));
         yo.add_child(&perilla);
         let piloto_mat = formas::material([1.0, 0.1, 0.05], 1.0, false, 0.01);
-        let mut piloto = formas::instancia_malla(formas::malla(TipoPieza::Esfera, [0.008, 0.0, 0.0]), piloto_mat.clone());
+        let mut piloto =
+            formas::instancia_malla(formas::malla(TipoPieza::Esfera, [0.008, 0.0, 0.0]), piloto_mat.clone());
         piloto.set_position(Vector3::new(w / 4.0, alto * 0.55, -d / 2.0 - e - 0.004));
         yo.add_child(&piloto);
         self.piloto = Some(piloto_mat);

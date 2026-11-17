@@ -15,6 +15,12 @@ Estado: **Aprobada**
 5. **Prueba de humo.** `tools/prueba_humo.sh` abre el juego sin pantalla y verifica los
    criterios de aceptación de integración (cocinar, sacar del depósito, armar un pancho).
 6. Cambiar una regla del juego = cambiar primero la spec, después el test, después el código.
+7. **Docs al día.** `rust/core/tests/docs.rs` falla si una spec no está en la tabla de áreas,
+   si el ROADMAP tiene IDs repetidos o estados inválidos, si hay enlaces rotos o si algún
+   documento pasa su presupuesto de tamaño (ver [CLAUDE.md](../../CLAUDE.md)).
+
+Ramas, PRs y commits: ver [CLAUDE.md](../../CLAUDE.md). El estado de cada etapa vive solo en el
+[ROADMAP](../ROADMAP.md).
 
 ## Formato de una spec
 

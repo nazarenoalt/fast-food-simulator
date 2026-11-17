@@ -3,17 +3,17 @@
 use carrito_core::carrito::{BaseCarrito, CarritoArmado, Funcion, armar};
 use carrito_core::clientes::SEPARACION_FILA;
 use carrito_core::forma::TipoPieza;
-use godot::classes::{Area3D, BoxShape3D, INode3D, Label3D, Node3D};
 use godot::classes::base_material_3d::BillboardMode;
+use godot::classes::{Area3D, BoxShape3D, INode3D, Label3D, Node3D};
 use godot::prelude::*;
 
 use crate::aderecera;
 use crate::bloque_stock::BloqueStock;
 use crate::comida::Comida;
-use crate::lugar_deposito::LugarDeposito;
 use crate::datos::catalogo;
 use crate::formas;
 use crate::hervidor::Hervidor;
+use crate::lugar_deposito::LugarDeposito;
 use crate::luz::LuzNocturna;
 
 const ACERO: [f32; 3] = [0.82, 0.83, 0.85];
@@ -68,7 +68,10 @@ impl Carrito {
     /// Aderezos que el carrito tiene (para los pedidos). REQ-CLI-04
     pub fn aderezos_disponibles(&self) -> Vec<String> {
         let yo = self.to_gd();
-        crate::util::todos::<aderecera::Pomo>(&yo, aderecera::GRUPO).iter().map(|p| p.bind().aderezo().to_string()).collect()
+        crate::util::todos::<aderecera::Pomo>(&yo, aderecera::GRUPO)
+            .iter()
+            .map(|p| p.bind().aderezo().to_string())
+            .collect()
     }
 
     /// REQ-CLI-07: bandeja roja sobre el mostrador con su zona de entrega.

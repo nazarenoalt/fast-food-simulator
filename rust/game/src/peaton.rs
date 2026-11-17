@@ -17,8 +17,14 @@ pub const GRUPO: &str = "peatones";
 pub enum Accion {
     Caminar(Vec<Vector3>),
     /// REQ-AMB-05
-    Sentarse { rot_y: f32, segundos: f32 },
-    Charlar { mirar: Vector3, segundos: f32 },
+    Sentarse {
+        rot_y: f32,
+        segundos: f32,
+    },
+    Charlar {
+        mirar: Vector3,
+        segundos: f32,
+    },
     /// Ir al lugar de la fila que indique `Gente` y quedarse ahí (SPEC-009).
     EnFila,
     Desaparecer,
@@ -68,7 +74,7 @@ impl Peaton {
             lugar_fila: None,
             fase: 0.0,
             t_vida: 0.0,
-            gesto: (id as f32 * 1.7) % 6.28,
+            gesto: (id as f32 * 1.7) % std::f32::consts::TAU,
             cuerpo: None,
             piernas: Vec::new(),
             brazos: Vec::new(),
@@ -172,31 +178,74 @@ impl Peaton {
         let parte = |padre: &mut Gd<Node3D>, tipo, medidas, pos: [f32; 3], color| {
             padre.add_child(&formas::visual_pieza(&formas::pieza(tipo, medidas, pos, color)));
         };
-        parte(&mut cuerpo, TipoPieza::Caja, [0.3 * h * 0.85, hombros - cadera, 0.12 * h], [0.0, (hombros + cadera) / 2.0, 0.0], ap.remera);
-        parte(&mut cuerpo, TipoPieza::Caja, [0.3 * h * 0.8, 0.06 * h, 0.12 * h], [0.0, cadera + 0.02 * h, 0.0], ap.pantalon);
+        parte(
+            &mut cuerpo,
+            TipoPieza::Caja,
+            [0.3 * h * 0.85, hombros - cadera, 0.12 * h],
+            [0.0, (hombros + cadera) / 2.0, 0.0],
+            ap.remera,
+        );
+        parte(
+            &mut cuerpo,
+            TipoPieza::Caja,
+            [0.3 * h * 0.8, 0.06 * h, 0.12 * h],
+            [0.0, cadera + 0.02 * h, 0.0],
+            ap.pantalon,
+        );
         parte(&mut cuerpo, TipoPieza::Cilindro, [0.03 * h, 0.05 * h, 0.0], [0.0, hombros + 0.02 * h, 0.0], ap.piel);
         let radio_cabeza = 0.065 * h;
         let y_cabeza = hombros + 0.04 * h + radio_cabeza;
         parte(&mut cuerpo, TipoPieza::Esfera, [radio_cabeza, 0.0, 0.0], [0.0, y_cabeza, 0.0], ap.piel);
         // Pelo o gorra.
-        let mut pelo = formas::pieza(TipoPieza::Esfera, [radio_cabeza * 1.04, 0.0, 0.0], [0.0, y_cabeza + 0.012, -0.008], ap.pelo);
+        let mut pelo =
+            formas::pieza(TipoPieza::Esfera, [radio_cabeza * 1.04, 0.0, 0.0], [0.0, y_cabeza + 0.012, -0.008], ap.pelo);
         pelo.escala = [1.0, 0.75, 1.0];
         cuerpo.add_child(&formas::visual_pieza(&pelo));
         if ap.gorra {
-            parte(&mut cuerpo, TipoPieza::Cilindro, [radio_cabeza * 1.08, 0.04, 0.0], [0.0, y_cabeza + radio_cabeza * 0.55, 0.0], ap.remera);
-            parte(&mut cuerpo, TipoPieza::Caja, [0.08, 0.01, 0.07], [0.0, y_cabeza + radio_cabeza * 0.4, radio_cabeza + 0.02], ap.remera);
+            parte(
+                &mut cuerpo,
+                TipoPieza::Cilindro,
+                [radio_cabeza * 1.08, 0.04, 0.0],
+                [0.0, y_cabeza + radio_cabeza * 0.55, 0.0],
+                ap.remera,
+            );
+            parte(
+                &mut cuerpo,
+                TipoPieza::Caja,
+                [0.08, 0.01, 0.07],
+                [0.0, y_cabeza + radio_cabeza * 0.4, radio_cabeza + 0.02],
+                ap.remera,
+            );
         }
         // Ojos, para que se note hacia dónde mira (+Z).
         for x in [-0.025, 0.025] {
-            parte(&mut cuerpo, TipoPieza::Esfera, [0.009, 0.0, 0.0], [x, y_cabeza + 0.01, radio_cabeza * 0.92], [0.05, 0.05, 0.05]);
+            parte(
+                &mut cuerpo,
+                TipoPieza::Esfera,
+                [0.009, 0.0, 0.0],
+                [x, y_cabeza + 0.01, radio_cabeza * 0.92],
+                [0.05, 0.05, 0.05],
+            );
         }
 
         // Piernas y brazos con pivote arriba (para la animación de caminar).
         for x in [-0.06 * h, 0.06 * h] {
             let mut piv = Node3D::new_alloc();
             piv.set_position(Vector3::new(x, cadera, 0.0));
-            parte(&mut piv, TipoPieza::Caja, [0.075 * h, largo_pierna, 0.085 * h], [0.0, -largo_pierna / 2.0, 0.0], ap.pantalon);
-            parte(&mut piv, TipoPieza::Caja, [0.08 * h, 0.04, 0.14 * h], [0.0, -largo_pierna + 0.02, 0.02], [0.12, 0.1, 0.1]);
+            parte(
+                &mut piv,
+                TipoPieza::Caja,
+                [0.075 * h, largo_pierna, 0.085 * h],
+                [0.0, -largo_pierna / 2.0, 0.0],
+                ap.pantalon,
+            );
+            parte(
+                &mut piv,
+                TipoPieza::Caja,
+                [0.08 * h, 0.04, 0.14 * h],
+                [0.0, -largo_pierna + 0.02, 0.02],
+                [0.12, 0.1, 0.1],
+            );
             cuerpo.add_child(&piv);
             self.piernas.push(piv);
         }
@@ -204,8 +253,20 @@ impl Peaton {
         for x in [-0.17 * h, 0.17 * h] {
             let mut piv = Node3D::new_alloc();
             piv.set_position(Vector3::new(x, hombros - 0.02 * h, 0.0));
-            parte(&mut piv, TipoPieza::Caja, [0.06 * h, largo_brazo * 0.5, 0.065 * h], [0.0, -largo_brazo * 0.25, 0.0], ap.remera);
-            parte(&mut piv, TipoPieza::Caja, [0.05 * h, largo_brazo * 0.5, 0.055 * h], [0.0, -largo_brazo * 0.75, 0.0], ap.piel);
+            parte(
+                &mut piv,
+                TipoPieza::Caja,
+                [0.06 * h, largo_brazo * 0.5, 0.065 * h],
+                [0.0, -largo_brazo * 0.25, 0.0],
+                ap.remera,
+            );
+            parte(
+                &mut piv,
+                TipoPieza::Caja,
+                [0.05 * h, largo_brazo * 0.5, 0.055 * h],
+                [0.0, -largo_brazo * 0.75, 0.0],
+                ap.piel,
+            );
             cuerpo.add_child(&piv);
             self.brazos.push(piv);
         }
@@ -217,7 +278,10 @@ impl Peaton {
         let mut s = CapsuleShape3D::new_gd();
         s.set_radius(0.22);
         s.set_height(h);
-        cuerpo_fisico.add_child(&formas::nodo_colision(s.upcast(), Transform3D::new(Basis::IDENTITY, Vector3::new(0.0, h / 2.0, 0.0))));
+        cuerpo_fisico.add_child(&formas::nodo_colision(
+            s.upcast(),
+            Transform3D::new(Basis::IDENTITY, Vector3::new(0.0, h / 2.0, 0.0)),
+        ));
         self.base_mut().add_child(&cuerpo_fisico);
 
         // REQ-CLI-05: globo de pedido.
@@ -235,7 +299,13 @@ impl Peaton {
         // REQ-AMB-05: perro (se mueve por su cuenta, siguiendo al dueño).
         if self.con_perro {
             let mut perro = Node3D::new_alloc();
-            let pelaje = if self.id % 3 == 0 { [0.15, 0.12, 0.1] } else if self.id % 3 == 1 { [0.65, 0.45, 0.25] } else { [0.9, 0.88, 0.82] };
+            let pelaje = if self.id % 3 == 0 {
+                [0.15, 0.12, 0.1]
+            } else if self.id % 3 == 1 {
+                [0.65, 0.45, 0.25]
+            } else {
+                [0.9, 0.88, 0.82]
+            };
             parte(&mut perro, TipoPieza::Caja, [0.16, 0.16, 0.42], [0.0, 0.3, 0.0], pelaje);
             parte(&mut perro, TipoPieza::Caja, [0.14, 0.14, 0.17], [0.0, 0.42, 0.25], pelaje);
             parte(&mut perro, TipoPieza::Caja, [0.07, 0.06, 0.08], [0.0, 0.4, 0.36], [0.1, 0.08, 0.07]);
@@ -265,8 +335,7 @@ impl Peaton {
             return true;
         }
         // REQ-AMB-13: se corre para no chocar y frena si tiene a alguien encima.
-        let (dir, factor) =
-            carrito_core::peatones::esquivar([pos.x, pos.z], [d.x / dist, d.z / dist], &self.vecinos);
+        let (dir, factor) = carrito_core::peatones::esquivar([pos.x, pos.z], [d.x / dist, d.z / dist], &self.vecinos);
         let paso = (self.vel * factor * dt).min(dist);
         let dir = Vector3::new(dir[0], 0.0, dir[1]);
         self.base_mut().set_global_position(Vector3::new(pos.x + dir.x * paso, 0.0, pos.z + dir.z * paso));
@@ -298,7 +367,13 @@ impl Peaton {
         let amplitud = if moviendo { if self.vel > 2.0 { 0.9 } else { 0.55 } } else { 0.0 };
         let s = self.fase.sin() * amplitud;
         for (i, p) in self.piernas.iter_mut().enumerate() {
-            let a = if sentado { -1.45 } else if i == 0 { s } else { -s };
+            let a = if sentado {
+                -1.45
+            } else if i == 0 {
+                s
+            } else {
+                -s
+            };
             p.set_rotation(Vector3::new(a, 0.0, 0.0));
         }
         self.gesto += dt;
@@ -319,7 +394,13 @@ impl Peaton {
             b.set_rotation(Vector3::new(a, 0.0, 0.0));
         }
         if let Some(c) = &mut self.cuerpo {
-            let y = if sentado { 0.47 - 0.47 * self.ap.altura } else if moviendo { (self.fase * 2.0).sin().abs() * 0.02 } else { 0.0 };
+            let y = if sentado {
+                0.47 - 0.47 * self.ap.altura
+            } else if moviendo {
+                (self.fase * 2.0).sin().abs() * 0.02
+            } else {
+                0.0
+            };
             c.set_position(Vector3::new(0.0, y, if sentado { -0.1 } else { 0.0 }));
         }
     }
@@ -337,7 +418,8 @@ impl Peaton {
         }
         let fase = self.t_vida * 12.0;
         for (i, p) in self.patas_perro.iter_mut().enumerate() {
-            let a = if moviendose { (fase + if i % 2 == 0 { 0.0 } else { 3.14 }).sin() * 0.6 } else { 0.0 };
+            let a =
+                if moviendose { (fase + if i % 2 == 0 { 0.0 } else { std::f32::consts::PI }).sin() * 0.6 } else { 0.0 };
             p.set_rotation(Vector3::new(a, 0.0, 0.0));
         }
     }

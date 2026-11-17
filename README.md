@@ -3,10 +3,7 @@
 Simulador de carrito de comida rápida (panchos, hamburguesas, choripanes) en 3D con
 física real, frente a una plaza. Hecho con **Godot 4.7** y **Rust** (godot-rust 0.5).
 
-> Estado: **etapa 2**: además de cocinar y armar panchos, llegan clientes que hacen fila,
-> piden y pagan; hay caja, reputación, proveedor y aderezos. Alrededor, una ciudad con
-> gente, autos, palomas, nubes y cielo con sol y luna.
-> Ver [`docs/hoja-de-ruta.md`](docs/hoja-de-ruta.md).
+> Estado y próximas tareas: [`docs/ROADMAP.md`](docs/ROADMAP.md).
 
 | | |
 |---|---|
@@ -61,33 +58,7 @@ La primera vez Godot tarda un poco en importar el proyecto.
 
 Cada vez que cambies código Rust, volvé a correr `cargo build`; Godot recarga la librería.
 
-### Controles
-
-| Tecla | Acción |
-|---|---|
-| W A S D | Moverse |
-| Mouse | Mirar |
-| Shift | Correr |
-| Espacio | Saltar |
-| Clic izquierdo | Agarrar / soltar |
-| Clic derecho | Tirar lo que tenés en la mano |
-| E | Usar: prender el hervidor, sacar del depósito, poner aderezo (con el pancho en la mano), recargar un pomo (con el repuesto en la mano) |
-| Tab | Panel del proveedor (comprar mercadería) |
-| T | Tiempo ×30 (para ver el atardecer rápido) |
-| C | Traer un cliente al instante (para probar) |
-| Esc | Soltar el mouse |
-
-**Para atender a un cliente:**
-1. E sobre el hervidor para prenderlo.
-2. E sobre el paquete de salchichas del estante y soltá la salchicha en el agua.
-3. Esperá a que esté cocida (el cartel lo dice y cambia de color).
-4. Sacá un pan de la bolsa, dejalo en la mesada y soltá la salchicha encima: se arma el pancho.
-5. Con el pancho en la mano, mirá un pomo y apretá E para ponerle el aderezo que pidió el
-   cliente (está en el globo sobre su cabeza).
-6. Dejá el pancho en la **bandeja roja**: el cliente lo agarra, paga y se va comiendo.
-
-**Cuando se acaba algo:** Tab abre el proveedor. Lo que comprás llega en una hora de juego
-a un pallet al lado del carrito; llevá el paquete a un lugar libre del estante y queda guardado.
+Controles, cómo atender clientes y cómo agregar contenido: [`docs/jugar.md`](docs/jugar.md).
 
 ## Tests
 
@@ -96,32 +67,15 @@ cd rust && cargo test                          # reglas + trazabilidad
 GODOT=/ruta/a/godot tools/prueba_humo.sh       # prueba de humo en el motor
 ```
 
-## Estructura
+## Contribuir
 
-```
-docs/specs/        ← las specs (qué tiene que pasar)
-rust/core/         ← reglas puras, sin Godot: cocción, depósito, carrito, reloj, plaza
-rust/game/         ← nodos de Godot en Rust: jugador, comida, hervidor, carrito, HUD…
-godot/data/        ← contenido en archivos .ron: productos, bloques, accesorios, carritos
-godot/scenes/      ← escena principal y escena de prueba de humo
-tools/             ← scripts (prueba de humo)
-```
-
-### Agregar contenido sin tocar código
-
-- **Un carrito nuevo:** copiá un archivo de `godot/data/carritos/` y cambiale id, medidas
-  y anclajes.
-- **Un accesorio:** agregalo en `godot/data/accesorios.ron` (categoría, forma, función).
-- **Cambiar tu carrito:** editá `godot/data/carrito_jugador.ron` (base, color, qué va en
-  cada anclaje y el stock inicial). Si algo no encaja, el juego muestra el error arriba
-  del carrito.
+Specs primero, un PR por etapa, ramas `tipo/TASK-0000-slug` y títulos `tipo (modulo): descripción`.
+Las reglas completas (y el mapa del repo) están en [`CLAUDE.md`](CLAUDE.md).
 
 ## Notas técnicas
 
 - Física: **Jolt** (incluida en Godot). Las unidades guardadas en el depósito no tienen
   física hasta que se sacan, para que un depósito lleno no haga lento el juego.
-- Los modelos son piezas simples (cajas, cilindros) definidas en los datos; se van a
-  reemplazar por modelos de Blender (`.glb`) más adelante. Cuando haya modelos, conviene
-  activar Git LFS para los archivos pesados.
-- Al exportar el juego, agregá `data/*.ron` en "Filtros para exportar archivos que no son
-  recursos", para que se incluyan los datos.
+- Los modelos son piezas simples definidas en los datos; se van a reemplazar por modelos de
+  Blender (`.glb`), con Git LFS (ver [ROADMAP](docs/ROADMAP.md)).
+- Al exportar, agregá `data/*.ron` en "Filtros para exportar archivos que no son recursos".

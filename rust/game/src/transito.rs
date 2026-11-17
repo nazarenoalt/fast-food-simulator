@@ -70,7 +70,10 @@ impl Autos {
         let mut cuerpo = AnimatableBody3D::new_alloc();
         let mut s = BoxShape3D::new_gd();
         s.set_size(Vector3::new(4.1, 1.4, 1.75));
-        cuerpo.add_child(&formas::nodo_colision(s.upcast(), Transform3D::new(Basis::IDENTITY, Vector3::new(0.0, 0.75, 0.0))));
+        cuerpo.add_child(&formas::nodo_colision(
+            s.upcast(),
+            Transform3D::new(Basis::IDENTITY, Vector3::new(0.0, 0.75, 0.0)),
+        ));
         nodo.add_child(&cuerpo);
         Auto { nodo, ruedas, carril: a.carril, x: a.x, v: a.crucero, crucero: a.crucero }
     }
@@ -93,8 +96,10 @@ impl INode3D for Autos {
         let dt = delta as f32;
         let yo = self.to_gd();
         // Obstáculos: el jugador y los peatones (REQ-AMB-08).
-        let mut obstaculos: Vec<(f32, f32)> =
-            util::todos::<Node3D>(&yo, peaton::GRUPO).iter().map(|p| (p.get_global_position().x, p.get_global_position().z)).collect();
+        let mut obstaculos: Vec<(f32, f32)> = util::todos::<Node3D>(&yo, peaton::GRUPO)
+            .iter()
+            .map(|p| (p.get_global_position().x, p.get_global_position().z))
+            .collect();
         if let Some(j) = util::unico::<Node3D>(&yo, "jugador") {
             let p = j.get_global_position();
             obstaculos.push((p.x, p.z));

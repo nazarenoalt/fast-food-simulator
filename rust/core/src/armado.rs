@@ -12,10 +12,7 @@ pub struct Combinacion {
 
 /// Devuelve el producto resultante, o `None` si la combinación no es válida. REQ-ARM-01, REQ-ARM-04
 pub fn combinar<'a>(reglas: &'a [Combinacion], base: &str, agregado: &str) -> Option<&'a str> {
-    reglas
-        .iter()
-        .find(|r| r.base == base && r.agregado == agregado)
-        .map(|r| r.resultado.as_str())
+    reglas.iter().find(|r| r.base == base && r.agregado == agregado).map(|r| r.resultado.as_str())
 }
 
 /// ¿Este producto puede recibir algo encima? (para saber si necesita zona de encastre). REQ-ARM-02
@@ -33,11 +30,7 @@ mod tests {
     use super::*;
 
     fn reglas() -> Vec<Combinacion> {
-        vec![Combinacion {
-            base: "pan_pancho".into(),
-            agregado: "salchicha".into(),
-            resultado: "pancho".into(),
-        }]
+        vec![Combinacion { base: "pan_pancho".into(), agregado: "salchicha".into(), resultado: "pancho".into() }]
     }
 
     #[test]

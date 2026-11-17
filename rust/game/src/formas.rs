@@ -156,10 +156,7 @@ pub fn construir(padre: &mut Gd<Node3D>, piezas: &[Pieza]) {
             });
             // La escala se aplica a las medidas (las formas de colisión no se escalan bien).
             let sin_escala = Pieza { escala: [1.0; 3], ..p.clone() };
-            cuerpo.add_child(&nodo_colision(
-                forma_colision(p.tipo, p.medidas, p.escala),
-                transform_pieza(&sin_escala),
-            ));
+            cuerpo.add_child(&nodo_colision(forma_colision(p.tipo, p.medidas, p.escala), transform_pieza(&sin_escala)));
         }
     }
 }

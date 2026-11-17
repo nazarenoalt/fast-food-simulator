@@ -131,12 +131,7 @@ impl Deposito {
     }
 
     pub fn unidades_de(&self, producto: &str) -> u32 {
-        self.lugares
-            .iter()
-            .flatten()
-            .filter(|b| b.def.producto == producto)
-            .map(|b| b.restantes)
-            .sum()
+        self.lugares.iter().flatten().filter(|b| b.def.producto == producto).map(|b| b.restantes).sum()
     }
 }
 

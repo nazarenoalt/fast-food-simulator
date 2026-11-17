@@ -9,18 +9,18 @@ use godot::prelude::*;
 use crate::aderecera::Pomo;
 use crate::bloque_stock::BloqueStock;
 use crate::carrito::Carrito;
+use crate::comida::Comida;
+use crate::dia_noche::DiaNoche;
 use crate::gente::Gente;
+use crate::hervidor::Hervidor;
+use crate::jugador::Jugador;
 use crate::lugar_deposito::LugarDeposito;
+use crate::luz::{GRUPO_LUCES_NOCHE, LuzNocturna};
 use crate::negocio::Negocio;
 use crate::palomas::Palomas;
 use crate::paquete::Paquete;
 use crate::peaton::Peaton;
 use crate::transito::{Autos, Nubes};
-use crate::comida::Comida;
-use crate::dia_noche::DiaNoche;
-use crate::hervidor::Hervidor;
-use crate::jugador::Jugador;
-use crate::luz::{GRUPO_LUCES_NOCHE, LuzNocturna};
 
 #[derive(GodotClass)]
 #[class(base=Node, init)]
@@ -190,7 +190,8 @@ impl INode for PruebaHumo {
                 self.chequear(s.bind().punto() == Some(Punto::Cocido), "CA-COC-02 afuera no se sigue cocinando");
 
                 // CA-ARM-01: pan sobre la mesada, salchicha suelta encima → pancho.
-                let carrito = todos::<Node3D>(&mundo).into_iter().find(|n| n.get_name().to_string() == "Carrito").unwrap();
+                let carrito =
+                    todos::<Node3D>(&mundo).into_iter().find(|n| n.get_name().to_string() == "Carrito").unwrap();
                 let sobre_mesada = carrito.get_global_position() + Vector3::new(0.4, 1.0, 0.0);
                 self.pan = Some(self.agregar_comida("pan_pancho", sobre_mesada));
                 self.esperar(60);
@@ -223,7 +224,8 @@ impl INode for PruebaHumo {
                 self.esperar(10);
             }
             6 => {
-                let salchichas = todos::<Comida>(&mundo).into_iter().filter(|c| c.bind().producto() == "salchicha").count();
+                let salchichas =
+                    todos::<Comida>(&mundo).into_iter().filter(|c| c.bind().producto() == "salchicha").count();
                 self.chequear(salchichas >= 2, "REQ-ARM-04 salchicha + salchicha no se combinan");
 
                 let luces = self.base().get_tree().get_nodes_in_group(GRUPO_LUCES_NOCHE);
@@ -254,7 +256,8 @@ impl INode for PruebaHumo {
                 );
 
                 // ── Etapa 2: ambientación ──
-                let ciudad = todos::<Node3D>(&mundo).into_iter().find(|n| n.get_name().to_string() == "Ciudad").unwrap();
+                let ciudad =
+                    todos::<Node3D>(&mundo).into_iter().find(|n| n.get_name().to_string() == "Ciudad").unwrap();
                 self.chequear(ciudad.get_child_count() > 30, "REQ-AMB-01 hay edificios alrededor");
                 self.autos_antes = todos::<Autos>(&mundo)[0].bind().posiciones();
                 self.nube_antes = todos::<Nubes>(&mundo)[0].bind().posicion_primera();
@@ -308,7 +311,10 @@ impl INode for PruebaHumo {
                     .find(|c| c.bind().producto() == "pancho" && !self.panchos_antes.contains(&c.instance_id()))
                     .expect("se armó el pancho");
                 // CA-ADE-01: le pongo los aderezos del pedido.
-                let pedido = self.pedido.clone().unwrap_or(carrito_core::clientes::Pedido { producto: "pancho".into(), aderezos: vec![] });
+                let pedido = self
+                    .pedido
+                    .clone()
+                    .unwrap_or(carrito_core::clientes::Pedido { producto: "pancho".into(), aderezos: vec![] });
                 let mut ok_usos = true;
                 for a in &pedido.aderezos {
                     let mut pomo = todos::<Pomo>(&mundo).into_iter().find(|p| p.bind().aderezo() == a).expect("pomo");
@@ -319,11 +325,17 @@ impl INode for PruebaHumo {
                 let tiene = pancho.bind().aderezos().to_vec();
                 self.chequear(
                     ok_usos && tiene == pedido.aderezos,
-                    &format!("CA-ADE-01 aderezos puestos y pomos gastados ({tiene:?}) — {}", pancho.bind().descripcion()),
+                    &format!(
+                        "CA-ADE-01 aderezos puestos y pomos gastados ({tiene:?}) — {}",
+                        pancho.bind().descripcion()
+                    ),
                 );
                 let mut repetido = todos::<Pomo>(&mundo).into_iter().find(|p| p.bind().aderezo() == "mostaza").unwrap();
                 if tiene.contains(&"mostaza".to_string()) {
-                    self.chequear(repetido.bind_mut().aplicar(&mut pancho).is_err(), "REQ-ADE-04 no se repite un aderezo");
+                    self.chequear(
+                        repetido.bind_mut().aplicar(&mut pancho).is_err(),
+                        "REQ-ADE-04 no se repite un aderezo",
+                    );
                 }
                 // Lo apoyo en la bandeja.
                 let negocio = todos::<Negocio>(&mundo).pop().unwrap();
@@ -340,12 +352,18 @@ impl INode for PruebaHumo {
                 let (saldo, ventas) = (negocio.bind().saldo(), negocio.bind().ventas_de_hoy());
                 self.chequear(
                     saldo >= self.saldo_antes + 2500.0 && ventas == 1,
-                    &format!("CA-CLI-01 / CA-ECO-01 el cliente pagó (caja {} → {saldo}, ventas {ventas})", self.saldo_antes),
+                    &format!(
+                        "CA-CLI-01 / CA-ECO-01 el cliente pagó (caja {} → {saldo}, ventas {ventas})",
+                        self.saldo_antes
+                    ),
                 );
                 let tasa = self.superpuestos as f32 / self.muestras.max(1) as f32;
                 self.chequear(
                     tasa < 0.05,
-                    &format!("REQ-AMB-13 la gente no se atraviesa ({} encimadas en {} cuadros)", self.superpuestos, self.muestras),
+                    &format!(
+                        "REQ-AMB-13 la gente no se atraviesa ({} encimadas en {} cuadros)",
+                        self.superpuestos, self.muestras
+                    ),
                 );
                 // CA-CLI-02: el siguiente se cansa de esperar.
                 let mut gente = todos::<Gente>(&mundo).pop().unwrap();
@@ -367,7 +385,10 @@ impl INode for PruebaHumo {
                 // CA-ECO-02: sin plata no se compra.
                 negocio.bind_mut().set_saldo(1000.0);
                 let r = negocio.bind_mut().comprar("bolsa_panes_12");
-                self.chequear(r.is_err() && negocio.bind().saldo() == 1000.0, "CA-ECO-02 no se puede comprar sin plata");
+                self.chequear(
+                    r.is_err() && negocio.bind().saldo() == 1000.0,
+                    "CA-ECO-02 no se puede comprar sin plata",
+                );
                 negocio.bind_mut().set_saldo(30_000.0);
                 // CA-PRO-01: compro a las 10:00, llega a las 11:00.
                 let mut dn = todos::<DiaNoche>(&mundo).pop().unwrap();
@@ -392,7 +413,8 @@ impl INode for PruebaHumo {
                 let paquetes = todos::<Paquete>(&mundo);
                 self.chequear(paquetes.len() == self.paquetes_antes + 1, "REQ-PRO-04 a las 11:00 llegó el paquete");
                 // Lo llevo a un lugar libre del estante.
-                let lugar = todos::<LugarDeposito>(&mundo).into_iter().find(|l| !l.bind().ocupado()).expect("lugar libre");
+                let lugar =
+                    todos::<LugarDeposito>(&mundo).into_iter().find(|l| !l.bind().ocupado()).expect("lugar libre");
                 let mut p = paquetes.into_iter().last().unwrap();
                 p.set_global_position(lugar.bind().centro_zona());
                 p.set_global_rotation(Vector3::ZERO);

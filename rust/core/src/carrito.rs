@@ -60,12 +60,24 @@ impl BaseCarrito {
 #[derive(Debug, Clone, PartialEq, Deserialize)]
 pub enum Funcion {
     /// Interior útil (ancho, alto, profundidad) de la cuba.
-    Hervidor { interior: [f32; 3] },
+    Hervidor {
+        interior: [f32; 3],
+    },
     /// Posiciones (relativas al accesorio) donde se apoya cada bloque de stock.
-    Deposito { lugares: Vec<[f32; 3]> },
-    Luz { pos: [f32; 3], color: [f32; 3], energia: f32, alcance: f32 },
+    Deposito {
+        lugares: Vec<[f32; 3]>,
+    },
+    Luz {
+        pos: [f32; 3],
+        color: [f32; 3],
+        energia: f32,
+        alcance: f32,
+    },
     /// Un pomo por aderezo (SPEC-012), separados `separacion` metros en X.
-    Aderezos { tipos: Vec<String>, separacion: f32 },
+    Aderezos {
+        tipos: Vec<String>,
+        separacion: f32,
+    },
 }
 
 /// REQ-CAR-05
@@ -118,17 +130,15 @@ impl fmt::Display for ErrorCarrito {
             AccesorioInexistente { anclaje, accesorio } => {
                 write!(f, "Anclaje \"{anclaje}\": no existe el accesorio \"{accesorio}\"")
             }
-            CategoriaNoPermitida { anclaje, accesorio, categoria, permitidas } => write!(
-                f,
-                "Anclaje \"{anclaje}\": \"{accesorio}\" es {categoria:?}, y ahí solo van {permitidas:?}"
-            ),
+            CategoriaNoPermitida { anclaje, accesorio, categoria, permitidas } => {
+                write!(f, "Anclaje \"{anclaje}\": \"{accesorio}\" es {categoria:?}, y ahí solo van {permitidas:?}")
+            }
             StockSinDeposito { anclaje } => {
                 write!(f, "Stock en \"{anclaje}\", pero ahí no hay un accesorio de depósito")
             }
-            StockDemasiadosBloques { anclaje, lugares, pedidos } => write!(
-                f,
-                "Depósito en \"{anclaje}\" tiene {lugares} lugares y se pidieron {pedidos} bloques"
-            ),
+            StockDemasiadosBloques { anclaje, lugares, pedidos } => {
+                write!(f, "Depósito en \"{anclaje}\" tiene {lugares} lugares y se pidieron {pedidos} bloques")
+            }
             BloqueInexistente { anclaje, bloque } => {
                 write!(f, "Depósito en \"{anclaje}\": no existe el bloque \"{bloque}\"")
             }
@@ -160,20 +170,18 @@ pub fn armar(
     accesorios: &[Accesorio],
     bloques_existentes: &[String],
 ) -> Result<CarritoArmado, ErrorCarrito> {
-    let base = bases
-        .iter()
-        .find(|b| b.id == config.base)
-        .ok_or_else(|| ErrorCarrito::BaseInexistente(config.base.clone()))?;
+    let base =
+        bases.iter().find(|b| b.id == config.base).ok_or_else(|| ErrorCarrito::BaseInexistente(config.base.clone()))?;
 
     // Un BTreeMap ya garantiza un accesorio como máximo por anclaje (REQ-CAR-08).
     let mut colocados = Vec::new();
     for (anclaje_id, acc_id) in &config.accesorios {
-        let anclaje = base.anclaje(anclaje_id).ok_or_else(|| ErrorCarrito::AnclajeInexistente {
-            base: base.id.clone(),
+        let anclaje = base
+            .anclaje(anclaje_id)
+            .ok_or_else(|| ErrorCarrito::AnclajeInexistente { base: base.id.clone(), anclaje: anclaje_id.clone() })?;
+        let acc = accesorios.iter().find(|a| &a.id == acc_id).ok_or_else(|| ErrorCarrito::AccesorioInexistente {
             anclaje: anclaje_id.clone(),
-        })?;
-        let acc = accesorios.iter().find(|a| &a.id == acc_id).ok_or_else(|| {
-            ErrorCarrito::AccesorioInexistente { anclaje: anclaje_id.clone(), accesorio: acc_id.clone() }
+            accesorio: acc_id.clone(),
         })?;
         if !anclaje.categorias.contains(&acc.categoria) {
             return Err(ErrorCarrito::CategoriaNoPermitida {

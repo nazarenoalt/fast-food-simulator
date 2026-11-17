@@ -120,7 +120,12 @@ impl INode3D for Ciudad {
         // Veredas de enfrente, laterales y sur.
         let mut yo = self.to_gd().upcast::<Node3D>();
         let sup = |yo: &mut Gd<Node3D>, ancho: f32, largo: f32, x: f32, z: f32, c: [f32; 3]| {
-            yo.add_child(&formas::visual_pieza(&formas::pieza(TipoPieza::Caja, [ancho, 0.01, largo], [x, 0.006, z], c)));
+            yo.add_child(&formas::visual_pieza(&formas::pieza(
+                TipoPieza::Caja,
+                [ancho, 0.01, largo],
+                [x, 0.006, z],
+                c,
+            )));
         };
         sup(&mut yo, 120.0, 4.0, 0.0, ciudad::Z_VEREDA_ENFRENTE, VEREDA);
         sup(&mut yo, 4.0, 52.0, ciudad::X_FACHADA_ESTE - 2.0, 5.0, VEREDA);
@@ -137,7 +142,12 @@ impl INode3D for Ciudad {
         for x in SENDAS {
             let mut z = plaza::Z_CALLE - plaza::ANCHO_CALLE / 2.0 + 0.5;
             while z < plaza::Z_CALLE + plaza::ANCHO_CALLE / 2.0 {
-                yo.add_child(&formas::visual_pieza(&formas::pieza(TipoPieza::Caja, [3.0, 0.01, 0.5], [x, 0.009, z], [0.92, 0.92, 0.9])));
+                yo.add_child(&formas::visual_pieza(&formas::pieza(
+                    TipoPieza::Caja,
+                    [3.0, 0.01, 0.5],
+                    [x, 0.009, z],
+                    [0.92, 0.92, 0.9],
+                )));
                 z += 1.0;
             }
         }

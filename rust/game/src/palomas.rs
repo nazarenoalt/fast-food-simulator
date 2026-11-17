@@ -73,24 +73,44 @@ impl INode3D for Palomas {
             let mut cuerpo = formas::pieza(TipoPieza::Esfera, [0.09, 0.0, 0.0], [0.0, 0.11, 0.0], gris);
             cuerpo.escala = [0.8, 0.75, 1.3];
             nodo.add_child(&formas::visual_pieza(&cuerpo));
-            nodo.add_child(&formas::visual_pieza(&formas::pieza(TipoPieza::Caja, [0.07, 0.02, 0.1], [0.0, 0.13, -0.13], [0.3, 0.3, 0.33])));
+            nodo.add_child(&formas::visual_pieza(&formas::pieza(
+                TipoPieza::Caja,
+                [0.07, 0.02, 0.1],
+                [0.0, 0.13, -0.13],
+                [0.3, 0.3, 0.33],
+            )));
             let mut cabeza = Node3D::new_alloc();
             cabeza.set_position(Vector3::new(0.0, 0.17, 0.08));
-            cabeza.add_child(&formas::visual_pieza(&formas::pieza(TipoPieza::Esfera, [0.045, 0.0, 0.0], [0.0, 0.0, 0.02], [0.35, 0.38, 0.45])));
-            cabeza.add_child(&formas::visual_pieza(&formas::pieza(TipoPieza::Caja, [0.015, 0.012, 0.03], [0.0, -0.005, 0.07], [0.9, 0.7, 0.3])));
+            cabeza.add_child(&formas::visual_pieza(&formas::pieza(
+                TipoPieza::Esfera,
+                [0.045, 0.0, 0.0],
+                [0.0, 0.0, 0.02],
+                [0.35, 0.38, 0.45],
+            )));
+            cabeza.add_child(&formas::visual_pieza(&formas::pieza(
+                TipoPieza::Caja,
+                [0.015, 0.012, 0.03],
+                [0.0, -0.005, 0.07],
+                [0.9, 0.7, 0.3],
+            )));
             nodo.add_child(&cabeza);
             let mut alas = Vec::new();
             for s in [-1.0_f32, 1.0] {
                 let mut piv = Node3D::new_alloc();
                 piv.set_position(Vector3::new(s * 0.06, 0.14, 0.0));
-                piv.add_child(&formas::visual_pieza(&formas::pieza(TipoPieza::Caja, [0.16, 0.012, 0.11], [s * 0.08, 0.0, 0.0], gris)));
+                piv.add_child(&formas::visual_pieza(&formas::pieza(
+                    TipoPieza::Caja,
+                    [0.16, 0.012, 0.11],
+                    [s * 0.08, 0.0, 0.0],
+                    gris,
+                )));
                 nodo.add_child(&piv);
                 alas.push(piv);
             }
             let pos = self.lugar_al_azar();
             self.base_mut().add_child(&nodo);
             nodo.set_global_position(pos);
-            nodo.set_rotation(Vector3::new(0.0, self.azar.rango(0.0, 6.28), 0.0));
+            nodo.set_rotation(Vector3::new(0.0, self.azar.rango(0.0, std::f32::consts::TAU), 0.0));
             let t = self.azar.rango(0.0, 5.0);
             self.palomas.push(Paloma { nodo, cabeza, alas, estado: Estado::Suelo, t, desde: pos, hasta: pos });
         }

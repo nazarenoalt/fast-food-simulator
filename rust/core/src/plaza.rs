@@ -47,9 +47,8 @@ pub fn distribucion() -> Vec<Prop> {
     // Árboles en los cuatro cuadrantes, en una grilla con corrimiento fijo.
     for &sx in &[-1.0_f32, 1.0] {
         for &sz in &[-1.0_f32, 1.0] {
-            for (i, &(a, b)) in [(6.5, 6.5), (12.0, 7.0), (7.0, 12.5), (15.5, 15.0), (11.5, 16.5), (16.5, 10.5)]
-                .iter()
-                .enumerate()
+            for (i, &(a, b)) in
+                [(6.5, 6.5), (12.0, 7.0), (7.0, 12.5), (15.5, 15.0), (11.5, 16.5), (16.5, 10.5)].iter().enumerate()
             {
                 let corr = (i as f32 * 0.37).sin() * 0.8;
                 v.push(Prop { tipo: TipoProp::Arbol, x: sx * (a + corr), z: sz * (b - corr), rot_y: i as f32 * 47.0 });
