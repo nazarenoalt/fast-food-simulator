@@ -33,7 +33,7 @@ import bmesh  # noqa: E402
 
 import _ciudad as ciudad  # noqa: E402
 import _fachada as fa  # noqa: E402
-from _fachada import CARPINTERIA, CLARO, HIERRO, MURO, PROF  # noqa: E402
+from _fachada import CARPINTERIA, MURO, PROF  # noqa: E402
 import comun  # noqa: E402
 
 P = {
@@ -47,24 +47,6 @@ PUERTA = (1.2, 2.6)
 VENTANA_PB = (0.95, 2.45)
 
 
-def puerta(bm, f, x, ancho, alto, zf):
-    """Puerta de madera de dos hojas con tableros y banderola, con jambas y dintel claros."""
-    xa, xb = x - ancho / 2, x + ancho / 2
-    hoja = 2.15
-    ciudad.rectangulo(bm, xa, xb, 0, hoja, zf, CARPINTERIA)
-    f.vidrio(xa, xb, hoja, alto, zf)
-    ciudad.caja_frente(bm, (ancho, 0.08, 0.05), (x, hoja + 0.04, zf + 0.025), CARPINTERIA)
-    ciudad.caja_frente(bm, (0.03, hoja, 0.03), (x, hoja / 2, zf + 0.015), CARPINTERIA,
-                       sin_abajo=True, sin_arriba=True)
-    for s in (-1, 1):
-        for ya, yb in ((0.2, 0.95), (1.15, 1.95)):
-            ciudad.caja_frente(bm, (0.36, yb - ya, 0.03), (x + s * ancho / 4, (ya + yb) / 2, zf + 0.015),
-                               CARPINTERIA)
-        ciudad.caja_frente(bm, (0.16, alto, 0.05), (x + s * (ancho / 2 + 0.08), alto / 2, 0.025), CLARO,
-                           fa.BISEL_FINO, sin_abajo=True)
-    ciudad.caja_frente(bm, (ancho + 0.5, 0.2, 0.09), (x, alto + 0.1, 0.045), CLARO, fa.BISEL_FINO)
-
-
 def planta_baja(f):
     bm = bmesh.new()
     xp = fa.col_x(0)
@@ -72,7 +54,7 @@ def planta_baja(f):
     vanos += [(fa.col_x(c) - 0.55, fa.col_x(c) + 0.55, *VENTANA_PB) for c in (1, 2, 3)]
     fondos = ciudad.muro_con_vanos(bm, -fa.ANCHO / 2, fa.ANCHO / 2, 0, fa.ALTO_PB, vanos, PROF, MURO,
                                    espesor=fa.ESPESOR)
-    puerta(bm, f, xp, PUERTA[0], PUERTA[1], fondos[0][4])
+    fa.puerta_madera(bm, f, xp, PUERTA[0], PUERTA[1], fondos[0][4])
     for xa, xb, ya, yb, zf in fondos[1:]:
         x = (xa + xb) / 2
         f.vidrio(xa, xb, ya, yb, zf)

@@ -85,7 +85,7 @@ def muro_con_vanos(bm, x0, x1, y0, y1, vanos, prof, mat=0, mat_jamba=None, z=0.0
                    espesor=0.0, costados=(True, True)):
     """Paño de pared en el plano z (Godot), de x0 a x1 y de y0 a y1, mirando a +Z.
 
-    vanos = [(xa, xb, ya, yb)]: agujeros. Cada vano lleva su jamba (4 caras hacia adentro, de
+    vanos = [(xa, xb, ya, yb)] o [(xa, xb, ya, yb, hondo)]: agujeros. Cada vano lleva su jamba (4 caras hacia adentro, de
     `prof` de hondo); si el vano toca y0 (puerta), no lleva jamba abajo (es el piso).
     espesor > 0: agrega los costados (retornos) del paño en x0 y x1, hacia atrás.
     Las caras de arriba y abajo del paño no se crean: los módulos se apilan (guía 3.6).
@@ -116,8 +116,9 @@ def muro_con_vanos(bm, x0, x1, y0, y1, vanos, prof, mat=0, mat_jamba=None, z=0.0
                 continue
             cara((vs[i, j], vs[i + 1, j], vs[i + 1, j + 1], vs[i, j + 1]), mat, frente)
     fondos = []
-    for xa, xb, ya, yb in vanos:
-        zf = z - prof
+    for v in vanos:
+        xa, xb, ya, yb = v[:4]
+        zf = z - (v[4] if len(v) > 4 else prof)
         atras = {}
 
         def va(i, j):
@@ -186,11 +187,32 @@ def perfil_segmentado(bm, perfil, xs, mats, tapas=True):
     return nuevas
 
 
+def terminar(nombre, bm, materiales, sombreado="duro"):
+    """Como piezas.terminar, pero SIN recalcular las normales: acá hay piezas abiertas a
+    propósito (paños de pared con vanos, vidrios, chapas) cuyas caras ya se arman mirando
+    hacia afuera, y el recálculo de Blender en una malla abierta las puede dar vuelta (un
+    vidrio suelto quedaba mirando hacia la pared). Las piezas cerradas (cajas, perfiles,
+    caños) ya salen con las normales bien de piezas.py, _plaza.py y perfil_segmentado()."""
+    bmesh.ops.remove_doubles(bm, verts=bm.verts, dist=1e-6)
+    for f in bm.faces:
+        f.smooth = sombreado != "plano"
+    if sombreado != "plano":
+        for e in bm.edges:
+            caras = e.link_faces
+            if len(caras) != 2:
+                e.smooth = sombreado == "suave"
+                continue
+            distinto = caras[0].material_index != caras[1].material_index
+            angulo = caras[0].normal.angle(caras[1].normal, 0.0)
+            e.smooth = not (distinto or (sombreado == "duro" and angulo > piezas.ANGULO_DURO))
+    return comun.objeto_desde_bmesh(nombre, bm, materiales)
+
+
 def terminar_en(nombre, bm, materiales, origen=(0.0, 0.0, 0.0), sombreado="duro"):
-    """piezas.terminar, con el origen del objeto en `origen` (Godot): la malla se corre para
+    """terminar(), con el origen del objeto en `origen` (Godot): la malla se corre para
     que quede en el mismo lugar del mundo. Para módulos que se apilan y piezas que giran."""
     bmesh.ops.translate(bm, vec=-g2b(origen), verts=bm.verts)
-    obj = piezas.terminar(nombre, bm, materiales, sombreado=sombreado)
+    obj = terminar(nombre, bm, materiales, sombreado=sombreado)
     obj.location = g2b(origen)
     return obj
 
@@ -216,6 +238,72 @@ def chequeo_materiales(objetos, max_total, max_objeto=4, por_que=""):
         len(nombres), max_total, por_que, peor, max_objeto)
 
 
+def chequeo_normales(objetos, frente=True, centro=None):
+    """Reemplazo de "Normales hacia afuera" para modelos con piezas abiertas a propósito.
+
+    Se mira cada parte suelta (isla de caras) de cada objeto:
+    - cerrada (toda arista con dos caras): volumen con signo > 0;
+    - abierta: las caras miran, en promedio, hacia afuera de su centro (Σ área·n·(c − centro)
+      > 0) y, si frente=True, toda cara apoyada en el plano z = 0 de Godot mira a +Z (paños
+      de pared) y todo vidrio o paño suelto plano mira a +Z.
+    centro = punto de Godot: las partes abiertas se miran contra ese centro (no el propio):
+    para cáscaras partidas en varios objetos, como la carrocería y los vidrios de un auto.
+    comun.revisar() suma el volumen de todo el objeto, y en una malla abierta eso depende de
+    dónde está el origen (un vidrio detrás del origen da negativo aunque mire bien)."""
+    malas = []
+    centro_ref = centro
+    for o in objetos:
+        bm = bmesh.new()
+        bm.from_mesh(o.data)
+        bm.transform(o.matrix_world)
+        bm.normal_update()
+        vistas = set()
+        for f0 in bm.faces:
+            if f0.index in vistas:
+                continue
+            isla, pila = [], [f0]
+            vistas.add(f0.index)
+            while pila:
+                f = pila.pop()
+                isla.append(f)
+                for e in f.edges:
+                    for g in e.link_faces:
+                        if g.index not in vistas:
+                            vistas.add(g.index)
+                            pila.append(g)
+            cerrada = all(len(e.link_faces) == 2 for f in isla for e in f.edges)
+            if cerrada:
+                vol = 0.0
+                for f in isla:
+                    v = [x.co for x in f.verts]
+                    for i in range(1, len(v) - 1):
+                        vol += v[0].dot(v[i].cross(v[i + 1])) / 6
+                if vol <= 0:
+                    malas.append(f"{o.name} (pieza cerrada al revés)")
+                continue
+            area = sum(f.calc_area() for f in isla)
+            centro = sum((f.calc_center_median() * f.calc_area() for f in isla), Vector()) / area
+            ref = g2b(centro_ref) if centro_ref is not None else centro
+            puntaje = sum(f.calc_area() * f.normal.dot(f.calc_center_median() - ref) for f in isla)
+            plana = all(abs(f.normal.dot(isla[0].normal)) > 0.999 for f in isla)
+            if plana and centro_ref is None:
+                if frente and isla[0].normal.y > -0.999:
+                    malas.append(f"{o.name} (paño plano que no mira al frente)")
+                continue
+            if puntaje < -1e-9:
+                malas.append(f"{o.name} (pieza abierta hacia adentro)")
+            if frente:
+                for f in isla:
+                    if abs(f.normal.y) > 0.999 and all(abs(v.co.y) < 1e-6 for v in f.verts) \
+                            and f.normal.y > 0:
+                        malas.append(f"{o.name} (cara del paño mirando hacia atrás)")
+                        break
+        bm.free()
+    malas = list(dict.fromkeys(malas))
+    return not malas, "Normales hacia afuera (chequeo propio por partes: cerradas con volumen > 0, " \
+        "abiertas hacia afuera y paños mirando al frente)" + (": MAL en " + ", ".join(malas) if malas else "")
+
+
 # ── Archivos y hoja ────────────────────────────────────────────────────
 
 def guardar_y_exportar(id_, exportar):
@@ -223,10 +311,11 @@ def guardar_y_exportar(id_, exportar):
     comun.exportar_glb(exportar, comun.RAIZ / f"godot/modelos/{FAMILIA}/{id_}.glb")
 
 
-def hoja(id_, titulo, cuadros_pedidos, revision, persona_en=None, sin_piso=False):
+def hoja(id_, titulo, cuadros_pedidos, revision, persona_en=None, sin_piso=False, antes=None):
     """Como _plaza.hoja, con dos agregados: cada pedido puede traer un sexto elemento, la
     lista de objetos a encuadrar (si no, se encuadra lo que se ve), y sin_piso=True esconde
-    el piso de referencia (nubes)."""
+    el piso de referencia (nubes). antes = {i: función} se llama antes de la foto i (para
+    mover una pieza, ej. bajar la cortina)."""
     import tempfile
     comun.preparar_revision()
     if sin_piso:
@@ -240,7 +329,9 @@ def hoja(id_, titulo, cuadros_pedidos, revision, persona_en=None, sin_piso=False
     tmp = Path(tempfile.mkdtemp())
     todos = {o for pedido in cuadros_pedidos for o in cambiar(pedido[1])}
     cuadros = []
-    for pedido in cuadros_pedidos:
+    for i, pedido in enumerate(cuadros_pedidos):
+        if antes and i in antes:
+            antes[i]()
         etiqueta, objs, vista, luz, de_cerca = pedido[:5]
         objs = cambiar(objs)
         encuadre = cambiar(pedido[5]) if len(pedido) > 5 else objs

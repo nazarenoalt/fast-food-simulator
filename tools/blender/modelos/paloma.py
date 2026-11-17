@@ -29,18 +29,18 @@ Colores (no hay grises de paloma en la paleta, se usan los más parecidos):
                             del cuello), franja de las alas y puntas, franja de la cola
     M_Terracota (#B4623E)   patas
 
-Medidas: 0,12 × 0,19 × 0,30 (la lista dice ≈ 0,1 × 0,15 × 0,25, que es chica para una paloma
+Medidas: 0,12 × 0,19 × 0,29 (la lista dice ≈ 0,1 × 0,15 × 0,25, que es chica para una paloma
 de verdad: 30–35 cm de largo; la de hoy en el juego mide 0,35 de largo y 0,215 de alto).
 Origen: en el piso, entre las patas (las patas apoyan en Y = 0 y están centradas en X y Z; la
 cola corre la caja envolvente hacia atrás: chequeo propio).
 
 Objetos (hijos del Empty `paloma`), sin esqueleto, como hoy en el código:
     paloma_cuerpo     cuerpo, cola y patas.
-    pieza_cabeza      cabeza, pico y cuello. Origen en la base del cuello (0; 0,135; 0,045):
+    pieza_cabeza      cabeza, pico y cuello. Origen en la base del cuello (0; 0,122; 0,045):
                       girando en X (positivo = baja la cabeza) picotea. El cuello entra en el
                       cuerpo, así no se abre un hueco al girar.
-    pieza_ala_izq     ala izquierda de la paloma (+X), origen en el hombro (+0,040; 0,140; 0,040).
-    pieza_ala_der     ala derecha (−X), origen en (−0,040; 0,140; 0,040).
+    pieza_ala_izq     ala izquierda de la paloma (+X), origen en el hombro (+0,040; 0,125; 0,038).
+    pieza_ala_der     ala derecha (−X), origen en (−0,040; 0,125; 0,038).
                       Plegadas a lo largo del cuerpo. Para volar: abrirlas girando en Y
                       (izq −80°, der +80°: la punta va hacia el costado) y aletear girando en Z
                       en ejes del cuerpo (después de abrir; ver el informe).
@@ -205,8 +205,8 @@ def revisar(m):
     medidas = (round(d.x, 3), round(d.y, 3), round(d.z, 3))
     res = comun.revisar(visibles(m), PRESUPUESTO, medidas, origen="base")
     res = an.reemplazar(res, "Medidas", abs(d.x - 0.12) < 0.006 and abs(d.y - 0.19) < 0.006
-                        and abs(d.z - 0.30) < 0.008,
-                        "Medidas %.3f × %.3f × %.3f m (≈ 0,12 × 0,19 × 0,30: paloma bravía; "
+                        and abs(d.z - 0.29) < 0.006,
+                        "Medidas %.3f × %.3f × %.3f m (≈ 0,12 × 0,19 × 0,29: paloma bravía; "
                         "la de hoy en el juego, 0,14 × 0,215 × 0,35)" % (d.x, d.y, d.z))
     ok, texto = an.chequeo_patas([m["cuerpo"]])
     res = an.reemplazar(res, "Origen", ok, texto)
@@ -243,7 +243,7 @@ def main():
     if "--sin-hoja" not in sys.argv:
         v = visibles(m)
         quieta = pose(m)
-        an.hoja(ID, "paloma · 0,12 × 0,19 × 0,30 m · picotea y sale volando (SPEC-013)", [
+        an.hoja(ID, "paloma · 0,12 × 0,19 × 0,29 m · picotea y sale volando (SPEC-013)", [
             ("Costado (silueta) · día", v, "costado", "dia", quieta),
             ("Frente · día", v, "frente", "dia", quieta),
             ("3/4 · día", v, "tres_cuartos", "dia", quieta),

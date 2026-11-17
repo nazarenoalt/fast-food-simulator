@@ -66,6 +66,24 @@
         {"nombre": "M_LuzCalida", "hex": "#FFBF73", "metalico": 0.0, "rugosidad": 0.5, "emision": 2.0},
         {"nombre": "M_LuzFarol", "hex": "#FFD18C", "metalico": 0.0, "rugosidad": 0.5, "emision": 2.0}
       ]
+    },
+    {
+      "nombre": "Personajes",
+      "materiales": [
+        {"nombre": "M_Piel1", "hex": "#EBC3A0", "metalico": 0.0, "rugosidad": 0.6},
+        {"nombre": "M_Piel2", "hex": "#D19C74", "metalico": 0.0, "rugosidad": 0.6},
+        {"nombre": "M_Piel3", "hex": "#A46E4C", "metalico": 0.0, "rugosidad": 0.6},
+        {"nombre": "M_Piel4", "hex": "#664332", "metalico": 0.0, "rugosidad": 0.6},
+        {"nombre": "M_PeloNegro", "hex": "#231D19", "metalico": 0.0, "rugosidad": 0.8},
+        {"nombre": "M_PeloCastano", "hex": "#533824", "metalico": 0.0, "rugosidad": 0.8},
+        {"nombre": "M_PeloRubio", "hex": "#B89560", "metalico": 0.0, "rugosidad": 0.8},
+        {"nombre": "M_PeloCanoso", "hex": "#A9A6A0", "metalico": 0.0, "rugosidad": 0.8},
+        {"nombre": "M_Jean", "hex": "#3A4A66", "metalico": 0.0, "rugosidad": 0.9},
+        {"nombre": "M_TelaGris", "hex": "#5C5F66", "metalico": 0.0, "rugosidad": 0.9},
+        {"nombre": "M_TelaBeige", "hex": "#A39478", "metalico": 0.0, "rugosidad": 0.9},
+        {"nombre": "M_TelaVerde", "hex": "#55684A", "metalico": 0.0, "rugosidad": 0.9},
+        {"nombre": "M_TelaBordo", "hex": "#7A3038", "metalico": 0.0, "rugosidad": 0.9}
+      ]
     }
   ]
 }

@@ -272,6 +272,11 @@ base (el hex ya está en el espacio de color correcto; no copiar los números de
 | `M_Pizarra` | `#141A14` | 0 | 0,9 | Pizarras. |
 | `M_LuzCalida` | `#FFBF73` | 0 | 0,5 | Lamparitas del carrito (emisión). |
 | `M_LuzFarol` | `#FFD18C` | 0 | 0,5 | Faroles de la plaza (emisión). |
+| **Personajes** |||||
+| `M_Piel1/2/3/4` | `#EBC3A0` `#D19C74` `#A46E4C` `#664332` | 0 | 0,6 | Tonos de piel, de claro a oscuro. **El juego elige uno por persona.** |
+| `M_PeloNegro` `M_PeloCastano` `M_PeloRubio` `M_PeloCanoso` | `#231D19` `#533824` `#B89560` `#A9A6A0` | 0 | 0,8 | Pelo y cejas. **El juego elige uno por persona.** |
+| `M_Jean` | `#3A4A66` | 0 | 0,9 | Pantalones de jean. |
+| `M_TelaGris` `M_TelaBeige` `M_TelaVerde` `M_TelaBordo` | `#5C5F66` `#A39478` `#55684A` `#7A3038` | 0 | 0,9 | Ropa de colores apagados (remeras, camisas, pantalones, zapatillas). La ropa también puede usar los acentos y `M_BlancoCrema`. |
 
 ### 4.2 Reglas de color
 

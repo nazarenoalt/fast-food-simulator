@@ -72,21 +72,28 @@ def anillo(centro, normal, ancho, alto, lados, arriba=(0, 1, 0), abajo=None, fas
 def lofteo(bm, anillos, mats=0, punta_ini=None, punta_fin=None, mat_ini=None, mat_fin=None):
     """Une anillos (listas de puntos de Godot, misma cantidad) con caras.
 
-    mats = material de cada banda (número o lista, una por banda entre anillos).
+    mats = material de cada banda (número o lista, una por banda entre anillos), o una
+    función mats(banda, k) para pintar por cara (k = punto del anillo donde arranca la cara;
+    con fase 0, k = 0 es el lomo y k = lados/2 la panza).
     punta_ini / punta_fin = punto (Godot) al que se cierra cada extremo en abanico; None =
     tapa plana. mat_ini / mat_fin = material de esas puntas (por defecto, el de la banda
     vecina). Devuelve las caras nuevas.
     """
     n_b = len(anillos) - 1
-    mats = mats if isinstance(mats, (list, tuple)) else [mats] * n_b
+    if callable(mats):
+        por_cara = mats
+    else:
+        lista = mats if isinstance(mats, (list, tuple)) else [mats] * n_b
+        def por_cara(i, k):
+            return lista[i]
     previas = set(bm.faces)
     vs = [[bm.verts.new(g2b(p)) for p in a] for a in anillos]
     n = len(vs[0])
     for i, (a, b) in enumerate(zip(vs, vs[1:])):
         for k in range(n):
-            bm.faces.new((a[k], a[(k + 1) % n], b[(k + 1) % n], b[k])).material_index = mats[i]
-    for punta, a, m in ((punta_ini, vs[0], mats[0] if mat_ini is None else mat_ini),
-                        (punta_fin, vs[-1], mats[-1] if mat_fin is None else mat_fin)):
+            bm.faces.new((a[k], a[(k + 1) % n], b[(k + 1) % n], b[k])).material_index = por_cara(i, k)
+    for punta, a, m in ((punta_ini, vs[0], por_cara(0, 0) if mat_ini is None else mat_ini),
+                        (punta_fin, vs[-1], por_cara(n_b - 1, 0) if mat_fin is None else mat_fin)):
         if punta is None:
             bm.faces.new(a).material_index = m
         else:

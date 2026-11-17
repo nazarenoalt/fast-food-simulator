@@ -120,6 +120,46 @@ def moldura_pb(bm):
     ciudad.caja_frente(bm, (ANCHO, 0.18, 0.12), (0, ALTO_PB, 0.06), CLARO, BISEL)
 
 
+def puerta_madera(bm, f, x, ancho, alto, zf):
+    """Puerta de madera de dos hojas con tableros y banderola, con jambas y dintel claros."""
+    xa, xb = x - ancho / 2, x + ancho / 2
+    hoja = 2.15
+    ciudad.rectangulo(bm, xa, xb, 0, hoja, zf, CARPINTERIA)
+    f.vidrio(xa, xb, hoja, alto, zf)
+    ciudad.caja_frente(bm, (ancho, 0.08, 0.05), (x, hoja + 0.04, zf + 0.025), CARPINTERIA)
+    ciudad.caja_frente(bm, (0.03, hoja, 0.03), (x, hoja / 2, zf + 0.015), CARPINTERIA,
+                       sin_abajo=True, sin_arriba=True)
+    for s in (-1, 1):
+        for ya, yb in ((0.2, 0.95), (1.15, 1.95)):
+            ciudad.caja_frente(bm, (0.36, yb - ya, 0.03), (x + s * ancho / 4, (ya + yb) / 2, zf + 0.015),
+                               CARPINTERIA)
+        ciudad.caja_frente(bm, (0.16, alto, 0.05), (x + s * (ancho / 2 + 0.08), alto / 2, 0.025), CLARO,
+                           BISEL_FINO, sin_abajo=True)
+    ciudad.caja_frente(bm, (ancho + 0.5, 0.2, 0.09), (x, alto + 0.1, 0.045), CLARO, BISEL_FINO)
+
+
+def puerta_hierro(bm, f, x, ancho, alto, zf, jambas=True):
+    """Puerta de hierro y vidrio de dos hojas (entrada a los pisos de arriba), con banderola."""
+    xa, xb = x - ancho / 2, x + ancho / 2
+    zb = zf + 0.02
+    g = 0.05
+    ciudad.rectangulo(bm, xa, xb, 0, 0.9, zf, HIERRO)
+    f.vidrio(xa, xb, 0.9, alto, zf)
+    for bx in (xa + g / 2, x, xb - g / 2):
+        ciudad.barra(bm, (bx, 0.9, zb), (bx, alto, zb), g, HIERRO)
+    for y in (0.9, 2.2):
+        ciudad.barra(bm, (xa, y, zb), (xb, y, zb), g, HIERRO)
+    for s in (-1, 1):  # barrotes de las hojas
+        for k in (1, 2):
+            bx = x + s * ancho / 2 * k / 3
+            ciudad.barra(bm, (bx, 0.9, zb), (bx, 2.2, zb), 0.025, HIERRO)
+        if jambas:
+            ciudad.caja_frente(bm, (0.16, alto, 0.05), (x + s * (ancho / 2 + 0.08), alto / 2, 0.025), CLARO,
+                               BISEL_FINO, sin_abajo=True)
+    if jambas:
+        ciudad.caja_frente(bm, (ancho + 0.5, 0.2, 0.09), (x, alto + 0.1, 0.045), CLARO, BISEL_FINO)
+
+
 # ── Armado ─────────────────────────────────────────────────────────────
 
 class Fachada:
@@ -177,7 +217,7 @@ class Fachada:
                     ciudad.rectangulo(bm, xa, xb, ya, yb, z)
             mat = self.mats[len(self.mats) - 1] if prende else self.mats[HIERRO]
             if bm.faces:
-                o = piezas.terminar(nombre, bm, [mat])
+                o = ciudad.terminar(nombre, bm, [mat])
                 self.objetos.append(o)
                 setattr(self, "luz" if prende else "oscuras", o)
 
@@ -200,6 +240,8 @@ def revisar(f, medidas):
                             "Origen en el centro de la base del plano de la fachada (x de %.2f a "
                             "%.2f, piso en %.3f, muro de z %.2f a 0; adelante sale %.2f)" % (
                                 mn.x, mx.x, mn.y, mn.z, mx.z))
+    ok, texto = ciudad.chequeo_normales(f.objetos)
+    res = ciudad.reemplazar(res, "Normales", ok, texto)
     ok, texto = ciudad.chequeo_materiales(f.objetos, 6, max_objeto=5,
                                          por_que=": fachada armada, como una base de carrito")
     res = ciudad.reemplazar(res, "Materiales: ", ok, texto)
@@ -235,7 +277,7 @@ def fotos(f, extra=()):
     ] + list(extra)
 
 
-def main(f, medidas, titulo, extra_fotos=(), antes_fotos=None):
+def main(f, medidas, titulo, extra_fotos=(), antes_fotos=None, entre_fotos=None):
     revision = revisar(f, medidas)
     ok = comun.imprimir_revision(f.p["id"], revision)
     ciudad.guardar_y_exportar(f.p["id"], [f.raiz_obj] + f.objetos + f.extras)
@@ -243,6 +285,7 @@ def main(f, medidas, titulo, extra_fotos=(), antes_fotos=None):
         if antes_fotos:
             antes_fotos()
         bpy.context.view_layer.update()
-        ciudad.hoja(f.p["id"], titulo, fotos(f, extra_fotos), revision, persona_en=(-2.2, 0, 1.2))
+        ciudad.hoja(f.p["id"], titulo, fotos(f, extra_fotos), revision, persona_en=(-2.2, 0, 1.2),
+                   antes=entre_fotos)
     if not ok:
         sys.exit(1)
