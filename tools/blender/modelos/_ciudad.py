@@ -223,21 +223,37 @@ def guardar_y_exportar(id_, exportar):
     comun.exportar_glb(exportar, comun.RAIZ / f"godot/modelos/{FAMILIA}/{id_}.glb")
 
 
-def hoja(id_, titulo, cuadros, revision, persona_en=None, sin_piso=False):
-    """Como _plaza.hoja. sin_piso=True esconde el piso de referencia (nubes)."""
+def hoja(id_, titulo, cuadros_pedidos, revision, persona_en=None, sin_piso=False):
+    """Como _plaza.hoja, con dos agregados: cada pedido puede traer un sexto elemento, la
+    lista de objetos a encuadrar (si no, se encuadra lo que se ve), y sin_piso=True esconde
+    el piso de referencia (nubes)."""
+    import tempfile
+    comun.preparar_revision()
     if sin_piso:
-        viejo = comun.preparar_revision
+        bpy.data.objects["ref_piso"].hide_render = True
+    persona = bpy.data.objects["ref_persona_1,75m"]
+    if persona_en is not None:
+        persona.location = g2b(persona_en)
 
-        def preparar():
-            viejo()
-            bpy.data.objects["ref_piso"].hide_render = True
-        comun.preparar_revision = preparar
-        try:
-            plaza.hoja(id_, titulo, cuadros, revision, persona_en=persona_en)
-        finally:
-            comun.preparar_revision = viejo
-    else:
-        plaza.hoja(id_, titulo, cuadros, revision, persona_en=persona_en)
+    def cambiar(objs):
+        return [persona if o == "persona" else o for o in objs]
+    tmp = Path(tempfile.mkdtemp())
+    todos = {o for pedido in cuadros_pedidos for o in cambiar(pedido[1])}
+    cuadros = []
+    for pedido in cuadros_pedidos:
+        etiqueta, objs, vista, luz, de_cerca = pedido[:5]
+        objs = cambiar(objs)
+        encuadre = cambiar(pedido[5]) if len(pedido) > 5 else objs
+        comun.poner_luz(luz)
+        for o in todos:
+            o.hide_render = o not in objs
+        bpy.context.view_layer.update()
+        if vista in plaza.PERSPECTIVAS:
+            plaza.encuadre_ajustado(encuadre, vista)
+        else:
+            comun.encuadrar(encuadre, vista, de_cerca=de_cerca)
+        cuadros.append((etiqueta, comun.render(tmp / f"{len(cuadros)}.png")))
+    comun.componer_hoja(titulo, cuadros, revision, comun.RAIZ / f"docs/arte/revisiones/{id_}.jpg")
 
 
 m = plaza.m

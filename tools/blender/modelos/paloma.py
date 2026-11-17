@@ -66,17 +66,17 @@ CUERPO, ALA, OSCURO, PATA = range(4)
 # Cortes del cuerpo (planos z = cte), de adelante (pecho) hacia atrás (punta de la cola):
 # (z, centro y, medio alto arriba, medio alto abajo, medio ancho)
 CORTES = [
-    (0.070, 0.124, 0.034, 0.036, 0.036),
-    (0.045, 0.114, 0.048, 0.056, 0.052),
-    (0.008, 0.106, 0.047, 0.050, 0.058),
-    (-0.035, 0.103, 0.038, 0.036, 0.048),
-    (-0.072, 0.100, 0.022, 0.018, 0.033),
-    (-0.100, 0.096, 0.010, 0.007, 0.030),
-    (-0.165, 0.078, 0.005, 0.004, 0.042),
+    (0.072, 0.112, 0.036, 0.034, 0.036),
+    (0.048, 0.100, 0.050, 0.054, 0.052),
+    (0.008, 0.091, 0.047, 0.050, 0.058),
+    (-0.035, 0.088, 0.038, 0.036, 0.048),
+    (-0.072, 0.086, 0.022, 0.018, 0.034),
+    (-0.100, 0.082, 0.010, 0.007, 0.032),
+    (-0.172, 0.063, 0.005, 0.004, 0.045),
 ]
-PECHO = (0.0, 0.130, 0.090)        # punta del abanico de adelante del cuerpo
-CUELLO = (0.0, 0.135, 0.045)       # pivote de pieza_cabeza
-HOMBRO = (0.040, 0.140, 0.040)     # pivote de pieza_ala_izq (der: x negativa)
+PECHO = (0.0, 0.118, 0.090)        # punta del abanico de adelante del cuerpo
+CUELLO = (0.0, 0.122, 0.045)       # pivote de pieza_cabeza
+HOMBRO = (0.040, 0.125, 0.038)     # pivote de pieza_ala_izq (der: x negativa)
 PATAS_X = 0.017
 
 
@@ -110,7 +110,7 @@ def cuerpo(mats):
     # y uno atrás (una sola pieza en abanico).
     for s in (-1, 1):
         x = s * PATAS_X
-        an.tubo(bm, [(x, 0.066, -0.001), (x * 1.2, 0.010, -0.003)], [0.0042, 0.0038], 4, mats=PATA,
+        an.tubo(bm, [(x, 0.052, -0.001), (x * 1.2, 0.010, -0.003)], [0.0042, 0.0038], 4, mats=PATA,
                 fase=math.pi / 4)
         pie(bm, x * 1.2, s)
     return an.terminar(f"{ID}_cuerpo", bm, mats, angulo=42)
@@ -150,18 +150,20 @@ def cabeza(mats):
     bm = bmesh.new()
     # Cuello grueso (anillos horizontales), desde adentro del cuerpo hasta la cabeza.
     cuello = [
-        an.anillo((0, 0.112, 0.042), (0, 1, 0), 0.030, 0.032, 6, arriba=(0, 0, 1)),
-        an.anillo((0, 0.150, 0.056), (0, 1, 0), 0.025, 0.027, 6, arriba=(0, 0, 1)),
-        an.anillo((0, 0.172, 0.068), (0, 1, 0), 0.017, 0.019, 6, arriba=(0, 0, 1)),
+        an.anillo((0, 0.098, 0.040), (0, 1, 0), 0.036, 0.036, 6, arriba=(0, 0, 1)),
+        an.anillo((0, 0.135, 0.054), (0, 1, 0), 0.030, 0.032, 6, arriba=(0, 0, 1)),
+        an.anillo((0, 0.158, 0.064), (0, 1, 0), 0.021, 0.023, 6, arriba=(0, 0, 1)),
+        an.anillo((0, 0.170, 0.070), (0, 1, 0), 0.015, 0.016, 6, arriba=(0, 0, 1)),
     ]
     an.lofteo(bm, cuello, OSCURO)
     # Cabeza chica y redonda (cortes z = cte); el abanico de adelante es el pico (cera clara).
     cab = [
-        an.anillo((0, 0.183, 0.067), (0, 0, 1), 0.015, 0.014, 6, fase=math.pi / 6),
-        an.anillo((0, 0.186, 0.083), (0, 0, 1), 0.017, 0.016, 6, fase=math.pi / 6),
-        an.anillo((0, 0.181, 0.099), (0, 0, 1), 0.008, 0.007, 6, fase=math.pi / 6),
+        an.anillo((0, 0.172, 0.058), (0, 0, 1), 0.012, 0.012, 6, fase=math.pi / 6),
+        an.anillo((0, 0.175, 0.068), (0, 0, 1), 0.018, 0.017, 6, fase=math.pi / 6),
+        an.anillo((0, 0.175, 0.084), (0, 0, 1), 0.018, 0.016, 6, fase=math.pi / 6),
+        an.anillo((0, 0.170, 0.097), (0, 0, 1), 0.010, 0.009, 6, fase=math.pi / 6),
     ]
-    an.lofteo(bm, cab, OSCURO, punta_ini=(0, 0.185, 0.054), punta_fin=(0, 0.175, 0.118), mat_fin=ALA)
+    an.lofteo(bm, cab, OSCURO, punta_ini=(0, 0.174, 0.049), punta_fin=(0, 0.164, 0.116), mat_fin=ALA)
     return an.terminar("pieza_cabeza", bm, mats, origen=CUELLO, angulo=45)
 
 
@@ -170,14 +172,14 @@ def ala(mats, s):
     borde de arriba apoyado en el cuerpo, panza hacia afuera, borde de abajo apoyado."""
     bm = bmesh.new()
     # (z, ángulo del borde de arriba, ángulo del borde de abajo, grosor)
-    estaciones = [(0.050, 42, 100, 0.010), (0.005, 32, 108, 0.013), (-0.030, 24, 104, 0.012),
-                  (-0.075, 14, 80, 0.008)]
+    estaciones = [(0.048, 45, 95, 0.003), (0.010, 32, 102, 0.009), (-0.030, 22, 98, 0.009),
+                  (-0.075, 12, 78, 0.006)]
     anillos = []
     for z, a_arr, a_ab, g in estaciones:
         medio = (a_arr + a_ab) / 2
         pts = [superficie(z, a_arr, -0.003), superficie(z, medio, g), superficie(z, a_ab, -0.003)]
         anillos.append([V(p.x * s, p.y, p.z) for p in pts])
-    punta = V(0.012 * s, 0.108, -0.142)
+    punta = V(0.010 * s, 0.094, -0.142)
     bandas = [ALA, OSCURO, ALA]                    # franja oscura a mitad del ala
     an.lofteo(bm, anillos, bandas, punta_fin=punta, mat_fin=OSCURO)
     nombre = "pieza_ala_izq" if s > 0 else "pieza_ala_der"

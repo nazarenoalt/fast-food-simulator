@@ -223,14 +223,14 @@ def revisar(f, medidas):
 
 def fotos(f, extra=()):
     c = f.objetos
-    pb = [o for o in f.objetos if o.name in ("pieza_planta_baja", "pieza_ventanas_oscuras",
-                                            "pieza_vidriera", "pieza_cortina", "pieza_toldo")]
+    pb = [o for o in f.objetos if o.name in ("pieza_planta_baja", "pieza_vidriera", "pieza_toldo")]
     return [
         ("Frente · día", c, "frente", "dia", True),
         ("Costado · día", c, "costado", "dia", True),
         ("3/4 · día", c, "tres_cuartos_bajo", "dia", False),
         ("3/4 · atardecer", c, "tres_cuartos_bajo", "atardecer", False),
-        ("Planta baja con la persona de 1,75 m · día", pb + ["persona"], "tres_cuartos", "dia", False),
+        ("Planta baja con la persona de 1,75 m · día", c + ["persona"], "tres_cuartos", "dia", False,
+         pb + ["persona"]),
     ] + list(extra)
 
 
