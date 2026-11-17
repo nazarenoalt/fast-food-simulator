@@ -69,15 +69,20 @@ def caja(bm, medidas, centro, mat=0, bisel=0.0, rot=(0.0, 0.0, 0.0), sin_abajo=F
 
 
 def cilindro(bm, radio, alto, centro, eje="y", lados=12, mat=0, tapas=(True, True),
-             rot=(0.0, 0.0, 0.0), radio_arriba=None):
+             rot=(0.0, 0.0, 0.0), radio_arriba=None, radio_a_caras=False):
     """Cilindro (o cono truncado si radio_arriba) con su centro en `centro` (Godot).
 
     eje = "x", "y" o "z" de Godot: hacia dónde apunta el largo. lados: guía 3.2.
     tapas = (abajo, arriba) del eje; False la deja abierta (caño, batea).
     Una cara plana queda hacia abajo/adelante, no una arista.
+    radio_a_caras=False: el radio se mide en las aristas (los vértices), y las caras planas
+    quedan un poco más adentro. Con True, el radio se mide en las caras planas (guía 3.2):
+    usarlo cuando la medida importa (ruedas que apoyan, colisiones, piezas que encajan).
     """
     previas = set(bm.faces)
     r2 = radio if radio_arriba is None else radio_arriba
+    if radio_a_caras:
+        radio, r2 = radio / math.cos(math.pi / lados), r2 / math.cos(math.pi / lados)
     giro = math.pi / lados
     abajo = [bm.verts.new((radio * math.cos(giro + 2 * math.pi * k / lados),
                            radio * math.sin(giro + 2 * math.pi * k / lados), -alto / 2))
@@ -170,9 +175,9 @@ def colision_caja(nombre, medidas, centro, rot=(0.0, 0.0, 0.0)):
     return obj
 
 
-def colision_cilindro(nombre, radio, alto, centro, eje="y", lados=12):
+def colision_cilindro(nombre, radio, alto, centro, eje="y", lados=12, radio_a_caras=False):
     bm = bmesh.new()
-    cilindro(bm, radio, alto, centro, eje=eje, lados=lados)
+    cilindro(bm, radio, alto, centro, eje=eje, lados=lados, radio_a_caras=radio_a_caras)
     malla = bpy.data.meshes.new(f"{nombre}-colonly")
     bm.to_mesh(malla)
     bm.free()

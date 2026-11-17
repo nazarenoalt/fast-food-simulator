@@ -174,7 +174,7 @@ cuerpo + cabeza + pelo + ropa + accesorio, y de cambiar colores.
 | `garrafa` | Garrafa de gas | Ø 0,30 × 0,55 | 600 | color garrafa *(agregar)* | Para la plancha. | P2 | Pendiente |
 | `espatula` | Espátula | 0,30 × 0,03 × 0,10 | 200 | Acero, PlasticoNegro | Se agarra con la mano. | P2 | Pendiente |
 | `pinza` | Pinza de parrilla | 0,30 × 0,03 × 0,05 | 200 | Acero, PlasticoNegro | Ídem. | P2 | Pendiente |
-| `tabla_picar` | Tabla de picar | 0,35 × 0,02 × 0,25 | 100 | MaderaClara | | P3 | Pendiente |
+| `tabla_picar` | Tabla de picar | 0,35 × 0,02 × 0,25 | 100 | MaderaClara | - | P3 | Pendiente |
 
 ### Bloques de stock (`stock/`)
 
@@ -184,7 +184,7 @@ cuerpo + cabeza + pelo + ropa + accesorio, y de cambiar colores.
 | `bolsa_panes_hamburguesa_6` | Bolsa de panes de hamburguesa | ≈ 0,24 × 0,10 × 0,36 | 400 | BolsaPlastica, BlancoCrema | Mismo estilo que la bolsa de panes de pancho. | P2 | Pendiente |
 | `bandeja_chorizos_6` | Bandeja de chorizos | ≈ 0,20 × 0,05 × 0,16 | 300 | Carton, BolsaPlastica | Mismo estilo que la de salchichas. | P2 | Pendiente |
 | `bolsa_panes_frances_6` | Bolsa de pan francés | ≈ 0,20 × 0,10 × 0,35 | 400 | papel madera *(agregar)* | Bolsa de papel de panadería. | P2 | Pendiente |
-| `bolsa_carbon` | Bolsa de carbón | ≈ 0,35 × 0,50 × 0,15 | 300 | papel madera, PlasticoNegro | | P2 | Pendiente |
+| `bolsa_carbon` | Bolsa de carbón | ≈ 0,35 × 0,50 × 0,15 | 300 | papel madera, PlasticoNegro | - | P2 | Pendiente |
 
 ---
 
@@ -194,15 +194,15 @@ cuerpo + cabeza + pelo + ropa + accesorio, y de cambiar colores.
 |---|---|---|---|---|---|---|---|
 | `food_truck` | Base con interior caminable | ≈ 2,2 × 2,6 × 4,5 | 5.000 | PinturaCarrito, Acero, Goma, PlasticoNegro | Excede el tope de bases: se pide excepción al hacer la spec. Ventana de atención con toldo. | P2 | Pendiente |
 | `trailer` | Base remolque | ≈ 2,0 × 2,3 × 3,0 | 4.000 | ídem | ⚠ Mencionado como "remolque" en SPEC-006 (fuera de alcance). | P3 | Pendiente |
-| `cartel_luminoso` | Cartel luminoso | ≈ 0,8 × 0,3 × 0,1 | 400 | MetalOscuro, emisión | Texto en imagen con emisión de noche. | P2 | Pendiente |
-| `guirnalda_luces` | Guirnalda de lamparitas | ≈ 2,0 × 0,3 | 600 | PlasticoNegro, LuzCalida | Cable con 8–10 lamparitas. | P2 | Pendiente |
-| `banqueta` | Banqueta alta | Ø 0,35 × 0,75 | 400 | Acero, PinturaCarrito | Para que los clientes coman. | P2 | Pendiente |
-| `mesa_alta` | Mesa alta redonda | Ø 0,6 × 1,1 | 500 | Acero, MaderaClara | | P3 | Pendiente |
-| `maceta` | Maceta con planta | Ø 0,3 × 0,5 | 400 | Carton (terracota) *(agregar)*, Hojas | Decoración. | P3 | Pendiente |
-| `telon_hamburguesas` | Telón "Hamburguesas" | 1,3 × 0,42 × 0,01 | 200 | Amarillo, RojoAcento | Mismo modelo que `telon_panchos`, otra imagen. | P3 | Pendiente |
-| `telon_choripan` | Telón "Choripán" | 1,3 × 0,42 × 0,01 | 200 | ídem | Ídem. | P3 | Pendiente |
-| `pizarra_grande` | Pizarra de menú grande | ≈ 0,6 × 0,9 × 0,05 | 400 | Pizarra, Madera | | P3 | Pendiente |
-| `cerco_metal` | Cerco de metal | 2,46 × 0,9 × 0,05 | 600 | Hierro | Variante del cerco. | P3 | Pendiente |
+| `cartel_luminoso` | Cartel luminoso | 0,80 × 0,30 × 0,10 | 400 | MetalOscuro, LuzCalida + cartel `T_cartel_luminoso` | Cartel chico parado sobre dos patitas: caja de chapa oscura con `pieza_cartel` adelante (texto fijo "PANCHOS" con filete, en imagen) y lamparitas alrededor en `pieza_lamparitas` (se prenden de noche); `punto_luz` adelante. Va en el mostrador o arriba de un techo plano. Colisión `-colonly`: una caja. Hecho por código: `tools/blender/modelos/cartel_luminoso.py` (364 tris). [Hoja de revisión](revisiones/cartel_luminoso.jpg). | P2 | Hecho |
+| `guirnalda_luces` | Guirnalda de lamparitas | 1,60 / 2,40 / 3,40 × 0,30 × 0,056 | 600 | PlasticoNegro, LuzCalida | Cable negro en catenaria entre dos abrazaderas que agarran los caños de adelante de cualquier techo, con lamparitas tipo globo cada ≈ 18 cm en `pieza_lamparitas` y `punto_luz` en el medio. Tres tamaños, uno por base (`guirnalda_luces_chico/_mediano/_grande`); el script recibe el largo, así que sirve para cualquier ancho (una catenaria no se repite de a tramos). Abrazaderas a 2,08 m; la lamparita más baja a 1,80. Sin colisión. Hecho por código: `tools/blender/modelos/guirnalda_luces.py` (chico/mediano/grande: 492/684/972 tris). [Hoja de revisión](revisiones/guirnalda_luces.jpg). | P2 | Hecho |
+| `banqueta` | Banqueta alta | Ø 0,35 × 0,75 | 400 | PinturaCarrito, Acero, Goma | Banqueta de bar: asiento redondo `pieza_pintura` (toma el color del carrito) sobre 4 patas de caño de acero abiertas, con regatones y aro apoyapié. Asiento a 0,75 m. Colisión `-colonly`: un cilindro. Hecho por código: `tools/blender/modelos/banqueta.py` (358 tris). [Hoja de revisión](revisiones/banqueta.jpg). | P2 | Hecho |
+| `mesa_alta` | Mesa alta redonda | Ø 0,6 × 1,1 | 500 | Acero, MaderaClara | Tablero redondo de madera clara a 1,10 m, columna de acero y base redonda baja. Colisión `-colonly`: tablero, columna y base. Hecho por código: `tools/blender/modelos/mesa_alta.py` (374 tris). [Hoja de revisión](revisiones/mesa_alta.jpg). | P3 | Hecho |
+| `maceta` | Maceta con planta | Ø 0,3 × 0,5 | 400 | Terracota, Hojas1/2/3 | Maceta de barro (`M_Terracota`) con borde grueso y una planta como el arbusto, en chico. Colisión `-colonly`: solo la maceta. Hecho por código: `tools/blender/modelos/maceta.py` (281 tris). [Hoja de revisión](revisiones/maceta.jpg). | P3 | Hecho |
+| `telon_hamburguesas` | Telón "Hamburguesas" | 1,3 × 0,42 × 0,01 | 200 | Amarillo + cartel `T_telon_hamburguesas` | Mismo modelo que `telon_panchos` (el script recibe la palabra), con "HAMBURGUESAS" en la imagen; como es larga, va sin guardas. Origen en el anclaje `frente`, sin colisión. Hecho por código: `tools/blender/modelos/telon_hamburguesas.py` (12 tris). [Hoja de revisión](revisiones/telon_hamburguesas.jpg). | P3 | Hecho |
+| `telon_choripan` | Telón "Choripán" | 1,3 × 0,42 × 0,01 | 200 | Amarillo + cartel `T_telon_choripan` | Mismo modelo que `telon_panchos`, con "CHORIPÁN" entre las guardas de filete. Origen en el anclaje `frente`, sin colisión. Hecho por código: `tools/blender/modelos/telon_choripan.py` (12 tris). [Hoja de revisión](revisiones/telon_choripan.jpg). | P3 | Hecho |
+| `pizarra_grande` | Pizarra de menú grande | 0,60 × 0,90 × 0,43 (abierta) | 400 | Madera, Pizarra, Hierro | Pizarra de caballete para el piso: dos hojas de madera abiertas 12°, con bisagras y cadenitas. Las dos pizarras van **en blanco** (`pieza_pizarra` adelante y `pieza_pizarra_2` atrás, con UV para que el juego escriba el menú). Colisión `-colonly`: una caja por hoja. Hecho por código: `tools/blender/modelos/pizarra_grande.py` (368 tris). [Hoja de revisión](revisiones/pizarra_grande.jpg). | P3 | Hecho |
+| `cerco_metal` | Cerco de metal | 2,46 × 0,9 × 0,05 | 600 | Hierro | Variante de hierro del `cerco_bajo`, mismo largo y anclaje `frente`: postes con capitel en punta, dos planchuelas y 18 barrotes con punta de lanza. ⚠ En el `frente` de las barras cruza el telón y las ruedas, igual que el cerco bajo: revisar el anclaje en la spec. Colisión `-colonly`: una caja. Hecho por código: `tools/blender/modelos/cerco_metal.py` (544 tris). [Hoja de revisión](revisiones/cerco_metal.jpg). | P3 | Hecho |
 | `heladera_bebidas` | Heladera exhibidora de bebidas | ≈ 0,6 × 1,8 × 0,6 | 1.500 | BlancoCrema, vidrio, emisión | ⚠ Si se agregan bebidas. | P3 | Pendiente |
 
 ### Alacenas bajo mesada (`accesorios/`)
@@ -242,10 +242,10 @@ cuerpo + cabeza + pelo + ropa + accesorio, y de cambiar colores.
 | `fachada_casa_b` | Fachada con negocio en planta baja | ≈ 9 × 7 × 1 | 2.000 | ídem | Kiosco / almacén con cortina metálica. | P2 | Pendiente |
 | `fachada_edificio` | Edificio de departamentos | ≈ 9 × 18 × 1 | 2.000 | ídem | Balcones simples. | P3 | Pendiente |
 | `auto_a` | Auto (sedán) | ≈ 1,8 × 1,45 × 4,5 | 2.500 | colores de autos *(agregar)* | Diseño genérico, sin marca. | P3 | Pendiente |
-| `auto_b` | Auto (chico) | ≈ 1,7 × 1,5 × 3,8 | 2.500 | ídem | | P3 | Pendiente |
+| `auto_b` | Auto (chico) | ≈ 1,7 × 1,5 × 3,8 | 2.500 | ídem | - | P3 | Pendiente |
 | `colectivo` | Colectivo | ≈ 2,5 × 3,0 × 12 | 3.000 | ídem | ⚠ Pasa por la calle. | P3 | Pendiente |
-| `semaforo` | Semáforo | ≈ 0,4 × 3,5 × 0,4 | 500 | Hierro, emisión | | P3 | Pendiente |
-| `parada_colectivo` | Parada de colectivo | ≈ 2,5 × 2,5 × 1,2 | 800 | Hierro, vidrio | | P3 | Pendiente |
+| `semaforo` | Semáforo | ≈ 0,4 × 3,5 × 0,4 | 500 | Hierro, emisión | - | P3 | Pendiente |
+| `parada_colectivo` | Parada de colectivo | ≈ 2,5 × 2,5 × 1,2 | 800 | Hierro, vidrio | - | P3 | Pendiente |
 | `charco` | Charco | ≈ 1,0 × 0,005 × 0,7 | 30 | Agua | Para el clima con lluvia. | P3 | Pendiente |
 | `paraguas` | Paraguas (NPC) | Ø 1,0 × 0,9 | 400 | colores | Para NPCs cuando llueve. | P3 | Pendiente |
 

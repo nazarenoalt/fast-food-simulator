@@ -150,7 +150,9 @@ Para que todo el juego tenga la misma "resolución", la cantidad de lados depend
 
 El radio de un cilindro es el de sus **caras planas**, no el de sus aristas, y una cara plana va
 hacia abajo (o hacia el frente). Si no, una rueda de radio 0,15 queda 3 mm en el aire y una
-salchicha sale más fina que su colisión. `piezas.cilindro()` ya lo hace así.
+salchicha sale más fina que su colisión. En `piezas.cilindro()` eso es `radio_a_caras=True`
+en ambas funciones, `piezas.cilindro()` y `piezas.colision_cilindro()` (por defecto miden en las
+aristas, para no cambiar los modelos ya hechos). En modelos nuevos, usar `radio_a_caras=True`.
 
 Esferas: *UV Sphere* con la mitad de anillos que de lados (ej. 12 × 6), o *Ico Sphere* de 1 o
 2 subdivisiones. Las copas de los árboles son la excepción: formas irregulares de 30 a 80
@@ -553,3 +555,4 @@ revisión. Si alguno falla, el script termina con error. El resto se revisa a oj
 | v1.5 | Nuevos `M_FlorLila1` (`#6F5F99`) y `M_FlorLila2` (`#8574AE`) para la copa de los jacarandás. Los juegos infantiles de la plaza pueden usar los acentos vivos (rojo, azul, amarillo). La colisión de una pieza que se mueve va como hija de su `pieza_` (así la sigue). Cadenas: cilindro de 6 lados de 6 mm de radio, sin eslabones. |
 | v1.6 | Las pizarras van en blanco (`pieza_pizarra`, con UV para que el juego escriba); solo se pinta el texto fijo (4.5). |
 | v1.7 | Colores de la etapa 4: `M_CarneCruda`, `M_Lechuga`, `M_Tomate`, `M_Chimichurri`, `M_PapelMadera`, `M_Vidrio`, `M_Carbon`, `M_Brasa`. |
+| v1.8 | Corrección de 3.2: `piezas.cilindro()` mide el radio en las aristas salvo con `radio_a_caras=True` (la v1.3 decía lo contrario). Nuevo `M_Terracota` (`#B4623E`) para macetas. |
