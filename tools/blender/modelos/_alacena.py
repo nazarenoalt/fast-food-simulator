@@ -577,7 +577,8 @@ def hoja_revision(m, revision):
         ("Abierta (copias solo para la foto) · día", abiertos, "vendedor_derecha", "dia")
         if m["puertas"] or m["cajones"] else
         ("Adentro: piso y 2 estantes · día", v, "vendedor_frente", "dia"),
-        ("Con stock: bolsas de 12 panes y bandejas · día", lleno, "vendedor_frente", "dia"),
+        ("Con stock: bolsas de 12 panes y bandejas · día", lleno,
+         "vendedor_alto" if m["cajones"] else "vendedor_frente", "dia"),
         ("En la bahía 1 de la barra chica · día", en_carro, "vendedor", "dia"),
         ("3/4 lado del vendedor · atardecer", v, "vendedor_derecha", "atardecer"),
     ])
