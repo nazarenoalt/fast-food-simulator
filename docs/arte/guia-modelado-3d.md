@@ -314,8 +314,9 @@ con su material propio, para que el código las encuentre por nombre:
   sale de la biblioteca; la revisión lo acepta si su imagen usa solo colores de la paleta
   (`revisar_cartel` en `tools/blender/modelos/pizarra_precios.py`). La imagen va en
   `godot/modelos/<familia>/texturas/<id>.png` y embebida en el `.glb` (`exportar_glb(..., uvs=True)`).
-- Datos que pueden cambiar (precios): se leen de los `.ron` al correr el script. Si cambian,
-  se vuelve a correr.
+- Lo que el juego puede cambiar (precios, menú) **no se pinta**: las pizarras van en blanco,
+  con la superficie para escribir como `pieza_pizarra` y su cara mapeada (UV de 0 a 1), para que
+  el código escriba encima. Solo va pintado el texto fijo (el nombre en un telón, en un cartel).
 - Tipografía de los carteles del carrito: de trazo grueso, estilo "letrero pintado a mano"
   de carrito porteño (filete simplificado como guarda, sin detalle fino).
 - Nada de marcas reales: los nombres se inventan (ej. "Panchos El Turco", "Mostaza Doña Rosa").
@@ -540,3 +541,4 @@ revisión. Si alguno falla, el script termina con error. El resto se revisa a oj
 | v1.3 | Lo aprendido con la etapa 1 completa: origen de objetos no simétricos y chequeos propios (2.4), radio de cilindros a las caras planas (3.2), biseles en piezas finas (3.3), carteles opacos con material `T_<id>` (4.5), copa de árboles desde 2,5 m y agua en movimiento (5.4), `-colonly` de varias cajas y cuándo no lleva (6.1), variantes de color por superficies (6.2), `piezas.py`. |
 | v1.4 | Nuevo material `M_PlasticoClaro` (`#8C939A`, alfa 0,15) para pomos y films: un plástico casi blanco lavaba el color del aderezo (la mostaza se veía crema), porque la transparencia se mezcla en luz lineal. Gris medio + alfa bajo deja ver el color real. |
 | v1.5 | Nuevos `M_FlorLila1` (`#6F5F99`) y `M_FlorLila2` (`#8574AE`) para la copa de los jacarandás. Los juegos infantiles de la plaza pueden usar los acentos vivos (rojo, azul, amarillo). La colisión de una pieza que se mueve va como hija de su `pieza_` (así la sigue). Cadenas: cilindro de 6 lados de 6 mm de radio, sin eslabones. |
+| v1.6 | Las pizarras van en blanco (`pieza_pizarra`, con UV para que el juego escriba); solo se pinta el texto fijo (4.5). |
