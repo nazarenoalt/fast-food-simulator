@@ -164,7 +164,12 @@ pub struct Evaluacion {
 }
 
 /// REQ-CLI-08, REQ-CLI-09
-pub fn evaluar(pedido: &Pedido, entregado: &Entregado, precio: f32, paciencia_usada: f32) -> Result<Evaluacion, Rechazo> {
+pub fn evaluar(
+    pedido: &Pedido,
+    entregado: &Entregado,
+    precio: f32,
+    paciencia_usada: f32,
+) -> Result<Evaluacion, Rechazo> {
     if entregado.producto != pedido.producto {
         return Err(Rechazo::OtroProducto);
     }
@@ -196,7 +201,11 @@ mod tests {
         Pedido { producto: "pancho".into(), aderezos: ad.iter().map(|s| s.to_string()).collect() }
     }
     fn entregado(punto: Punto, ad: &[&str]) -> Entregado {
-        Entregado { producto: "pancho".into(), punto: Some(punto), aderezos: ad.iter().map(|s| s.to_string()).collect() }
+        Entregado {
+            producto: "pancho".into(),
+            punto: Some(punto),
+            aderezos: ad.iter().map(|s| s.to_string()).collect(),
+        }
     }
 
     #[test]

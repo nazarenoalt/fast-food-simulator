@@ -1,10 +1,10 @@
 //! Pantalla: mira, cartel de acción, hora, caja, reputación, avisos y resumen del día.
 
+use godot::builtin::Side;
 use godot::classes::control::{LayoutPreset, MouseFilter};
 use godot::classes::text_server::AutowrapMode;
 use godot::classes::{CanvasLayer, Control, ICanvasLayer, Label, VBoxContainer};
 use godot::global::HorizontalAlignment;
-use godot::builtin::Side;
 use godot::prelude::*;
 
 use crate::dia_noche::{self, DiaNoche};

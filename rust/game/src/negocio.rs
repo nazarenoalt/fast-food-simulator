@@ -87,7 +87,14 @@ impl Negocio {
             mundo.add_child(&p);
             p.set_global_position(pos);
         }
-        hud::avisar(&yo, &format!("Llegó tu pedido ({} paquete{}) — está en el pallet", bloques.len(), if bloques.len() == 1 { "" } else { "s" }));
+        hud::avisar(
+            &yo,
+            &format!(
+                "Llegó tu pedido ({} paquete{}) — está en el pallet",
+                bloques.len(),
+                if bloques.len() == 1 { "" } else { "s" }
+            ),
+        );
     }
 
     /// REQ-ECO-06
@@ -137,9 +144,7 @@ impl Negocio {
         let def = catalogo().bloque(bloque).ok_or_else(|| format!("No existe \"{bloque}\""))?.clone();
         let yo = self.to_gd();
         let ahora = util::unico::<DiaNoche>(&yo, dia_noche::GRUPO).map(|d| d.bind().minuto_absoluto()).unwrap_or(0.0);
-        self.caja
-            .pagar(def.precio)
-            .map_err(|e| format!("No te alcanza: faltan {}", plata(e.falta)))?;
+        self.caja.pagar(def.precio).map_err(|e| format!("No te alcanza: faltan {}", plata(e.falta)))?;
         self.hoy.gasto(def.precio);
         let llega = self.proveedor.pedir(bloque, ahora);
         Ok(format!("Pediste {} ({}) — llega {}", def.nombre, plata(def.precio), texto_llegada(llega, ahora)))

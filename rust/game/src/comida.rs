@@ -1,10 +1,10 @@
 //! Un alimento suelto en el mundo: objeto físico agarrable que se cocina y se arma.
 //! SPEC-002 (agarre), SPEC-003 (cocción), SPEC-005 (armado).
 
+use carrito_core::TEMP_AMBIENTE;
 use carrito_core::armado;
 use carrito_core::coccion::{EstadoCoccion, PerfilCoccion};
 use carrito_core::datos::{Colision, DefProducto};
-use carrito_core::TEMP_AMBIENTE;
 use godot::classes::{
     Area3D, BoxShape3D, CapsuleShape3D, Engine, IRigidBody3D, MeshInstance3D, PhysicsMaterial, RigidBody3D,
     StandardMaterial3D,
@@ -49,10 +49,7 @@ impl Comida {
 
 impl Comida {
     pub fn crear(producto: &str) -> Gd<Self> {
-        let def = catalogo()
-            .producto(producto)
-            .unwrap_or_else(|| panic!("producto inexistente: {producto}"))
-            .clone();
+        let def = catalogo().producto(producto).unwrap_or_else(|| panic!("producto inexistente: {producto}")).clone();
         let coccion = def.coccion.clone().map(|p| (p, EstadoCoccion::default()));
         let cocina = coccion.is_some();
         Gd::from_init_fn(|base| Self {
@@ -275,7 +272,8 @@ impl IRigidBody3D for Comida {
                 s.set_radius(radio);
                 s.set_height(largo);
                 // Acostada sobre X.
-                let t = Transform3D::new(Basis::from_axis_angle(Vector3::BACK, std::f32::consts::FRAC_PI_2), Vector3::ZERO);
+                let t =
+                    Transform3D::new(Basis::from_axis_angle(Vector3::BACK, std::f32::consts::FRAC_PI_2), Vector3::ZERO);
                 yo.add_child(&formas::nodo_colision(s.upcast(), t));
             }
         }

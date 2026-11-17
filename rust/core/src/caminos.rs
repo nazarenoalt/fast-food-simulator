@@ -12,7 +12,9 @@ pub const Z_VEREDA_SUR: f32 = 29.0;
 pub enum TipoNodo {
     Paso,
     /// Lugar en un banco; `rot_y` = hacia dónde mira sentado.
-    Asiento { rot_y: f32 },
+    Asiento {
+        rot_y: f32,
+    },
     /// Donde la gente aparece o desaparece (puertas, extremos del mapa).
     Salida,
     /// Lugar para quedarse charlando.
@@ -153,7 +155,8 @@ pub fn red() -> Red {
     }
 
     // Vereda del carrito y vereda de enfrente (extremos = salidas; enfrente, puertas).
-    let xs = [-58.0, -50.0, -42.0, -34.0, -29.0, -25.0, -17.0, -8.0, 0.0, 8.0, 17.0, 25.0, 29.0, 34.0, 42.0, 50.0, 58.0];
+    let xs =
+        [-58.0, -50.0, -42.0, -34.0, -29.0, -25.0, -17.0, -8.0, 0.0, 8.0, 17.0, 25.0, 29.0, 34.0, 42.0, 50.0, 58.0];
     let ultimo = xs.len() - 1;
     r.linea(&xs.iter().map(|&x| (x, Z_VEREDA_PEATONES)).collect::<Vec<_>>(), |i| {
         if i == 0 || i == ultimo { Salida } else { Paso }

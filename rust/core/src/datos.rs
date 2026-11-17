@@ -15,9 +15,14 @@ use crate::forma::Pieza;
 /// Forma de colisión de un producto.
 #[derive(Debug, Clone, PartialEq, Deserialize)]
 pub enum Colision {
-    Caja { medidas: [f32; 3] },
+    Caja {
+        medidas: [f32; 3],
+    },
     /// Cápsula acostada a lo largo del eje X.
-    Capsula { radio: f32, largo: f32 },
+    Capsula {
+        radio: f32,
+        largo: f32,
+    },
 }
 
 #[derive(Debug, Clone, PartialEq, Deserialize)]
@@ -246,7 +251,8 @@ pub(crate) mod tests {
     #[test]
     fn req_ade_02_aderecera_en_el_carrito() {
         let c = catalogo_real();
-        let a = c.accesorios.iter().find(|a| matches!(a.funcion, Some(crate::carrito::Funcion::Aderezos { .. }))).unwrap();
+        let a =
+            c.accesorios.iter().find(|a| matches!(a.funcion, Some(crate::carrito::Funcion::Aderezos { .. }))).unwrap();
         assert_eq!(a.categoria, crate::carrito::Categoria::Equipamiento);
         assert!(c.carrito_jugador.accesorios.values().any(|v| v == &a.id));
     }

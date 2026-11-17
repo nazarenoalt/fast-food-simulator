@@ -86,13 +86,24 @@ impl INode3D for Pomo {
         let c = self.def.color;
 
         // Envase semitransparente con colisión (para que la mira lo detecte).
-        let mut envase = formas::pieza(TipoPieza::Cilindro, [RADIO, ALTO, 0.0], [0.0, ALTO / 2.0, 0.0], [0.95, 0.95, 0.95]);
+        let mut envase =
+            formas::pieza(TipoPieza::Cilindro, [RADIO, ALTO, 0.0], [0.0, ALTO / 2.0, 0.0], [0.95, 0.95, 0.95]);
         envase.alfa = 0.35;
         envase.colision = true;
         formas::construir(&mut yo, &[envase]);
         // Pico y tapa del color del aderezo.
-        yo.add_child(&formas::visual_pieza(&formas::pieza(TipoPieza::Cono, [0.02, 0.05, 0.0], [0.0, ALTO + 0.025, 0.0], c)));
-        yo.add_child(&formas::visual_pieza(&formas::pieza(TipoPieza::Cilindro, [0.004, 0.02, 0.0], [0.0, ALTO + 0.055, 0.0], c)));
+        yo.add_child(&formas::visual_pieza(&formas::pieza(
+            TipoPieza::Cono,
+            [0.02, 0.05, 0.0],
+            [0.0, ALTO + 0.025, 0.0],
+            c,
+        )));
+        yo.add_child(&formas::visual_pieza(&formas::pieza(
+            TipoPieza::Cilindro,
+            [0.004, 0.02, 0.0],
+            [0.0, ALTO + 0.055, 0.0],
+            c,
+        )));
 
         // Relleno (el nivel que queda).
         let relleno = formas::instancia_malla(

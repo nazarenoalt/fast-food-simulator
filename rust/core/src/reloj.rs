@@ -66,18 +66,12 @@ impl Sol {
         let duracion_dia = PUESTA_SOL - SALIDA_SOL;
         if (SALIDA_SOL..PUESTA_SOL).contains(&minuto) {
             let f = ((minuto - SALIDA_SOL) / duracion_dia) as f32;
-            Sol {
-                altura: ALTURA_MAX_SOL * (std::f32::consts::PI * f).sin(),
-                azimut: 90.0 + 180.0 * f,
-            }
+            Sol { altura: ALTURA_MAX_SOL * (std::f32::consts::PI * f).sin(), azimut: 90.0 + 180.0 * f }
         } else {
             let duracion_noche = MINUTOS_DIA - duracion_dia;
             let desde_puesta = (minuto - PUESTA_SOL).rem_euclid(MINUTOS_DIA);
             let f = (desde_puesta / duracion_noche) as f32;
-            Sol {
-                altura: -PROFUNDIDAD_NOCHE * (std::f32::consts::PI * f).sin(),
-                azimut: (270.0 + 180.0 * f) % 360.0,
-            }
+            Sol { altura: -PROFUNDIDAD_NOCHE * (std::f32::consts::PI * f).sin(), azimut: (270.0 + 180.0 * f) % 360.0 }
         }
     }
 

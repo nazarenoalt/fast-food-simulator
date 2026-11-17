@@ -3,12 +3,12 @@
 use std::cell::Cell;
 
 use carrito_core::economia::plata;
+use godot::builtin::Side;
 use godot::classes::control::{LayoutPreset, SizeFlags};
 use godot::classes::input::MouseMode;
 use godot::classes::{
     Button, CanvasLayer, HBoxContainer, HSeparator, ICanvasLayer, Input, Label, PanelContainer, VBoxContainer,
 };
-use godot::builtin::Side;
 use godot::prelude::*;
 
 use crate::datos::catalogo;
@@ -130,7 +130,11 @@ impl ICanvasLayer for Tienda {
             l.set_text(&format!("En la caja: {}", plata(saldo)));
         }
         if let Some(l) = &mut self.pendientes {
-            let texto = if pend.is_empty() { "Nada en camino.".to_string() } else { format!("En camino:\n{}", pend.join("\n")) };
+            let texto = if pend.is_empty() {
+                "Nada en camino.".to_string()
+            } else {
+                format!("En camino:\n{}", pend.join("\n"))
+            };
             l.set_text(&texto);
         }
     }

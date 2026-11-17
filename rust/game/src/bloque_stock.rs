@@ -101,8 +101,12 @@ pub fn construir_visual(padre: &mut Gd<Node3D>, def: &DefBloque, restantes: u32)
             ] {
                 padre.add_child(&formas::visual_pieza(&formas::pieza(TipoPieza::Caja, m, p, c)));
             }
-            let mut film =
-                formas::pieza(TipoPieza::Caja, [tx + 0.008, ty + 0.004, tz + 0.008], [0.0, ty / 2.0, 0.0], [0.95, 0.95, 1.0]);
+            let mut film = formas::pieza(
+                TipoPieza::Caja,
+                [tx + 0.008, ty + 0.004, tz + 0.008],
+                [0.0, ty / 2.0, 0.0],
+                [0.95, 0.95, 1.0],
+            );
             film.alfa = 0.15;
             padre.add_child(&formas::visual_pieza(&film));
         }
@@ -122,7 +126,10 @@ impl INode3D for BloqueStock {
         let mut cuerpo = StaticBody3D::new_alloc();
         let mut s = BoxShape3D::new_gd();
         s.set_size(Vector3::new(tx + 0.01, ty + 0.01, tz + 0.01));
-        cuerpo.add_child(&formas::nodo_colision(s.upcast(), Transform3D::new(Basis::IDENTITY, Vector3::new(0.0, ty / 2.0, 0.0))));
+        cuerpo.add_child(&formas::nodo_colision(
+            s.upcast(),
+            Transform3D::new(Basis::IDENTITY, Vector3::new(0.0, ty / 2.0, 0.0)),
+        ));
         yo.add_child(&cuerpo);
     }
 }
