@@ -21,6 +21,7 @@ mod negocio; // SPEC-010/011
 mod nocturno;
 mod palomas; // SPEC-013
 mod paquete; // SPEC-011
+mod parrilla; // SPEC-015
 mod peaton; // SPEC-013
 mod plancha; // SPEC-014
 mod plaza; // SPEC-008

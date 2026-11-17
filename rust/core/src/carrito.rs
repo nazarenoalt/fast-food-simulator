@@ -67,6 +67,10 @@ pub enum Funcion {
     Plancha {
         superficie: [f32; 2],
     },
+    /// Parrilla de carbón (SPEC-015): superficie (ancho, profundidad) en metros.
+    Parrilla {
+        superficie: [f32; 2],
+    },
     /// Posiciones (relativas al accesorio) donde se apoya cada bloque de stock.
     Deposito {
         lugares: Vec<[f32; 3]>,

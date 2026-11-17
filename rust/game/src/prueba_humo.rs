@@ -19,6 +19,7 @@ use crate::luz::{GRUPO_LUCES_NOCHE, LuzNocturna};
 use crate::negocio::Negocio;
 use crate::palomas::Palomas;
 use crate::paquete::Paquete;
+use crate::parrilla::Parrilla;
 use crate::peaton::Peaton;
 use crate::plancha::Plancha;
 use crate::transito::{Autos, Nubes};
@@ -34,6 +35,7 @@ pub struct PruebaHumo {
     salchicha: Option<Gd<Comida>>,
     pan: Option<Gd<Comida>>,
     hamburguesa: Option<Gd<Comida>>,
+    chorizo: Option<Gd<Comida>>,
     mundo: Option<Gd<Node>>,
     autos_antes: Vec<f32>,
     nube_antes: Option<Vector3>,
@@ -488,6 +490,37 @@ impl INode for PruebaHumo {
                     ),
                 );
                 self.chequear(h.bind().punto() == Some(Punto::Cocido), "CA-PLA-02 queda cocida de los dos lados");
+                // CA-PAR-01: sin carbón no se enciende; cargo una bolsa, enciendo y apoyo un chorizo.
+                let mut pa = todos::<Parrilla>(&mundo).pop().expect("REQ-PAR-01 el carrito tiene su parrilla");
+                self.chequear(!pa.bind_mut().alternar(), "REQ-PAR-01 sin carbón no se enciende");
+                self.chequear(pa.bind_mut().cargar(1.0).is_ok(), "REQ-PAR-01 entra una bolsa de carbón");
+                self.chequear(pa.bind_mut().cargar(3.0).is_err(), "REQ-PAR-01 no entra más de 3 kg");
+                self.chequear(pa.bind_mut().alternar(), "REQ-PAR-01 con carbón se enciende");
+                let encima = pa.get_global_position() + Vector3::new(0.0, 0.12, 0.0);
+                self.chorizo = Some(self.agregar_comida("chorizo", encima));
+                self.esperar(90 * 60);
+            }
+            20 => {
+                let pa = todos::<Parrilla>(&mundo).pop().unwrap();
+                let e = pa.bind().estado();
+                self.chequear(e.temp > 100.0, &format!("CA-PAR-01 las brasas se calentaron ({:.0} °C)", e.temp));
+                self.chequear(
+                    e.carbon < 0.5 && e.carbon > 0.0,
+                    &format!("REQ-PAR-02 el carbón baja ({:.2} kg)", e.carbon),
+                );
+                let c = self.chorizo.clone().unwrap();
+                let l = c.bind().estado_lados().expect("el chorizo se cocina por lados");
+                self.chequear(
+                    l.lados[0].avance > 3.0 && l.lados[1].avance == 0.0,
+                    &format!("REQ-PAR-04 se cocina el lado de abajo del chorizo ({:.1})", l.lados[0].avance),
+                );
+                self.esperar(40 * 60);
+            }
+            21 => {
+                // CA-PAR-02: sigue prendida un rato largo: se queda sin carbón y se apaga.
+                let pa = todos::<Parrilla>(&mundo).pop().unwrap();
+                let e = pa.bind().estado();
+                self.chequear(e.carbon == 0.0 && !e.encendida, "CA-PAR-02 sin carbón la parrilla se apaga sola");
                 self.terminar();
             }
             _ => {}

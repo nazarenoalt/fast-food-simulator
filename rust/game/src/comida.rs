@@ -153,6 +153,11 @@ impl Comida {
         self.def.repone.as_deref()
     }
 
+    /// Si es una bolsa de carbón, cuántos kg trae. REQ-PAR-01
+    pub fn carbon(&self) -> Option<f32> {
+        self.def.carbon
+    }
+
     /// REQ-ADE-03: guarda los aderezos y los dibuja en zigzag.
     pub fn set_aderezos(&mut self, aderezos: Vec<String>) {
         self.aderezos = aderezos;

@@ -11,8 +11,9 @@ que reponer. El pan se tuesta en la misma parrilla.
 
 ### Parrilla y carbón
 - **REQ-PAR-01** La parrilla es un accesorio del carrito (datos `.ron`) con una cantidad de
-  carbón en kg (máximo 3 kg). Se carga con bolsas de carbón (producto con `repone`, como los
-  pomos de SPEC-012) y se enciende con E cuando tiene carbón.
+  carbón en kg (máximo 3 kg). Se carga con bolsas de carbón (producto con `carbon`: los kg que
+  trae; se usa con E sobre la parrilla, como los repuestos de SPEC-012). Si la bolsa haría pasar
+  los 3 kg, no entra y no se gasta. Se enciende con E cuando tiene carbón.
 - **REQ-PAR-02** Encendida, el carbón se gasta 0,5 kg por hora de juego y las brasas se
   calientan 3 °C por segundo hasta una temperatura máxima que depende del carbón que queda:
   `T_max = 20 + 300 × min(1, carbón / 1 kg)`. Sin carbón se apaga sola.
@@ -45,5 +46,8 @@ que reponer. El pan se tuesta en la misma parrilla.
 
 ## Notas de diseño
 
-- Valores iniciales: chorizo k = 0,05; T_min = 60 °C; velocidad = 0,0012; punto = 10; pasado = 22.
+- El carrito del jugador lleva la parrilla en un anclaje propio a su izquierda (`parrilla`).
+
+- Valores iniciales: chorizo k = 0,05; T_min = 60 °C; velocidad = 0,0012; punto = 10; pasado = 22;
+  quemado sobre 280 °C durante 60 s (a 250 °C no se quema; con la parrilla a tope sí).
   Pan: k = 0,15; T_min = 90 °C; velocidad = 0,0020; tostado = 4; quemado = 15.

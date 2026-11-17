@@ -15,6 +15,7 @@ use crate::formas;
 use crate::hervidor::Hervidor;
 use crate::lugar_deposito::LugarDeposito;
 use crate::luz::LuzNocturna;
+use crate::parrilla::Parrilla;
 use crate::plancha::Plancha;
 
 const ACERO: [f32; 3] = [0.82, 0.83, 0.85];
@@ -187,6 +188,10 @@ impl Carrito {
                 Some(Funcion::Plancha { superficie }) => {
                     // REQ-PLA-01
                     nodo.add_child(&Plancha::crear(*superficie));
+                }
+                Some(Funcion::Parrilla { superficie }) => {
+                    // REQ-PAR-01
+                    nodo.add_child(&Parrilla::crear(*superficie));
                 }
                 Some(Funcion::Deposito { lugares }) => {
                     // REQ-DEP-07: cada lugar es un nodo que guarda a lo sumo un bloque.

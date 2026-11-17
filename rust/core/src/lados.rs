@@ -62,6 +62,24 @@ pub(crate) fn perfil_hamburguesa() -> PerfilCoccion {
     }
 }
 
+/// Mismos valores que `chorizo` en godot/data/productos.ron (lo verifica un test de datos).
+#[cfg(test)]
+pub(crate) fn perfil_chorizo() -> PerfilCoccion {
+    PerfilCoccion {
+        k: 0.05,
+        t_min: 60.0,
+        velocidad: 0.0012,
+        punto: 10.0,
+        pasado: 22.0,
+        t_quemado: 280.0,
+        segundos_quemado: 60.0,
+        color_crudo: [0.75, 0.3, 0.25],
+        color_cocido: [0.5, 0.22, 0.14],
+        color_pasado: [0.33, 0.15, 0.1],
+        color_quemado: [0.1, 0.06, 0.05],
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -149,5 +167,50 @@ mod tests {
         let pasada = segundos_hasta(220.0, Punto::Pasado, 600.0).expect("nunca se pasó");
         let quemada = segundos_hasta(220.0, Punto::Quemado, 600.0).expect("nunca se quemó");
         assert!(quemada > pasada, "quemada a los {quemada} s, pasada a los {pasada} s");
+    }
+
+    /// Cuánto tarda el lado de abajo del chorizo en llegar al punto pedido sobre una parrilla a `temp` °C.
+    fn segundos_chorizo(temp: f32, objetivo: Punto, max_s: f32) -> Option<f32> {
+        let p = perfil_chorizo();
+        let mut c = CoccionLados::default();
+        let mut t = 0.0;
+        while t < max_s {
+            c.paso(&p, 0, temp, 20.0, DT);
+            t += DT;
+            if c.lados[0].punto(&p) == objetivo {
+                return Some(t);
+            }
+        }
+        None
+    }
+
+    #[test]
+    fn req_par_05_chorizo_a_250_queda_cocido_entre_60_y_150_s() {
+        let cocido = segundos_chorizo(250.0, Punto::Cocido, 600.0).expect("nunca se cocinó");
+        assert!((60.0..=150.0).contains(&cocido), "cocido a los {cocido} s");
+    }
+
+    #[test]
+    fn req_par_05_chorizo_se_pasa_y_a_250_no_se_quema() {
+        let cocido = segundos_chorizo(250.0, Punto::Cocido, 600.0).unwrap();
+        let pasado = segundos_chorizo(250.0, Punto::Pasado, 900.0).expect("nunca se pasó");
+        assert!(pasado > cocido + 30.0, "pasado a los {pasado} s");
+        assert_eq!(segundos_chorizo(250.0, Punto::Quemado, 900.0), None);
+    }
+
+    #[test]
+    fn req_par_05_con_la_parrilla_a_tope_el_chorizo_se_quema() {
+        assert!(segundos_chorizo(320.0, Punto::Quemado, 900.0).is_some());
+    }
+
+    #[test]
+    fn req_par_05_solo_se_cocina_el_lado_de_abajo() {
+        let p = perfil_chorizo();
+        let mut c = CoccionLados::default();
+        for _ in 0..(40 * 60) {
+            c.paso(&p, 0, 250.0, 20.0, DT);
+        }
+        assert!(c.lados[0].avance > 3.0);
+        assert_eq!(c.lados[1].avance, 0.0);
     }
 }

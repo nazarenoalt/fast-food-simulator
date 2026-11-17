@@ -47,6 +47,9 @@ pub struct DefProducto {
     /// REQ-ADE-05: si es un repuesto, qué aderezo repone.
     #[serde(default)]
     pub repone: Option<String>,
+    /// REQ-PAR-01: si es una bolsa de carbón, cuántos kg trae.
+    #[serde(default)]
+    pub carbon: Option<f32>,
 }
 
 #[derive(Debug, Clone, PartialEq, Deserialize)]
@@ -216,6 +219,28 @@ pub(crate) mod tests {
         // REQ-PLA-05: una mitad por lado, para teñirlas por separado.
         let lados: Vec<_> = h.forma.iter().filter_map(|p| p.tinte_lado).collect();
         assert_eq!(lados, vec![0, 1]);
+    }
+
+    #[test]
+    fn req_par_05_chorizo_se_cocina_por_lados_con_el_perfil_testeado() {
+        let c = catalogo_real();
+        let h = c.producto("chorizo").unwrap();
+        assert!(h.por_lados);
+        assert_eq!(h.coccion.clone().unwrap(), crate::lados::perfil_chorizo());
+        let lados: Vec<_> = h.forma.iter().filter_map(|p| p.tinte_lado).collect();
+        assert_eq!(lados, vec![0, 1]);
+    }
+
+    #[test]
+    fn req_par_01_parrilla_y_bolsas_de_carbon_en_datos() {
+        let c = catalogo_real();
+        let a =
+            c.accesorios.iter().find(|a| matches!(a.funcion, Some(crate::carrito::Funcion::Parrilla { .. }))).unwrap();
+        assert_eq!(a.categoria, crate::carrito::Categoria::Cocina);
+        assert!(c.carrito_jugador.accesorios.values().any(|v| v == &a.id));
+        assert_eq!(c.producto("bolsa_carbon").unwrap().carbon, Some(1.0));
+        assert!(c.bloques.iter().any(|b| b.producto == "bolsa_carbon"));
+        assert!(c.bloques.iter().any(|b| b.producto == "chorizo"));
     }
 
     #[test]
