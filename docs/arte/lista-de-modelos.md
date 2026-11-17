@@ -44,9 +44,9 @@ sobresale 2 cm, zócalo, 4 ruedas, manija para empujar. Las posiciones de los an
 
 | ID | Objeto | Medidas | Tris | Materiales | Notas | Prio. | Estado |
 |---|---|---|---|---|---|---|---|
-| `barra_chica` | Barra chica | 1,6 × 0,95 × 0,7 | 3.000 | PinturaCarrito, Acero, Goma, PlasticoNegro | El carrito actual del jugador. Puertitas del lado del vendedor (+Y en Blender). | P1 | Pendiente |
-| `barra_mediana` | Barra mediana | 2,4 × 0,95 × 0,8 | 3.000 | ídem | Mismo diseño que la chica, más larga: 3 puestos de mostrador. | P1 | Pendiente |
-| `carro_grande` | Carro grande | 3,4 × 1,0 × 1,2 | 3.000 | ídem | Más robusto, con estante bajo y lugar para garrafa. | P1 | Pendiente |
+| `barra_chica` | Barra chica | 1,6 × 0,95 × 0,7 | 3.000 | PinturaCarrito, Acero, Goma, PlasticoNegro, MetalOscuro | El carrito actual del jugador. Cuerpo pintado `pieza_pintura` (el juego lo tiñe), zócalo y cantoneras de acero, mesada de acero con esquinas redondeadas que sobresale 2 cm a los costados (5 cm hacia el cliente, como hoy en `carrito.rs`), 4 ruedas de goma con taza de acero y manija con puño negro del lado −X. 2 puertitas con tirador del lado del vendedor. *Empties* `punto_<anclaje>` en cada anclaje del `.ron`, más `punto_entrega` y `punto_fila`. Colisión `barra_chica-colonly` + `barra_chica_manija-colonly`. Origen en el centro del cuerpo, a nivel del piso. Hecho por código: `tools/blender/modelos/barra_chica.py` (1824 tris). [Hoja de revisión](revisiones/barra_chica.jpg). | P1 | Hecho |
+| `barra_mediana` | Barra mediana | 2,4 × 0,95 × 0,8 | 3.000 | PinturaCarrito, Acero, Goma, PlasticoNegro, MetalOscuro | Mismo diseño que la chica (módulo `_base_carrito.py`), más larga: 3 puestos de mostrador y 3 puertitas del lado del vendedor. `pieza_pintura`, *Empties* `punto_<anclaje>` + `punto_entrega` y `punto_fila`, colisión `-colonly`. Hecho por código: `tools/blender/modelos/barra_mediana.py` (1912 tris). [Hoja de revisión](revisiones/barra_mediana.jpg). | P1 | Hecho |
+| `carro_grande` | Carro grande | 3,4 × 1,0 × 1,2 | 3.000 | PinturaCarrito, Acero, Goma, PlasticoNegro, MetalOscuro | Más robusto que las barras: zócalo más alto, ruedas más anchas, manija más gruesa, 4 patas niveladoras y parantes de acero. Del lado del vendedor queda abierto bajo la mesada, con estante bajo, estante intermedio y, en la punta +X, el lugar para la garrafa (cincha y rejilla de ventilación). La garrafa no está: sería un modelo aparte. `pieza_pintura`, *Empties* `punto_<anclaje>` + `punto_entrega` y `punto_fila`, colisión `-colonly`. Hecho por código: `tools/blender/modelos/carro_grande.py` (2620 tris). [Hoja de revisión](revisiones/carro_grande.jpg). | P1 | Hecho |
 
 ### Accesorios (`accesorios/`, `cocina/`)
 
@@ -221,7 +221,7 @@ cuerpo + cabeza + pelo + ropa + accesorio, y de cambiar colores.
 
 1. ✔ **Biblioteca** (`materiales.blend`, `referencias.blend`) — sin esto no hay coherencia.
 2. ✔ **Comida de la etapa 1** (`pan_pancho`, `pan_pancho_cerrado`, `salchicha`, `pancho`), hecha: chicos, rápidos y se ven de cerca; definen el "sabor" del estilo.
-3. **`barra_chica` + `hervidor_chico`**: lo que el jugador ve todo el tiempo.
+3. **`barra_chica` (✔) + `hervidor_chico`**: lo que el jugador ve todo el tiempo.
 4. Resto de accesorios de la etapa 1.
 5. Plaza de la etapa 1 (banco, farol, árboles, fuente).
 6. Después, cada etapa a medida que se escriben sus specs.
