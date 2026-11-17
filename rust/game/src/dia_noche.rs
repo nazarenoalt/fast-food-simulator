@@ -3,12 +3,14 @@
 use carrito_core::reloj::Reloj;
 use godot::classes::environment::{AmbientSource, BgMode, ToneMapper};
 use godot::classes::sky::ProcessMode as SkyProcessMode;
+use godot::classes::base_material_3d::{Flags, ShadingMode};
 use godot::classes::{
-    DirectionalLight3D, Environment, INode, Input, Node, ProceduralSkyMaterial, Sky, WorldEnvironment,
+    DirectionalLight3D, Environment, INode, Input, MeshInstance3D, Node, ProceduralSkyMaterial, Sky, WorldEnvironment,
 };
+use carrito_core::forma::TipoPieza;
 use godot::prelude::*;
 
-use crate::formas;
+use crate::{formas, nocturno};
 use crate::luz::{GRUPO_LUCES_NOCHE, LuzNocturna};
 
 pub const GRUPO: &str = "dia_noche";
@@ -23,12 +25,22 @@ pub struct DiaNoche {
     luna: Option<Gd<DirectionalLight3D>>,
     entorno: Option<Gd<Environment>>,
     cielo: Option<Gd<ProceduralSkyMaterial>>,
+    disco_luna: Option<Gd<MeshInstance3D>>,
 }
 
 #[godot_api]
 impl INode for DiaNoche {
     fn init(base: Base<Node>) -> Self {
-        Self { base, reloj: Reloj::default(), noche: None, sol: None, luna: None, entorno: None, cielo: None }
+        Self {
+            base,
+            reloj: Reloj::default(),
+            noche: None,
+            sol: None,
+            luna: None,
+            entorno: None,
+            cielo: None,
+            disco_luna: None,
+        }
     }
 
     fn ready(&mut self) {
@@ -56,6 +68,8 @@ impl INode for DiaNoche {
 
         let mut sol = DirectionalLight3D::new_alloc();
         sol.set_shadow(true);
+        // REQ-AMB-12: tamaño aparente del disco del sol en el cielo.
+        sol.set_param(godot::classes::light_3d::Param::SIZE, 1.0);
         sol.set_name("Sol");
         self.base_mut().add_child(&sol);
 
@@ -65,6 +79,17 @@ impl INode for DiaNoche {
         // Fija, alta en el cielo.
         luna.set_rotation_degrees(Vector3::new(-55.0, 160.0, 0.0));
         self.base_mut().add_child(&luna);
+
+        // REQ-AMB-12: disco de la luna, lejos, en la dirección de su luz.
+        let mut mat = formas::material([0.92, 0.93, 1.0], 1.0, false, 1.5);
+        mat.set_shading_mode(ShadingMode::UNSHADED);
+        mat.set_flag(Flags::DISABLE_FOG, true);
+        let mut disco = formas::instancia_malla(formas::malla(TipoPieza::Esfera, [7.0, 0.0, 0.0]), mat);
+        disco.set_cast_shadows_setting(godot::classes::geometry_instance_3d::ShadowCastingSetting::OFF);
+        let dir = luna.get_transform().basis.col_c();
+        disco.set_position(dir * 280.0);
+        self.base_mut().add_child(&disco);
+        self.disco_luna = Some(disco);
 
         self.sol = Some(sol);
         self.luna = Some(luna);
@@ -97,6 +122,25 @@ impl DiaNoche {
 }
 
 impl DiaNoche {
+    /// (día − 1) × 1440 + minuto del día.
+    pub fn minuto_absoluto(&self) -> f64 {
+        (self.reloj.dia as f64 - 1.0) * carrito_core::reloj::MINUTOS_DIA + self.reloj.minuto
+    }
+
+    /// Hora del día con decimales (13.5 = 13:30).
+    pub fn hora(&self) -> f32 {
+        (self.reloj.minuto / 60.0) as f32
+    }
+
+    pub fn dia(&self) -> u32 {
+        self.reloj.dia
+    }
+
+    /// Minutos de juego que pasan por segundo real (incluye el ×30 de prueba).
+    pub fn minutos_por_segundo(&self) -> f64 {
+        self.reloj.minutos_por_segundo * self.reloj.multiplicador
+    }
+
     pub fn hora_texto(&self) -> String {
         let rapido = if self.reloj.multiplicador > 1.0 { "  ×30" } else { "" };
         format!("Día {}  {}{rapido}", self.reloj.dia, self.reloj.hora_texto())
@@ -121,6 +165,11 @@ impl DiaNoche {
             luna.set_param(godot::classes::light_3d::Param::ENERGY, sol.energia_luna());
             luna.set_visible(sol.energia_luna() > 0.001);
         }
+        // REQ-AMB-11, REQ-AMB-12
+        nocturno::set_color_nubes(sol.color_nubes());
+        if let Some(d) = &mut self.disco_luna {
+            d.set_visible(sol.luna_visible());
+        }
         if let Some(env) = &mut self.entorno {
             env.set_ambient_light_energy(sol.energia_ambiente());
             env.set_fog_light_color(formas::color(sol.colores_cielo().1));
@@ -143,6 +192,7 @@ impl DiaNoche {
     }
 
     fn prender_luces(&mut self, on: bool) {
+        nocturno::set_noche(on);
         let Some(arbol) = self.base().get_tree_or_null() else { return };
         for n in arbol.get_nodes_in_group(GRUPO_LUCES_NOCHE).iter_shared() {
             if let Ok(mut l) = n.try_cast::<LuzNocturna>() {

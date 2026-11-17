@@ -8,7 +8,10 @@ use godot::classes::{
 use godot::global::{Key, MouseButton};
 use godot::prelude::*;
 
+use crate::aderecera::Pomo;
 use crate::bloque_stock::BloqueStock;
+use crate::paquete::Paquete;
+use crate::tienda;
 use crate::comida::Comida;
 use crate::formas;
 use crate::hervidor::Hervidor;
@@ -33,6 +36,8 @@ pub enum Objetivo {
     Comida(Gd<Comida>),
     Hervidor(Gd<Hervidor>),
     Bloque(Gd<BloqueStock>),
+    Paquete(Gd<Paquete>),
+    Pomo(Gd<Pomo>),
 }
 
 #[derive(GodotClass)]
@@ -41,7 +46,8 @@ pub struct Jugador {
     base: Base<CharacterBody3D>,
     camara: Option<Gd<Camera3D>>,
     rayo: Option<Gd<RayCast3D>>,
-    mano: Option<Gd<Comida>>,
+    /// Lo que tiene en la mano: comida o paquete (REQ-INT-03).
+    mano: Option<Gd<RigidBody3D>>,
     segundos_en_mano: f32,
     pitch: f32,
     gravedad: f32,
@@ -58,6 +64,8 @@ fn registrar_acciones() {
         ("correr", Key::SHIFT),
         ("usar", Key::E),
         ("tiempo_rapido", Key::T),
+        ("tienda", Key::TAB),
+        ("traer_cliente", Key::C),
     ] {
         if !mapa.has_action(accion) {
             mapa.add_action(accion);
@@ -78,6 +86,7 @@ impl ICharacterBody3D for Jugador {
 
     fn ready(&mut self) {
         registrar_acciones();
+        self.base_mut().add_to_group("jugador");
         self.gravedad = ProjectSettings::singleton()
             .get_setting("physics/3d/default_gravity")
             .try_to::<f64>()
@@ -129,8 +138,11 @@ impl ICharacterBody3D for Jugador {
             if !boton.is_pressed() {
                 return;
             }
-            // REQ-JUG-07: clic captura el mouse.
+            // REQ-JUG-07: clic captura el mouse (salvo con el panel del proveedor abierto).
             if !capturado {
+                if tienda::abierta() {
+                    return;
+                }
                 input.set_mouse_mode(MouseMode::CAPTURED);
                 return;
             }
@@ -223,6 +235,14 @@ impl Jugador {
                 Ok(b) => return Some(Objetivo::Bloque(b)),
                 Err(n) => n,
             };
+            let n = match n.try_cast::<Paquete>() {
+                Ok(p) => return Some(Objetivo::Paquete(p)),
+                Err(n) => n,
+            };
+            let n = match n.try_cast::<Pomo>() {
+                Ok(p) => return Some(Objetivo::Pomo(p)),
+                Err(n) => n,
+            };
             nodo = n.get_parent();
         }
         None
@@ -232,14 +252,26 @@ impl Jugador {
         if self.mano.is_some() {
             // REQ-INT-06: soltar.
             self.soltar();
-        } else if let Some(Objetivo::Comida(c)) = self.objetivo() {
-            // REQ-INT-03: agarrar.
-            self.agarrar(c);
+            return;
+        }
+        // REQ-INT-03, REQ-PRO-05: agarrar comida o paquetes.
+        match self.objetivo() {
+            Some(Objetivo::Comida(c)) => self.agarrar(c.upcast()),
+            Some(Objetivo::Paquete(p)) => self.agarrar(p.upcast()),
+            _ => {}
         }
     }
 
-    pub fn agarrar(&mut self, mut c: Gd<Comida>) {
-        c.bind_mut().sostenida = true;
+    fn marcar(cuerpo: &Gd<RigidBody3D>, sostenido: bool) {
+        if let Ok(mut c) = cuerpo.clone().try_cast::<Comida>() {
+            c.bind_mut().sostenida = sostenido;
+        } else if let Ok(mut p) = cuerpo.clone().try_cast::<Paquete>() {
+            p.bind_mut().sostenido = sostenido;
+        }
+    }
+
+    pub fn agarrar(&mut self, mut c: Gd<RigidBody3D>) {
+        Self::marcar(&c, true);
         c.set_gravity_scale(0.0);
         if let Some(r) = &mut self.rayo {
             r.add_exception(&c);
@@ -248,12 +280,12 @@ impl Jugador {
         self.mano = Some(c);
     }
 
-    pub fn soltar(&mut self) -> Option<Gd<Comida>> {
+    pub fn soltar(&mut self) -> Option<Gd<RigidBody3D>> {
         let mut c = self.mano.take()?;
         if !c.is_instance_valid() {
             return None;
         }
-        c.bind_mut().sostenida = false;
+        Self::marcar(&c, false);
         c.set_gravity_scale(1.0);
         if let Some(r) = &mut self.rayo {
             r.remove_exception(&c);
@@ -273,9 +305,30 @@ impl Jugador {
         self.camara.as_ref().map(|c| -c.get_global_transform().basis.col_c()).unwrap_or(Vector3::FORWARD)
     }
 
-    /// REQ-INT-07: E usa equipos o saca del depósito, con la mano libre.
+    fn comida_en_mano(&self) -> Option<Gd<Comida>> {
+        self.mano.as_ref().filter(|c| c.is_instance_valid()).and_then(|c| c.clone().try_cast::<Comida>().ok())
+    }
+
+    /// REQ-INT-07: E usa el objetivo.
     pub fn usar(&mut self) {
+        let yo = self.to_gd();
         if self.mano.is_some() {
+            // Con algo en la mano, solo se usan los pomos de aderezo (SPEC-012).
+            let Some(mut comida) = self.comida_en_mano() else { return };
+            let Some(Objetivo::Pomo(mut pomo)) = self.objetivo() else { return };
+            let repone = comida.bind().repone().map(str::to_string);
+            let resultado = match repone {
+                // REQ-ADE-05: recargar con un repuesto (que se gasta).
+                Some(a) => pomo.bind_mut().recargar(&a).map(|_| {
+                    self.soltar();
+                    comida.queue_free();
+                }),
+                // REQ-ADE-03
+                None => pomo.bind_mut().aplicar(&mut comida),
+            };
+            if let Err(e) = resultado {
+                hud::avisar(&yo, e.mensaje());
+            }
             return;
         }
         match self.objetivo() {
@@ -290,7 +343,7 @@ impl Jugador {
                         padre.add_child(&c);
                     }
                     c.set_global_position(pos);
-                    self.agarrar(c);
+                    self.agarrar(c.upcast());
                 }
             }
             _ => {}
@@ -300,7 +353,7 @@ impl Jugador {
     /// REQ-INT-03, REQ-INT-04, REQ-INT-05
     fn actualizar_mano(&mut self, dt: f32) {
         let Some(c) = &self.mano else { return };
-        if !c.is_instance_valid() {
+        if !c.is_instance_valid() || c.is_queued_for_deletion() {
             self.mano = None;
             return;
         }
@@ -326,13 +379,36 @@ impl Jugador {
 
     /// REQ-INT-02, REQ-INT-08
     fn actualizar_cartel(&mut self) {
-        let texto = if let Some(c) = self.mano.as_ref().filter(|c| c.is_instance_valid()) {
-            format!("{}\n[Clic] Soltar · [Clic der.] Tirar", c.bind().descripcion())
+        let en_mano = self.mano.clone().filter(|c| c.is_instance_valid() && !c.is_queued_for_deletion());
+        let objetivo = self.objetivo();
+        let texto = if let Some(m) = en_mano {
+            if let Ok(c) = m.clone().try_cast::<Comida>() {
+                let c = c.bind();
+                let mut t = format!("{}\n[Clic] Soltar · [Clic der.] Tirar", c.descripcion());
+                if let Some(Objetivo::Pomo(p)) = &objetivo {
+                    let p = p.bind();
+                    if c.repone().is_some() {
+                        t += &format!(" · [E] Recargar {}", p.cartel());
+                    } else if c.admite_aderezos() {
+                        t += &format!(" · [E] Poner {}", p.cartel());
+                    }
+                }
+                t
+            } else if let Ok(p) = m.try_cast::<Paquete>() {
+                format!(
+                    "{}\nDejalo en un lugar libre del estante · [Clic] Soltar · [Clic der.] Tirar",
+                    p.bind().descripcion()
+                )
+            } else {
+                String::new()
+            }
         } else {
-            match self.objetivo() {
+            match objetivo {
                 Some(Objetivo::Comida(c)) => format!("[Clic] Agarrar {}", c.bind().descripcion().to_lowercase()),
                 Some(Objetivo::Hervidor(h)) => h.bind().cartel(),
                 Some(Objetivo::Bloque(b)) => b.bind().cartel(),
+                Some(Objetivo::Paquete(p)) => format!("[Clic] Agarrar {}", p.bind().descripcion().to_lowercase()),
+                Some(Objetivo::Pomo(p)) => format!("{} — agarrá un pancho y apretá E para ponerle", p.bind().cartel()),
                 None => String::new(),
             }
         };

@@ -3,3 +3,4 @@ godot/.godot/
 *.import
 *.blend1
 __pycache__/
+build/

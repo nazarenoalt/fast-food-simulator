@@ -2,7 +2,15 @@
 //!
 //! Cada módulo implementa una spec de `docs/specs/`.
 
+pub mod aderezos; // SPEC-012
 pub mod armado; // SPEC-005
+pub mod azar; // números al azar con semilla
+pub mod caminos; // SPEC-013 (red de peatones)
+pub mod ciudad; // SPEC-013
+pub mod clientes; // SPEC-009
+pub mod economia; // SPEC-010
+pub mod peatones; // SPEC-013
+pub mod proveedor; // SPEC-011
 pub mod carrito; // SPEC-006
 pub mod coccion; // SPEC-003
 pub mod datos; // carga de archivos .ron

@@ -32,6 +32,9 @@ pub struct Comida {
     /// Temperatura del entorno que le dio una fuente de calor, y en qué cuadro.
     entorno: Option<(f32, u64)>,
     tintes: Vec<Gd<StandardMaterial3D>>,
+    /// Aderezos puestos (SPEC-012) y su dibujo.
+    aderezos: Vec<String>,
+    dibujo_aderezos: Option<Gd<godot::classes::Node3D>>,
     zona_encastre: Option<Gd<Area3D>>,
 }
 
@@ -62,6 +65,8 @@ impl Comida {
             consumida: false,
             entorno: None,
             tintes: Vec::new(),
+            aderezos: Vec::new(),
+            dibujo_aderezos: None,
             zona_encastre: None,
         })
     }
@@ -82,7 +87,79 @@ impl Comida {
         } else if let Some((p, e)) = &self.coccion {
             s += &format!(" ({}, {:.0} °C)", e.punto(p).nombre(), e.temp);
         }
+        // REQ-ADE-03 / CA-ADE-01: el cartel lista los aderezos.
+        if !self.aderezos.is_empty() {
+            let nombres: Vec<String> = self
+                .aderezos
+                .iter()
+                .map(|a| catalogo().aderezo(a).map(|d| d.nombre.clone()).unwrap_or_default())
+                .collect();
+            s += &format!(" con {}", carrito_core::aderezos::enumerar(&nombres));
+        }
         s
+    }
+
+    pub fn admite_aderezos(&self) -> bool {
+        self.def.admite_aderezos
+    }
+
+    pub fn aderezos(&self) -> &[String] {
+        &self.aderezos
+    }
+
+    /// Si es un repuesto, qué aderezo repone. REQ-ADE-05
+    pub fn repone(&self) -> Option<&str> {
+        self.def.repone.as_deref()
+    }
+
+    /// REQ-ADE-03: guarda los aderezos y los dibuja en zigzag.
+    pub fn set_aderezos(&mut self, aderezos: Vec<String>) {
+        self.aderezos = aderezos;
+        self.dibujar_aderezos();
+    }
+
+    /// Lo que ve el cliente al recibirlo. REQ-CLI-08
+    pub fn entregado(&self) -> carrito_core::clientes::Entregado {
+        carrito_core::clientes::Entregado {
+            producto: self.def.id.clone(),
+            punto: self.punto(),
+            aderezos: self.aderezos.clone(),
+        }
+    }
+
+    /// Solo para pruebas: deja la parte cocinable con este avance de cocción.
+    pub fn forzar_avance(&mut self, avance: f32) {
+        if let Some((_, e)) = &mut self.coccion {
+            e.avance = avance;
+            e.temp = 70.0;
+        }
+        self.actualizar_color();
+    }
+
+    fn dibujar_aderezos(&mut self) {
+        if let Some(mut viejo) = self.dibujo_aderezos.take() {
+            viejo.queue_free();
+        }
+        if self.aderezos.is_empty() {
+            return;
+        }
+        let mut nodo = godot::classes::Node3D::new_alloc();
+        for (k, id) in self.aderezos.iter().enumerate() {
+            let color = catalogo().aderezo(id).map(|a| a.color).unwrap_or([1.0; 3]);
+            // Zigzag: palitos finos alternando el ángulo, un poco más arriba cada aderezo.
+            for i in 0..6 {
+                let mut p = formas::pieza(
+                    carrito_core::forma::TipoPieza::Caja,
+                    [0.03, 0.004, 0.005],
+                    [-0.0625 + i as f32 * 0.025, 0.037 + k as f32 * 0.003, 0.0],
+                    color,
+                );
+                p.rot = [0.0, if i % 2 == 0 { 35.0 } else { -35.0 }, 0.0];
+                nodo.add_child(&formas::visual_pieza(&p));
+            }
+        }
+        self.base_mut().add_child(&nodo);
+        self.dibujo_aderezos = Some(nodo);
     }
 
     pub fn detalle(&self) -> Option<&str> {
@@ -168,6 +245,7 @@ impl IRigidBody3D for Comida {
         yo.set_mass(def.masa);
         // Objetos chicos: detección continua para que no atraviesen paredes finas.
         yo.set_use_continuous_collision_detection(true);
+        yo.set_collision_layer(1 | formas::CAPA_OBJETOS);
         yo.set_angular_damp(2.0);
         let mut mat = PhysicsMaterial::new_gd();
         mat.set_friction(0.9);
@@ -208,7 +286,7 @@ impl IRigidBody3D for Comida {
                 Colision::Caja { medidas } => medidas[1],
                 Colision::Capsula { radio, .. } => radio * 2.0,
             };
-            let mut zona = Area3D::new_alloc();
+            let mut zona = formas::zona_objetos();
             let mut s = BoxShape3D::new_gd();
             s.set_size(Vector3::new(0.16, 0.06, 0.06));
             zona.add_child(&formas::nodo_colision(s.upcast(), Transform3D::IDENTITY));

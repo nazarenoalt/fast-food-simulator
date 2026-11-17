@@ -39,8 +39,8 @@ pub fn distribucion() -> Vec<Prop> {
         for &s in &[-1.0_f32, 1.0] {
             v.push(Prop { tipo: TipoProp::Banco, x: s * d, z: 2.6, rot_y: 180.0 });
             v.push(Prop { tipo: TipoProp::Banco, x: s * d, z: -2.6, rot_y: 0.0 });
-            v.push(Prop { tipo: TipoProp::Banco, x: 2.6, z: s * d, rot_y: 90.0 });
-            v.push(Prop { tipo: TipoProp::Banco, x: -2.6, z: s * d, rot_y: -90.0 });
+            v.push(Prop { tipo: TipoProp::Banco, x: 2.6, z: s * d, rot_y: -90.0 });
+            v.push(Prop { tipo: TipoProp::Banco, x: -2.6, z: s * d, rot_y: 90.0 });
         }
     }
 
@@ -95,6 +95,17 @@ mod tests {
         // Los árboles no caen sobre los caminos en cruz.
         for p in d.iter().filter(|p| p.tipo == TipoProp::Arbol) {
             assert!(p.x.abs() > ANCHO_CAMINO && p.z.abs() > ANCHO_CAMINO, "árbol en el camino: {p:?}");
+        }
+    }
+
+    #[test]
+    fn req_mun_02_bancos_miran_al_camino() {
+        // El frente del banco (eje +Z local girado) apunta hacia el camino más cercano.
+        for p in distribucion().iter().filter(|p| p.tipo == TipoProp::Banco) {
+            let (s, c) = p.rot_y.to_radians().sin_cos();
+            let (fx, fz) = (s, c);
+            let hacia_camino = if p.x.abs() < p.z.abs() { (-p.x.signum(), 0.0) } else { (0.0, -p.z.signum()) };
+            assert!(fx * hacia_camino.0 + fz * hacia_camino.1 > 0.9, "banco {p:?} no mira al camino");
         }
     }
 

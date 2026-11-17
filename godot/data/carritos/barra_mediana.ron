@@ -5,6 +5,8 @@
     color: (0.8, 0.8, 0.82),
     ruedas: true,
     precio: 480000,
+    entrega: (0.3, 0.95, 0.25), // REQ-CAR-10: bandeja de entrega
+    fila: (0.3, 0.0, 1.05), // REQ-CAR-10: primer lugar de la fila (sigue hacia +X)
     anclajes: [
         (id: "mostrador_izq", pos: (-0.75, 0.95, 0.0), categorias: [Cocina, Equipamiento]),
         (id: "mostrador_centro", pos: (0.0, 0.95, 0.0), categorias: [Cocina, Equipamiento, Decoracion]),

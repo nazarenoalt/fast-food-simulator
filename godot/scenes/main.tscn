@@ -6,10 +6,24 @@
 
 [node name="Plaza" type="Plaza" parent="."]
 
+[node name="Ciudad" type="Ciudad" parent="."]
+
+[node name="Nubes" type="Nubes" parent="."]
+
+[node name="Autos" type="Autos" parent="."]
+
+[node name="Palomas" type="Palomas" parent="."]
+
 [node name="Carrito" type="Carrito" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -23)
+
+[node name="Gente" type="Gente" parent="."]
+
+[node name="Negocio" type="Negocio" parent="."]
 
 [node name="Jugador" type="Jugador" parent="."]
 transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 0, 0.05, -23.85)
 
 [node name="Hud" type="Hud" parent="."]
+
+[node name="Tienda" type="Tienda" parent="."]

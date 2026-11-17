@@ -5,6 +5,7 @@
 
 use serde::Deserialize;
 
+use crate::aderezos::DefAderezo;
 use crate::armado::Combinacion;
 use crate::carrito::{Accesorio, BaseCarrito, ConfigCarrito};
 use crate::coccion::PerfilCoccion;
@@ -29,6 +30,15 @@ pub struct DefProducto {
     pub forma: Vec<Pieza>,
     #[serde(default)]
     pub coccion: Option<PerfilCoccion>,
+    /// REQ-ECO-03: precio de venta (solo productos que se venden).
+    #[serde(default)]
+    pub precio: Option<f32>,
+    /// REQ-ADE-03
+    #[serde(default)]
+    pub admite_aderezos: bool,
+    /// REQ-ADE-05: si es un repuesto, qué aderezo repone.
+    #[serde(default)]
+    pub repone: Option<String>,
 }
 
 #[derive(Debug, Clone, PartialEq, Deserialize)]
@@ -46,9 +56,17 @@ pub struct Catalogo {
     pub accesorios: Vec<Accesorio>,
     pub bases: Vec<BaseCarrito>,
     pub carrito_jugador: ConfigCarrito,
+    pub aderezos: Vec<DefAderezo>,
 }
 
 impl Catalogo {
+    pub fn aderezo(&self, id: &str) -> Option<&DefAderezo> {
+        self.aderezos.iter().find(|a| a.id == id)
+    }
+    /// Productos que se venden (tienen precio). REQ-CLI-04
+    pub fn menu(&self) -> Vec<String> {
+        self.productos.iter().filter(|p| p.precio.is_some()).map(|p| p.id.clone()).collect()
+    }
     pub fn producto(&self, id: &str) -> Option<&DefProducto> {
         self.productos.iter().find(|p| p.id == id)
     }
@@ -85,8 +103,18 @@ pub fn cargar_catalogo(
     accesorios: &str,
     bases: &[(String, String)],
     carrito_jugador: &str,
+    aderezos: &str,
 ) -> Result<Catalogo, ErrorDatos> {
     let p: ArchivoProductos = parsear("productos.ron", productos)?;
+    let aderezos: Vec<DefAderezo> = parsear("aderezos.ron", aderezos)?;
+    let error = |archivo: &str, mensaje: String| ErrorDatos { archivo: archivo.into(), mensaje };
+    for prod in &p.productos {
+        if let Some(a) = &prod.repone {
+            if !aderezos.iter().any(|x| &x.id == a) {
+                return Err(error("productos.ron", format!("\"{}\" repone un aderezo inexistente \"{a}\"", prod.id)));
+            }
+        }
+    }
     let bloques: Vec<DefBloque> = parsear("bloques.ron", bloques)?;
     for b in &bloques {
         if !p.productos.iter().any(|x| x.id == b.producto) {
@@ -101,13 +129,24 @@ pub fn cargar_catalogo(
         lista_bases.push(parsear::<BaseCarrito>(nombre, texto)?);
     }
     lista_bases.sort_by(|a, b| a.ancho.total_cmp(&b.ancho));
+    let accesorios: Vec<Accesorio> = parsear("accesorios.ron", accesorios)?;
+    for acc in &accesorios {
+        if let Some(crate::carrito::Funcion::Aderezos { tipos, .. }) = &acc.funcion {
+            for t in tipos {
+                if !aderezos.iter().any(|x| &x.id == t) {
+                    return Err(error("accesorios.ron", format!("\"{}\" usa el aderezo inexistente \"{t}\"", acc.id)));
+                }
+            }
+        }
+    }
     Ok(Catalogo {
         productos: p.productos,
         combinaciones: p.combinaciones,
         bloques,
-        accesorios: parsear("accesorios.ron", accesorios)?,
+        accesorios,
         bases: lista_bases,
         carrito_jugador: parsear("carrito_jugador.ron", carrito_jugador)?,
+        aderezos,
     })
 }
 
@@ -140,6 +179,7 @@ pub(crate) mod tests {
             &leer("accesorios.ron"),
             &bases,
             &leer("carrito_jugador.ron"),
+            &leer("aderezos.ron"),
         )
         .unwrap_or_else(|e| panic!("{e}"))
     }
@@ -178,11 +218,45 @@ pub(crate) mod tests {
     }
 
     #[test]
+    fn req_eco_03_precio_del_pancho() {
+        let c = catalogo_real();
+        assert_eq!(c.producto("pancho").unwrap().precio, Some(2500.0));
+        assert_eq!(c.menu(), vec!["pancho".to_string()]);
+    }
+
+    #[test]
+    fn req_ade_01_tres_aderezos_de_40_usos() {
+        let c = catalogo_real();
+        for id in ["mostaza", "ketchup", "mayonesa"] {
+            assert_eq!(c.aderezo(id).map(|a| a.usos), Some(40), "{id}");
+        }
+        assert!(c.producto("pancho").unwrap().admite_aderezos);
+        assert!(!c.producto("salchicha").unwrap().admite_aderezos);
+    }
+
+    #[test]
+    fn req_ade_05_repuestos_se_compran_como_bloques() {
+        let c = catalogo_real();
+        for id in ["mostaza", "ketchup", "mayonesa"] {
+            let repuesto = c.productos.iter().find(|p| p.repone.as_deref() == Some(id)).expect("repuesto");
+            assert!(c.bloques.iter().any(|b| b.producto == repuesto.id), "bloque de {}", repuesto.id);
+        }
+    }
+
+    #[test]
+    fn req_ade_02_aderecera_en_el_carrito() {
+        let c = catalogo_real();
+        let a = c.accesorios.iter().find(|a| matches!(a.funcion, Some(crate::carrito::Funcion::Aderezos { .. }))).unwrap();
+        assert_eq!(a.categoria, crate::carrito::Categoria::Equipamiento);
+        assert!(c.carrito_jugador.accesorios.values().any(|v| v == &a.id));
+    }
+
+    #[test]
     fn producto_inexistente_en_bloque_da_error_claro() {
         let prod = leer("productos.ron");
         let bloques = r#"[(id: "x", nombre: "x", producto: "fantasma", grilla: (1,1,1),
             separacion: (0.1,0.1,0.1), empaque: Bolsa, color_empaque: (1,1,1), precio: 1)]"#;
-        let e = cargar_catalogo(&prod, bloques, "[]", &[], "").unwrap_err();
+        let e = cargar_catalogo(&prod, bloques, "[]", &[], "", &leer("aderezos.ron")).unwrap_err();
         assert!(e.mensaje.contains("fantasma"));
     }
 }

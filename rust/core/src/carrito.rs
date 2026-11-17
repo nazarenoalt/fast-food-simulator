@@ -43,6 +43,10 @@ pub struct BaseCarrito {
     pub color: [f32; 3],
     pub ruedas: bool,
     pub precio: f32,
+    /// REQ-CAR-10: centro de la bandeja de entrega (relativo a la base).
+    pub entrega: [f32; 3],
+    /// REQ-CAR-10: primer lugar de la fila de clientes; la fila sigue hacia +X.
+    pub fila: [f32; 3],
     pub anclajes: Vec<Anclaje>,
 }
 
@@ -60,6 +64,8 @@ pub enum Funcion {
     /// Posiciones (relativas al accesorio) donde se apoya cada bloque de stock.
     Deposito { lugares: Vec<[f32; 3]> },
     Luz { pos: [f32; 3], color: [f32; 3], energia: f32, alcance: f32 },
+    /// Un pomo por aderezo (SPEC-012), separados `separacion` metros en X.
+    Aderezos { tipos: Vec<String>, separacion: f32 },
 }
 
 /// REQ-CAR-05
@@ -299,6 +305,15 @@ mod tests {
         let mut c = config("barra_chica", &[("lateral", "estante_deposito")]);
         c.stock.insert("lateral".into(), vec![None; 50]);
         assert!(matches!(armar_cfg(&c), Err(ErrorCarrito::StockDemasiadosBloques { .. })));
+    }
+
+    #[test]
+    fn req_car_10_bandeja_sobre_el_mostrador_y_fila_adelante() {
+        for b in catalogo_real().bases {
+            assert!((b.entrega[1] - b.alto_mostrador).abs() < 0.01, "{}: bandeja a la altura del mostrador", b.id);
+            assert!(b.entrega[0].abs() < b.ancho / 2.0 && b.entrega[2].abs() < b.profundidad / 2.0);
+            assert!(b.fila[2] > b.profundidad / 2.0 + 0.3, "{}: la fila va adelante del carrito", b.id);
+        }
     }
 
     #[test]

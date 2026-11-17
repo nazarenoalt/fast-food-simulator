@@ -34,10 +34,48 @@
             id: "pancho",
             nombre: "pancho",
             masa: 0.09,
+            precio: Some(2500), // REQ-ECO-03
+            admite_aderezos: true,
             colision: Caja(medidas: (0.17, 0.06, 0.055)),
             forma: [
                 (tipo: Capsula, medidas: (0.027, 0.17, 0), rot: (0, 0, 90), escala: (1, 0.85, 1), color: (0.86, 0.6, 0.32)),
                 (tipo: Capsula, medidas: (0.011, 0.155, 0), pos: (0, 0.024, 0), rot: (0, 0, 90), color: (0.72, 0.3, 0.2), tinte_coccion: true),
+            ],
+        ),
+        (
+            id: "repuesto_mostaza",
+            nombre: "repuesto de mostaza",
+            masa: 0.5,
+            repone: Some("mostaza"),
+            colision: Caja(medidas: (0.08, 0.19, 0.08)),
+            forma: [
+                (tipo: Cilindro, medidas: (0.038, 0.17, 0), pos: (0, -0.01, 0), color: (0.92, 0.72, 0.08)),
+                (tipo: Cilindro, medidas: (0.039, 0.05, 0), pos: (0, 0.0, 0), color: (0.95, 0.95, 0.95)),
+                (tipo: Cilindro, medidas: (0.018, 0.025, 0), pos: (0, 0.085, 0), color: (0.2, 0.2, 0.2)),
+            ],
+        ),
+        (
+            id: "repuesto_ketchup",
+            nombre: "repuesto de ketchup",
+            masa: 0.5,
+            repone: Some("ketchup"),
+            colision: Caja(medidas: (0.08, 0.19, 0.08)),
+            forma: [
+                (tipo: Cilindro, medidas: (0.038, 0.17, 0), pos: (0, -0.01, 0), color: (0.8, 0.08, 0.05)),
+                (tipo: Cilindro, medidas: (0.039, 0.05, 0), pos: (0, 0.0, 0), color: (0.95, 0.95, 0.95)),
+                (tipo: Cilindro, medidas: (0.018, 0.025, 0), pos: (0, 0.085, 0), color: (0.2, 0.2, 0.2)),
+            ],
+        ),
+        (
+            id: "repuesto_mayonesa",
+            nombre: "repuesto de mayonesa",
+            masa: 0.5,
+            repone: Some("mayonesa"),
+            colision: Caja(medidas: (0.08, 0.19, 0.08)),
+            forma: [
+                (tipo: Cilindro, medidas: (0.038, 0.17, 0), pos: (0, -0.01, 0), color: (0.97, 0.94, 0.78)),
+                (tipo: Cilindro, medidas: (0.039, 0.05, 0), pos: (0, 0.0, 0), color: (0.95, 0.95, 0.95)),
+                (tipo: Cilindro, medidas: (0.018, 0.025, 0), pos: (0, 0.085, 0), color: (0.2, 0.2, 0.2)),
             ],
         ),
     ],

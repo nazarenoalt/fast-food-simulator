@@ -6,7 +6,16 @@ use carrito_core::plaza;
 use godot::classes::{INode, Node, Node3D, PackedScene};
 use godot::prelude::*;
 
+use crate::aderecera::Pomo;
 use crate::bloque_stock::BloqueStock;
+use crate::carrito::Carrito;
+use crate::gente::Gente;
+use crate::lugar_deposito::LugarDeposito;
+use crate::negocio::Negocio;
+use crate::palomas::Palomas;
+use crate::paquete::Paquete;
+use crate::peaton::Peaton;
+use crate::transito::{Autos, Nubes};
 use crate::comida::Comida;
 use crate::dia_noche::DiaNoche;
 use crate::hervidor::Hervidor;
@@ -24,6 +33,17 @@ pub struct PruebaHumo {
     salchicha: Option<Gd<Comida>>,
     pan: Option<Gd<Comida>>,
     mundo: Option<Gd<Node>>,
+    autos_antes: Vec<f32>,
+    nube_antes: Option<Vector3>,
+    panchos_antes: Vec<InstanceId>,
+    pedido: Option<carrito_core::clientes::Pedido>,
+    saldo_antes: f32,
+    reputacion_antes: f32,
+    perdidos_antes: u32,
+    paquetes_antes: usize,
+    lugar: Option<Gd<LugarDeposito>>,
+    superpuestos: usize,
+    muestras: usize,
 }
 
 fn todos<T: GodotClass + Inherits<Node>>(raiz: &Gd<Node>) -> Vec<Gd<T>> {
@@ -88,6 +108,20 @@ impl INode for PruebaHumo {
 
     fn physics_process(&mut self, _delta: f64) {
         self.cuadro += 1;
+        // REQ-AMB-13: mientras la plaza está llena (pasos 8 a 11), se cuenta cuántas veces
+        // dos personas quedan encimadas (a menos de 0,3 m).
+        if (8..=11).contains(&self.paso) {
+            let mundo = self.mundo();
+            let pos: Vec<Vector3> = todos::<Peaton>(&mundo).iter().map(|p| p.get_global_position()).collect();
+            self.muestras += 1;
+            for i in 0..pos.len() {
+                for j in (i + 1)..pos.len() {
+                    if Vector2::new(pos[i].x - pos[j].x, pos[i].z - pos[j].z).length() < 0.3 {
+                        self.superpuestos += 1;
+                    }
+                }
+            }
+        }
         if self.cuadro < self.espera_hasta {
             return;
         }
@@ -218,6 +252,179 @@ impl INode for PruebaHumo {
                     todos::<Node3D>(&mundo).iter().all(|n| !n.is_in_group("errores_carrito")),
                     "REQ-CAR-08 sin errores en la config del carrito",
                 );
+
+                // ── Etapa 2: ambientación ──
+                let ciudad = todos::<Node3D>(&mundo).into_iter().find(|n| n.get_name().to_string() == "Ciudad").unwrap();
+                self.chequear(ciudad.get_child_count() > 30, "REQ-AMB-01 hay edificios alrededor");
+                self.autos_antes = todos::<Autos>(&mundo)[0].bind().posiciones();
+                self.nube_antes = todos::<Nubes>(&mundo)[0].bind().posicion_primera();
+                let mut dn = todos::<DiaNoche>(&mundo).pop().unwrap();
+                dn.bind_mut().set_minuto(13.0 * 60.0);
+                self.esperar(180);
+            }
+            8 => {
+                let ahora = todos::<Autos>(&mundo)[0].bind().posiciones();
+                self.chequear(ahora != self.autos_antes, "REQ-AMB-08 los autos circulan");
+                let nube = todos::<Nubes>(&mundo)[0].bind().posicion_primera();
+                self.chequear(nube != self.nube_antes, "REQ-AMB-11 las nubes se mueven");
+                let gente = todos::<Gente>(&mundo).pop().unwrap();
+                let n = gente.bind().cantidad();
+                self.chequear(n >= 15, &format!("REQ-AMB-04 hay gente en la plaza a las 13:00 ({n})"));
+
+                // CA-CLI-01: llega un cliente y pide.
+                let mut g = gente.clone();
+                if g.bind().largo_fila() == 0 {
+                    g.bind_mut().forzar_cliente();
+                }
+                self.esperar(60);
+            }
+            9 => {
+                let mut gente = todos::<Gente>(&mundo).pop().unwrap();
+                let pidio = gente.bind().pedido_del_primero();
+                self.chequear(pidio.is_some(), &format!("REQ-CLI-04 el primero de la fila pidió: {pidio:?}"));
+                // Para probar los aderezos sí o sí, el pedido pasa a ser con mostaza y ketchup.
+                let pedido = carrito_core::clientes::Pedido {
+                    producto: "pancho".into(),
+                    aderezos: vec!["mostaza".into(), "ketchup".into()],
+                };
+                gente.bind_mut().set_pedido_del_primero(pedido.clone());
+                self.pedido = Some(pedido);
+                // Armo el pancho: salchicha cocida sobre un pan en la mesada.
+                self.panchos_antes = todos::<Comida>(&mundo)
+                    .iter()
+                    .filter(|c| c.bind().producto() == "pancho")
+                    .map(|c| c.instance_id())
+                    .collect();
+                let carrito = todos::<Carrito>(&mundo).pop().unwrap();
+                let pos = carrito.get_global_position() + Vector3::new(0.05, 1.0, 0.1);
+                self.pan = Some(self.agregar_comida("pan_pancho", pos));
+                let mut s = self.agregar_comida("salchicha", pos + Vector3::new(0.0, 0.1, 0.0));
+                s.bind_mut().forzar_avance(5.0);
+                self.esperar(90);
+            }
+            10 => {
+                let mut pancho = todos::<Comida>(&mundo)
+                    .into_iter()
+                    .find(|c| c.bind().producto() == "pancho" && !self.panchos_antes.contains(&c.instance_id()))
+                    .expect("se armó el pancho");
+                // CA-ADE-01: le pongo los aderezos del pedido.
+                let pedido = self.pedido.clone().unwrap_or(carrito_core::clientes::Pedido { producto: "pancho".into(), aderezos: vec![] });
+                let mut ok_usos = true;
+                for a in &pedido.aderezos {
+                    let mut pomo = todos::<Pomo>(&mundo).into_iter().find(|p| p.bind().aderezo() == a).expect("pomo");
+                    let antes = pomo.bind().usos();
+                    let r = pomo.bind_mut().aplicar(&mut pancho);
+                    ok_usos &= r.is_ok() && pomo.bind().usos() == antes - 1;
+                }
+                let tiene = pancho.bind().aderezos().to_vec();
+                self.chequear(
+                    ok_usos && tiene == pedido.aderezos,
+                    &format!("CA-ADE-01 aderezos puestos y pomos gastados ({tiene:?}) — {}", pancho.bind().descripcion()),
+                );
+                let mut repetido = todos::<Pomo>(&mundo).into_iter().find(|p| p.bind().aderezo() == "mostaza").unwrap();
+                if tiene.contains(&"mostaza".to_string()) {
+                    self.chequear(repetido.bind_mut().aplicar(&mut pancho).is_err(), "REQ-ADE-04 no se repite un aderezo");
+                }
+                // Lo apoyo en la bandeja.
+                let negocio = todos::<Negocio>(&mundo).pop().unwrap();
+                self.saldo_antes = negocio.bind().saldo();
+                let carrito = todos::<Carrito>(&mundo).pop().unwrap();
+                let bandeja = carrito.bind().pos_bandeja();
+                pancho.set_global_position(bandeja + Vector3::new(0.0, 0.05, 0.0));
+                pancho.set_global_rotation(Vector3::ZERO);
+                pancho.set_linear_velocity(Vector3::ZERO);
+                self.esperar(60);
+            }
+            11 => {
+                let negocio = todos::<Negocio>(&mundo).pop().unwrap();
+                let (saldo, ventas) = (negocio.bind().saldo(), negocio.bind().ventas_de_hoy());
+                self.chequear(
+                    saldo >= self.saldo_antes + 2500.0 && ventas == 1,
+                    &format!("CA-CLI-01 / CA-ECO-01 el cliente pagó (caja {} → {saldo}, ventas {ventas})", self.saldo_antes),
+                );
+                let tasa = self.superpuestos as f32 / self.muestras.max(1) as f32;
+                self.chequear(
+                    tasa < 0.05,
+                    &format!("REQ-AMB-13 la gente no se atraviesa ({} encimadas en {} cuadros)", self.superpuestos, self.muestras),
+                );
+                // CA-CLI-02: el siguiente se cansa de esperar.
+                let mut gente = todos::<Gente>(&mundo).pop().unwrap();
+                if gente.bind().largo_fila() == 0 {
+                    gente.bind_mut().forzar_cliente();
+                }
+                gente.bind_mut().set_paciencia_del_primero(0.3);
+                self.reputacion_antes = negocio.bind().reputacion();
+                self.perdidos_antes = negocio.bind().perdidos_de_hoy();
+                self.esperar(60);
+            }
+            12 => {
+                let mut negocio = todos::<Negocio>(&mundo).pop().unwrap();
+                let (rep, perdidos) = (negocio.bind().reputacion(), negocio.bind().perdidos_de_hoy());
+                self.chequear(
+                    perdidos == self.perdidos_antes + 1 && rep < self.reputacion_antes,
+                    &format!("CA-CLI-02 se fue enojado y bajó la reputación ({:.2} → {rep:.2})", self.reputacion_antes),
+                );
+                // CA-ECO-02: sin plata no se compra.
+                negocio.bind_mut().set_saldo(1000.0);
+                let r = negocio.bind_mut().comprar("bolsa_panes_12");
+                self.chequear(r.is_err() && negocio.bind().saldo() == 1000.0, "CA-ECO-02 no se puede comprar sin plata");
+                negocio.bind_mut().set_saldo(30_000.0);
+                // CA-PRO-01: compro a las 10:00, llega a las 11:00.
+                let mut dn = todos::<DiaNoche>(&mundo).pop().unwrap();
+                dn.bind_mut().set_minuto(10.0 * 60.0);
+                let r = negocio.bind_mut().comprar("bolsa_panes_12");
+                self.chequear(
+                    r.is_ok() && negocio.bind().saldo() == 30_000.0 - 1800.0,
+                    &format!("REQ-PRO-02 compra hecha: {r:?}"),
+                );
+                self.paquetes_antes = todos::<Paquete>(&mundo).len();
+                dn.bind_mut().set_minuto(10.0 * 60.0 + 59.0);
+                self.esperar(5);
+            }
+            13 => {
+                let n = todos::<Paquete>(&mundo).len();
+                self.chequear(n == self.paquetes_antes, "REQ-PRO-03 a las 10:59 todavía no llegó");
+                let mut dn = todos::<DiaNoche>(&mundo).pop().unwrap();
+                dn.bind_mut().set_minuto(11.0 * 60.0 + 1.0);
+                self.esperar(10);
+            }
+            14 => {
+                let paquetes = todos::<Paquete>(&mundo);
+                self.chequear(paquetes.len() == self.paquetes_antes + 1, "REQ-PRO-04 a las 11:00 llegó el paquete");
+                // Lo llevo a un lugar libre del estante.
+                let lugar = todos::<LugarDeposito>(&mundo).into_iter().find(|l| !l.bind().ocupado()).expect("lugar libre");
+                let mut p = paquetes.into_iter().last().unwrap();
+                p.set_global_position(lugar.bind().centro_zona());
+                p.set_global_rotation(Vector3::ZERO);
+                p.set_linear_velocity(Vector3::ZERO);
+                self.lugar = Some(lugar);
+                self.esperar(60);
+            }
+            15 => {
+                let lugar = self.lugar.clone().unwrap();
+                let restantes = lugar.bind().bloque().map(|b| b.bind().restantes());
+                self.chequear(
+                    restantes == Some(12) && todos::<Paquete>(&mundo).len() == self.paquetes_antes,
+                    &format!("CA-PRO-01 / REQ-PRO-06 el paquete quedó guardado con sus 12 panes ({restantes:?})"),
+                );
+                // REQ-ADE-05: recargar un pomo con un repuesto.
+                let mut pomo = todos::<Pomo>(&mundo).into_iter().find(|p| p.bind().aderezo() == "mostaza").unwrap();
+                pomo.bind_mut().set_usos(5);
+                let repuesto = self.agregar_comida("repuesto_mostaza", Vector3::new(4.0, 0.3, plaza::Z_VEREDA));
+                let repone = repuesto.bind().repone().map(str::to_string).unwrap_or_default();
+                let ok = pomo.bind_mut().recargar(&repone).is_ok();
+                self.chequear(ok && pomo.bind().usos() == 40, "REQ-ADE-05 el repuesto llena el pomo");
+                // CA-AMB-02: me acerco a una paloma.
+                let palomas = todos::<Palomas>(&mundo).pop().unwrap();
+                let en_suelo = palomas.bind().posiciones_en_suelo();
+                if let (Some(p), Some(mut j)) = (en_suelo.first(), todos::<Jugador>(&mundo).pop()) {
+                    j.set_global_position(*p + Vector3::new(1.5, 0.05, 0.0));
+                }
+                self.esperar(20);
+            }
+            16 => {
+                let palomas = todos::<Palomas>(&mundo).pop().unwrap();
+                self.chequear(palomas.bind().volando() >= 1, "CA-AMB-02 la paloma salió volando");
                 self.terminar();
             }
             _ => {}

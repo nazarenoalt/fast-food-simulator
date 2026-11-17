@@ -26,7 +26,8 @@ agregar un archivo de datos.
 - **REQ-CAR-05** Un accesorio se define en `godot/data/accesorios.ron` con id, nombre,
   categoría, precio, forma visual (lista de piezas simples: caja, cilindro, esfera, cono,
   con medidas, posición y color) y opcionalmente una **función**: Hervidor, Depósito
-  (con cantidad de lugares para bloques) o Luz (color, potencia, alcance).
+  (con cantidad de lugares para bloques), Luz (color, potencia, alcance) o Aderezos
+  (qué pomos tiene, SPEC-012).
 - **REQ-CAR-06** Las luces de accesorios se prenden de noche y se apagan de día (SPEC-007).
 
 ### Configuración del carrito del jugador
@@ -36,6 +37,8 @@ agregar un archivo de datos.
   accesorio está permitida en ese anclaje, un anclaje tiene como máximo un accesorio, y el
   accesorio existe. Si algo falla, se informa el error exacto (qué anclaje, qué accesorio).
 - **REQ-CAR-09** Estilo: la configuración puede cambiar el color de la base sin cambiar la base.
+- **REQ-CAR-10** Cada base define dónde va su bandeja de entrega sobre el mostrador
+  (SPEC-009) y dónde se paran los clientes para hacer fila.
 
 ## Criterios de aceptación
 

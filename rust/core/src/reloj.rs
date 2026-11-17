@@ -112,6 +112,20 @@ impl Sol {
         0.18 * (1.0 - suave(-6.0, 2.0, self.altura))
     }
 
+    /// REQ-AMB-11: blancas de día, anaranjadas al atardecer, oscuras de noche.
+    pub fn color_nubes(&self) -> [f32; 3] {
+        use crate::coccion::mezclar;
+        let dia = suave(-6.0, 10.0, self.altura);
+        let atardecer = 1.0 - suave(0.0, 20.0, self.altura.abs());
+        let base = mezclar([0.1, 0.11, 0.16], [0.97, 0.97, 0.98], dia);
+        mezclar(base, [1.0, 0.6, 0.4], atardecer * 0.7)
+    }
+
+    /// REQ-AMB-12
+    pub fn luna_visible(&self) -> bool {
+        self.altura < -2.0
+    }
+
     /// REQ-DIA-05: (cielo arriba, horizonte).
     pub fn colores_cielo(&self) -> ([f32; 3], [f32; 3]) {
         use crate::coccion::mezclar;
@@ -186,6 +200,22 @@ mod tests {
         assert!(noche.energia_luna() > 0.1);
         assert_eq!(dia.energia_luna(), 0.0);
         assert!(noche.colores_cielo().0[2] < dia.colores_cielo().0[2]);
+    }
+
+    #[test]
+    fn req_amb_11_color_de_nubes() {
+        let dia = Sol::en(h(13, 0)).color_nubes();
+        let atardecer = Sol::en(h(19, 25)).color_nubes();
+        let noche = Sol::en(h(1, 0)).color_nubes();
+        assert!(dia.iter().all(|c| *c > 0.9));
+        assert!(atardecer[0] > atardecer[2] + 0.15, "anaranjadas: {atardecer:?}");
+        assert!(noche.iter().all(|c| *c < 0.2));
+    }
+
+    #[test]
+    fn req_amb_12_luna_de_noche() {
+        assert!(Sol::en(h(23, 0)).luna_visible());
+        assert!(!Sol::en(h(13, 0)).luna_visible());
     }
 
     #[test]
