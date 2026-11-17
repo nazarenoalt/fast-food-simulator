@@ -14,7 +14,7 @@ Cada modelo sigue la [guía de modelado](guia-modelado-3d.md).
 - **Estado**: Pendiente → En progreso → En revisión → Hecho.
 - ⚠ = objeto que **no** está en ninguna spec todavía; es una propuesta y se confirma al escribir la spec de su etapa.
 
-Resumen: **106 modelos**. La etapa 1 tiene 28, y 23 de ellos (P1) reemplazan las piezas simples que el juego usa hoy.
+Resumen: **107 modelos**. La etapa 1 tiene 29, y 23 de ellos (P1) reemplazan las piezas simples que el juego usa hoy.
 
 ---
 
@@ -25,8 +25,9 @@ Resumen: **106 modelos**. La etapa 1 tiene 28, y 23 de ellos (P1) reemplazan las
 | ID | Objeto | Medidas | Tris | Materiales | Notas | Prio. | Estado |
 |---|---|---|---|---|---|---|---|
 | `pan_pancho` | Pan de pancho | 0,17 × 0,045 × 0,055 | 300 | PanCorteza, PanMiga | Pan abierto, como de panadería: cortado a lo largo casi hasta la base, con las mitades separadas y el fondo del corte en U para la salchicha. Origen al centro. Hecho por código: `tools/blender/modelos/pan_pancho.py` (280 tris). [Hoja de revisión](revisiones/pan_pancho.jpg). | P1 | En revisión |
-| `salchicha` | Salchicha | Ø 0,022 × 0,15 | 200 | SalchichaCruda | Cilindro de 8 lados con puntas redondeadas, apenas curvada. Pieza `pieza_salchicha` (el color lo cambia la cocción). | P1 | Pendiente |
-| `pancho` | Pancho armado | 0,17 × 0,06 × 0,055 | 500 | PanCorteza, PanMiga, SalchichaCruda | Se arma con `pan_pancho` + `salchicha` (no es un modelo nuevo). La salchicha va **hundida** entre las dos mitades: su centro a 0,004 m del centro del pan (hoy en `productos.ron` está a 0,024, apoyada arriba; cambiarlo cuando el juego cargue los `.glb`). | P1 | Pendiente |
+| `salchicha` | Salchicha | Ø 0,022 × 0,15 | 200 | SalchichaCruda | Tipo viena: 8 lados, puntas redondeadas con un nudito, apenas curvada. Objeto `pieza_salchicha` (el color lo cambia la cocción). Hecho por código: `tools/blender/modelos/salchicha.py` (176 tris). [Hoja de revisión](revisiones/salchicha.jpg). | P1 | En revisión |
+| `pancho` | Pancho armado | 0,17 × 0,045 × 0,055 | 600 | PanCorteza, PanMiga, SalchichaCruda | `pan_pancho` + `pieza_salchicha` bajo un objeto `pancho` (no es un modelo nuevo). La salchicha va **hundida** entre las dos mitades: centro a 0,004 m del centro del pan, así que el pancho mide lo mismo que el pan. Cuando el juego cargue los `.glb`, en `productos.ron` hay que pasar la salchicha de 0,024 a 0,004 y la colisión de 0,06 a 0,045 de alto. Hecho por código: `tools/blender/modelos/pancho.py` (456 tris). [Hoja de revisión](revisiones/pancho.jpg). | P1 | En revisión |
+| `pan_pancho_cerrado` | Pan de pancho cerrado (entero, sin cortar) | 0,17 × 0,045 × 0,055 | 300 | PanCorteza | Mismo pan que `pan_pancho` (mismo largo y puntas) pero entero. ⚠ Uso a definir: por ejemplo, los panes dentro de la bolsa del depósito, que se abren al sacarlos. Hecho por código: `tools/blender/modelos/pan_pancho_cerrado.py` (196 tris). [Hoja de revisión](revisiones/pan_pancho_cerrado.jpg). | P2 | En revisión |
 
 ### Bloques de stock (`stock/`)
 
@@ -219,7 +220,7 @@ cuerpo + cabeza + pelo + ropa + accesorio, y de cambiar colores.
 ## Orden sugerido para empezar
 
 1. ✔ **Biblioteca** (`materiales.blend`, `referencias.blend`) — sin esto no hay coherencia.
-2. **Comida de la etapa 1** (`pan_pancho`, `salchicha`, `pancho`): chicos, rápidos y se ven de cerca; definen el "sabor" del estilo.
+2. ✔ **Comida de la etapa 1** (`pan_pancho`, `pan_pancho_cerrado`, `salchicha`, `pancho`), en revisión: chicos, rápidos y se ven de cerca; definen el "sabor" del estilo.
 3. **`barra_chica` + `hervidor_chico`**: lo que el jugador ve todo el tiempo.
 4. Resto de accesorios de la etapa 1.
 5. Plaza de la etapa 1 (banco, farol, árboles, fuente).

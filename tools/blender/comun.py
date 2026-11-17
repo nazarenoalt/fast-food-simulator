@@ -134,6 +134,35 @@ def capsula(nombre, radio, largo, lados=8, material=None):
     return objeto_desde_bmesh(nombre, bm, [material] if material else [])
 
 
+def lofteo(nombre, anillos, puntas, materiales, material_cara=lambda banda, k: 0):
+    """Pieza alargada sobre X a partir de cortes transversales (panes, salchichas...).
+
+    anillos = lista de anillos, cada uno una lista de (x, y, z) con la misma cantidad de puntos.
+    puntas = (punto inicial, punto final): cada extremo se cierra en abanico hacia su punta.
+    material_cara(banda, k) = índice de material de la cara entre los anillos banda y banda+1,
+    que arranca en el punto k. Las puntas usan el material 0.
+    Sombreado suave, con borde marcado donde cambia el material (guía 3.4).
+    """
+    bm = bmesh.new()
+    vs = [[bm.verts.new(p) for p in a] for a in anillos]
+    n = len(vs[0])
+    for i, (a, b) in enumerate(zip(vs, vs[1:])):
+        for k in range(n):
+            f = bm.faces.new((a[k], b[k], b[(k + 1) % n], a[(k + 1) % n]))
+            f.material_index = material_cara(i, k)
+    for punta, a in zip(puntas, (vs[0], vs[-1])):
+        v = bm.verts.new(punta)
+        for k in range(n):
+            bm.faces.new((a[k], a[(k + 1) % n], v))
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+    for f in bm.faces:
+        f.smooth = True
+    for e in bm.edges:
+        if len({f.material_index for f in e.link_faces}) == 2:
+            e.smooth = False
+    return objeto_desde_bmesh(nombre, bm, materiales)
+
+
 # ── Revisión automática (guía, sección 8.2) ────────────────────────────
 
 def contar_triangulos(obj):
@@ -156,29 +185,36 @@ def _volumen_con_signo(obj):
     return vol
 
 
-def revisar(obj, presupuesto, medidas_godot, origen="centro", max_materiales=4, tolerancia=0.002):
+def _limites(objetos):
+    esquinas = [o.matrix_world @ Vector(c) for o in objetos for c in o.bound_box]
+    return Vector(map(min, *esquinas)), Vector(map(max, *esquinas))
+
+
+def revisar(objetos, presupuesto, medidas_godot, origen="centro", max_materiales=4, tolerancia=0.002):
     """Revisa un modelo contra la guía. Devuelve [(ok, texto)].
 
+    objetos = un objeto, o la lista de piezas de un modelo armado (ej. el pancho).
     medidas_godot = (ancho X, alto Y, profundidad Z) en metros, como en los .ron.
     origen = "centro" (comida, objetos de mano) o "base" (todo lo que se apoya).
     """
+    if not isinstance(objetos, (list, tuple)):
+        objetos = [objetos]
+    bpy.context.view_layer.update()
     res = []
+    minimo, maximo = _limites(objetos)
+    d = maximo - minimo
     esperado = Vector((medidas_godot[0], medidas_godot[2], medidas_godot[1]))  # a ejes de Blender
-    d = obj.dimensions
     ok = all(abs(d[i] - esperado[i]) <= tolerancia for i in range(3))
     res.append((ok, "Medidas %.3f × %.3f × %.3f m (esperado %.3f × %.3f × %.3f)" % (
         d.x, d.z, d.y, medidas_godot[0], medidas_godot[1], medidas_godot[2])))
 
-    tris = contar_triangulos(obj)
+    tris = sum(contar_triangulos(o) for o in objetos)
     res.append((tris <= presupuesto, f"Triángulos: {tris} (máx. {presupuesto})"))
 
-    limpio = (obj.rotation_euler.to_quaternion().angle < 1e-5
-              and all(abs(s - 1) < 1e-5 for s in obj.scale))
+    limpio = all(o.rotation_euler.to_quaternion().angle < 1e-5 and all(abs(s - 1) < 1e-5 for s in o.scale)
+                 for o in objetos)
     res.append((limpio, "Rotación 0 y escala 1 aplicadas"))
 
-    esquinas = [Vector(c) for c in obj.bound_box]
-    minimo = Vector(map(min, *esquinas))
-    maximo = Vector(map(max, *esquinas))
     centro = (minimo + maximo) / 2
     if origen == "centro":
         ok = centro.length <= tolerancia
@@ -188,24 +224,27 @@ def revisar(obj, presupuesto, medidas_godot, origen="centro", max_materiales=4, 
         texto = "Origen en el centro de la base, a nivel del piso"
     res.append((ok, texto))
 
-    nombres = [m.name for m in obj.data.materials if m]
+    nombres = list(dict.fromkeys(m.name for o in objetos for m in o.data.materials if m))
     validos = paleta()
     fuera = [n for n in nombres if n not in validos]
     res.append((not fuera, "Materiales de la paleta: " + ", ".join(nombres) +
                 (f" (NO están en la paleta: {fuera})" if fuera else "")))
     res.append((len(nombres) <= max_materiales, f"Materiales: {len(nombres)} (máx. {max_materiales})"))
-    usados = {p.material_index for p in obj.data.polygons}
-    res.append((usados == set(range(len(nombres))), "Todos los materiales se usan"))
+    usados = all({p.material_index for p in o.data.polygons} == set(range(len(o.data.materials)))
+                 for o in objetos)
+    res.append((usados, "Todos los materiales se usan"))
 
-    bm = bmesh.new()
-    bm.from_mesh(obj.data)
-    sueltos = sum(1 for v in bm.verts if not v.link_faces)
-    antes = len(bm.verts)
-    bmesh.ops.remove_doubles(bm, verts=bm.verts, dist=1e-5)
-    dobles = antes - len(bm.verts)
-    bm.free()
+    sueltos = dobles = 0
+    for o in objetos:
+        bm = bmesh.new()
+        bm.from_mesh(o.data)
+        sueltos += sum(1 for v in bm.verts if not v.link_faces)
+        antes = len(bm.verts)
+        bmesh.ops.remove_doubles(bm, verts=bm.verts, dist=1e-5)
+        dobles += antes - len(bm.verts)
+        bm.free()
     res.append((sueltos == 0 and dobles == 0, f"Sin vértices sueltos ({sueltos}) ni duplicados ({dobles})"))
-    res.append((_volumen_con_signo(obj) > 0, "Normales hacia afuera"))
+    res.append((all(_volumen_con_signo(o) > 0 for o in objetos), "Normales hacia afuera"))
     return res
 
 
@@ -349,6 +388,30 @@ def render(ruta):
     bpy.context.scene.render.filepath = str(ruta)
     bpy.ops.render.render(write_still=True)
     return Path(ruta)
+
+
+def preparar_revision():
+    """Trae las referencias (sin la persona ni el mostrador) y configura el render."""
+    cargar_referencias()
+    for nombre in ("ref_persona_1,75m", "ref_mostrador_0,95m"):
+        bpy.data.objects[nombre].hide_render = True
+    configurar_render()
+
+
+def sacar_fotos(pedidos):
+    """pedidos = [(etiqueta, objetos, vista, luz, de_cerca)]. En cada foto se ven solo
+    esos objetos (y el piso). Devuelve [(etiqueta, png)] para componer_hoja()."""
+    import tempfile
+    tmp = Path(tempfile.mkdtemp())
+    todos = {o for _, objs, *_ in pedidos for o in objs}
+    cuadros = []
+    for etiqueta, objs, vista, luz, de_cerca in pedidos:
+        poner_luz(luz)
+        for o in todos:
+            o.hide_render = o not in objs
+        encuadrar(objs, vista, de_cerca=de_cerca)
+        cuadros.append((etiqueta, render(tmp / f"{len(cuadros)}.png")))
+    return cuadros
 
 
 def componer_hoja(titulo, cuadros, revision, ruta, columnas=3):

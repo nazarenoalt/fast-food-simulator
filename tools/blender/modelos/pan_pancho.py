@@ -19,13 +19,11 @@ con borde marcado solo donde la corteza se encuentra con la miga.
 """
 import math
 import sys
-import tempfile
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-import bpy  # noqa: E402  (antes que bmesh)
-import bmesh  # noqa: E402
+import bpy  # noqa: E402, F401  (carga Blender)
 
 import comun  # noqa: E402
 
@@ -87,70 +85,40 @@ def anillo(x):
     return [(x, y * s, CENTRO_ESCALA_Z + (z - CENTRO_ESCALA_Z) * s) for y, z in completo]
 
 
-def es_miga(k, n_medio):
-    """k = índice del vértice de inicio de la cara dentro del anillo."""
+def es_miga(k, n_medio=len(PERFIL_ABIERTO)):
+    """k = índice del punto donde arranca la cara dentro del anillo."""
     return PRIMER_MIGA <= k < 2 * (n_medio - 1) - PRIMER_MIGA
 
 
-def construir():
-    corteza, miga = comun.cargar_materiales("M_PanCorteza", "M_PanMiga")
-    bm = bmesh.new()
-    anillos = [[bm.verts.new(p) for p in anillo(x)] for x in ESTACIONES]
-    n = len(anillos[0])
-    n_medio = len(PERFIL_ABIERTO)
-    for a, b in zip(anillos, anillos[1:]):
-        for k in range(n):
-            f = bm.faces.new((a[k], b[k], b[(k + 1) % n], a[(k + 1) % n]))
-            f.material_index = 1 if es_miga(k, n_medio) else 0
-    # Puntas: abanico hacia un vértice, a la altura media de la punta (todo corteza).
-    for x, a in ((-LARGO, anillos[0]), (LARGO, anillos[-1])):
-        zc = sum(v.co.z for v in a) / n
-        v = bm.verts.new((x, 0.0, zc))
-        for k in range(n):
-            bm.faces.new((a[k], a[(k + 1) % n], v))
-    bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
-    for f in bm.faces:
-        f.smooth = True
-    # Borde marcado entre corteza y miga (para que el corte se lea).
-    for e in bm.edges:
-        mats = {f.material_index for f in e.link_faces}
-        if len(mats) == 2:
-            e.smooth = False
-    obj = comun.objeto_desde_bmesh(ID, bm, [corteza, miga])
-    return obj
+def puntas(anillos):
+    """Cada punta del pan se cierra a la altura media de su último anillo."""
+    return [(x, 0.0, sum(p[2] for p in a) / len(a)) for x, a in ((-LARGO, anillos[0]), (LARGO, anillos[-1]))]
+
+
+def construir(nombre=ID):
+    materiales = comun.cargar_materiales("M_PanCorteza", "M_PanMiga")
+    anillos = [anillo(x) for x in ESTACIONES]
+    return comun.lofteo(nombre, anillos, puntas(anillos), materiales,
+                        lambda banda, k: 1 if es_miga(k) else 0)
 
 
 def hoja_revision(pan, revision):
     """Renders de día y de atardecer + prueba de encastre con la salchicha."""
-    comun.cargar_referencias()
-    for nombre in ("ref_persona_1,75m", "ref_mostrador_0,95m"):
-        bpy.data.objects[nombre].hide_render = True
-    comun.configurar_render()
+    comun.preparar_revision()
     pan.location.z = MEDIO_ALTO  # apoyado en el piso, solo para la foto
-
     # Salchicha cocida del pancho, con las medidas de productos.ron (no se exporta).
     cocida = comun.crear_material("ref_salchicha_cocida", "#B84C33", rugosidad=0.6)
     salchicha = comun.capsula("ref_salchicha", SALCHICHA_RADIO, 0.155, lados=8, material=cocida)
     salchicha.location = (0, 0, MEDIO_ALTO + SALCHICHA_Z)
-
-    tmp = Path(tempfile.mkdtemp())
-    cuadros = []
-
-    def foto(etiqueta, vista, luz, con_salchicha=False, de_cerca=False):
-        comun.poner_luz(luz)
-        salchicha.hide_render = not con_salchicha
-        objetos = [pan, salchicha] if con_salchicha else [pan]
-        comun.encuadrar(objetos, vista, de_cerca=de_cerca)
-        cuadros.append((etiqueta, comun.render(tmp / f"{len(cuadros)}.png")))
-
-    salchicha.hide_render = True
-    foto("Frente (lo que ve el cliente) · día", "frente", "dia")
-    foto("Costado de cerca: la salchicha queda hundida · día", "costado", "dia",
-         con_salchicha=True, de_cerca=True)
-    foto("3/4 · día", "tres_cuartos", "dia")
-    foto("Arriba · día", "arriba", "dia")
-    foto("3/4 · atardecer", "tres_cuartos", "atardecer")
-    foto("Encastre con la salchicha (pancho) · día", "tres_cuartos", "dia", con_salchicha=True)
+    solo, con = [pan], [pan, salchicha]
+    cuadros = comun.sacar_fotos([
+        ("Frente (lo que ve el cliente) · día", solo, "frente", "dia", False),
+        ("Costado de cerca: la salchicha queda hundida · día", con, "costado", "dia", True),
+        ("3/4 · día", solo, "tres_cuartos", "dia", False),
+        ("Arriba · día", solo, "arriba", "dia", False),
+        ("3/4 · atardecer", solo, "tres_cuartos", "atardecer", False),
+        ("Encastre con la salchicha (pancho) · día", con, "tres_cuartos", "dia", False),
+    ])
     comun.componer_hoja(
         "pan_pancho · 0,17 × 0,045 × 0,055 m · comida chica",
         cuadros, revision, comun.RAIZ / f"docs/arte/revisiones/{ID}.jpg",
