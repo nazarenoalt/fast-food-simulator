@@ -42,12 +42,17 @@ nubes y un cielo con sol y luna.
 - **REQ-AMB-11** Nubes que se mueven despacio con el viento y cruzan el cielo; de día son
   blancas (anaranjadas al atardecer) y de noche oscuras.
 - **REQ-AMB-12** El sol se ve como un disco en el cielo; de noche se ve la luna.
+- **REQ-AMB-14** Las sombras del sol son parejas en toda la plaza: sin bordes curvos que
+  aparecen o se corren al moverse, ni franjas de distinto desenfoque.
 
 ## Criterios de aceptación
 
 - **CA-AMB-01** Parado detrás del mostrador veo edificios, autos pasando, nubes moviéndose y
   gente en la plaza.
 - **CA-AMB-02** Corro hacia unas palomas y salen volando.
+
+- **CA-AMB-03** Camino por la plaza a cualquier hora: las sombras de árboles y edificios
+  se ven continuas, sin cortes redondos en el piso.
 
 ## Fuera de alcance
 
