@@ -1,0 +1,21 @@
+(
+    id: "carro_grande",
+    nombre: "Carro grande",
+    ancho: 3.4, profundidad: 1.2, alto_mostrador: 1.0,
+    color: (0.8, 0.8, 0.82),
+    ruedas: true,
+    precio: 950000,
+    anclajes: [
+        (id: "mostrador_izq", pos: (-1.1, 1.0, 0.1), categorias: [Cocina, Equipamiento]),
+        (id: "mostrador_centro", pos: (0.0, 1.0, 0.1), categorias: [Cocina, Equipamiento, Decoracion]),
+        (id: "mostrador_der", pos: (1.1, 1.0, 0.1), categorias: [Cocina, Equipamiento, Decoracion]),
+        (id: "lateral", pos: (2.15, 0.0, -0.35), rot_y: 180, categorias: [Deposito, Decoracion]),
+        (id: "lateral_izq", pos: (-2.15, 0.0, -0.35), rot_y: 180, categorias: [Deposito, Decoracion]),
+        (id: "sombra", pos: (-1.9, 0.0, -1.25), categorias: [Sombrilla]),
+        (id: "techo", pos: (0.0, 0.0, -0.2), categorias: [Carpa]),
+        (id: "frente", pos: (0.0, 0.0, 0.61), categorias: [Telon, Cerco, Decoracion]),
+        (id: "cerco", pos: (0.0, 0.0, 1.8), categorias: [Cerco, Decoracion]),
+        (id: "luz_1", pos: (-0.7, 2.1, 0.2), categorias: [Luz]),
+        (id: "luz_2", pos: (0.7, 2.1, 0.2), categorias: [Luz]),
+    ],
+)

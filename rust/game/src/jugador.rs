@@ -1,0 +1,346 @@
+//! SPEC-001 (jugador) y SPEC-002 (interacción y agarre).
+
+use godot::classes::input::MouseMode;
+use godot::classes::{
+    Camera3D, CapsuleShape3D, CharacterBody3D, ICharacterBody3D, Input, InputEvent, InputEventKey,
+    InputEventMouseButton, InputEventMouseMotion, InputMap, Node, ProjectSettings, RayCast3D, RigidBody3D,
+};
+use godot::global::{Key, MouseButton};
+use godot::prelude::*;
+
+use crate::bloque_stock::BloqueStock;
+use crate::comida::Comida;
+use crate::formas;
+use crate::hervidor::Hervidor;
+use crate::hud::{self, Hud};
+
+const VEL_CAMINAR: f32 = 3.5; // REQ-JUG-03
+const VEL_CORRER: f32 = 6.0; // REQ-JUG-03
+const VEL_SALTO: f32 = 4.5;
+const ALTO: f32 = 1.75; // REQ-JUG-05
+const RADIO: f32 = 0.3; // REQ-JUG-05
+const ALTO_OJOS: f32 = 1.65; // REQ-JUG-05
+const ALCANCE: f32 = 2.5; // REQ-INT-01
+const DIST_MANO: f32 = 1.0; // REQ-INT-03
+const RESORTE: f32 = 12.0; // REQ-INT-04
+const VEL_MAX_MANO: f32 = 8.0; // REQ-INT-04
+const DIST_TRABADO: f32 = 1.5; // REQ-INT-05
+const VEL_TIRO: f32 = 4.0; // REQ-INT-06
+const SENSIBILIDAD: f32 = 0.0025;
+
+/// Lo que está bajo la mira.
+pub enum Objetivo {
+    Comida(Gd<Comida>),
+    Hervidor(Gd<Hervidor>),
+    Bloque(Gd<BloqueStock>),
+}
+
+#[derive(GodotClass)]
+#[class(base=CharacterBody3D)]
+pub struct Jugador {
+    base: Base<CharacterBody3D>,
+    camara: Option<Gd<Camera3D>>,
+    rayo: Option<Gd<RayCast3D>>,
+    mano: Option<Gd<Comida>>,
+    segundos_en_mano: f32,
+    pitch: f32,
+    gravedad: f32,
+}
+
+fn registrar_acciones() {
+    let mut mapa = InputMap::singleton();
+    for (accion, tecla) in [
+        ("adelante", Key::W),
+        ("atras", Key::S),
+        ("izquierda", Key::A),
+        ("derecha", Key::D),
+        ("saltar", Key::SPACE),
+        ("correr", Key::SHIFT),
+        ("usar", Key::E),
+        ("tiempo_rapido", Key::T),
+    ] {
+        if !mapa.has_action(accion) {
+            mapa.add_action(accion);
+            let mut ev = InputEventKey::new_gd();
+            ev.set_physical_keycode(tecla);
+            mapa.action_add_event(accion, &ev);
+        }
+    }
+}
+
+#[godot_api]
+impl ICharacterBody3D for Jugador {
+    fn init(base: Base<CharacterBody3D>) -> Self {
+        // Arranca mirando un poco hacia abajo, para ver el mostrador.
+        let pitch = -18f32.to_radians();
+        Self { base, camara: None, rayo: None, mano: None, segundos_en_mano: 0.0, pitch, gravedad: 9.8 }
+    }
+
+    fn ready(&mut self) {
+        registrar_acciones();
+        self.gravedad = ProjectSettings::singleton()
+            .get_setting("physics/3d/default_gravity")
+            .try_to::<f64>()
+            .unwrap_or(9.8) as f32;
+
+        // REQ-JUG-05: cápsula de 1,75 m y radio 0,3; ojos a 1,65 m.
+        let mut forma = CapsuleShape3D::new_gd();
+        forma.set_radius(RADIO);
+        forma.set_height(ALTO);
+        let col = formas::nodo_colision(forma.upcast(), Transform3D::new(Basis::IDENTITY, Vector3::new(0.0, ALTO / 2.0, 0.0)));
+        self.base_mut().add_child(&col);
+
+        let mut camara = Camera3D::new_alloc();
+        camara.set_position(Vector3::new(0.0, ALTO_OJOS, 0.0));
+        camara.set_rotation(Vector3::new(self.pitch, 0.0, 0.0));
+        camara.set_fov(75.0);
+        camara.set_near(0.03);
+        self.base_mut().add_child(&camara);
+        camara.make_current();
+
+        // REQ-INT-01: lo que está a 2,5 m o menos bajo la mira.
+        let mut rayo = RayCast3D::new_alloc();
+        rayo.set_target_position(Vector3::new(0.0, 0.0, -ALCANCE));
+        let yo = self.to_gd();
+        rayo.add_exception(&yo);
+        camara.add_child(&rayo);
+
+        self.camara = Some(camara);
+        self.rayo = Some(rayo);
+        Input::singleton().set_mouse_mode(MouseMode::CAPTURED);
+    }
+
+    fn unhandled_input(&mut self, event: Gd<InputEvent>) {
+        let mut input = Input::singleton();
+        let capturado = input.get_mouse_mode() == MouseMode::CAPTURED;
+
+        if let Ok(mov) = event.clone().try_cast::<InputEventMouseMotion>() {
+            if capturado {
+                // REQ-JUG-02: mirar con el mouse, vertical limitado a ±85°.
+                let r = mov.get_relative();
+                self.base_mut().rotate_y(-r.x * SENSIBILIDAD);
+                self.pitch = (self.pitch - r.y * SENSIBILIDAD).clamp(-85f32.to_radians(), 85f32.to_radians());
+                let p = self.pitch;
+                if let Some(c) = &mut self.camara {
+                    c.set_rotation(Vector3::new(p, 0.0, 0.0));
+                }
+            }
+        } else if let Ok(boton) = event.clone().try_cast::<InputEventMouseButton>() {
+            if !boton.is_pressed() {
+                return;
+            }
+            // REQ-JUG-07: clic captura el mouse.
+            if !capturado {
+                input.set_mouse_mode(MouseMode::CAPTURED);
+                return;
+            }
+            match boton.get_button_index() {
+                MouseButton::LEFT => self.clic_izquierdo(),
+                MouseButton::RIGHT => self.tirar(),
+                _ => {}
+            }
+        } else if let Ok(tecla) = event.try_cast::<InputEventKey>() {
+            // REQ-JUG-07: Esc libera el mouse.
+            if tecla.is_pressed() && tecla.get_keycode() == Key::ESCAPE {
+                input.set_mouse_mode(MouseMode::VISIBLE);
+            }
+        }
+    }
+
+    fn physics_process(&mut self, delta: f64) {
+        let dt = delta as f32;
+        self.mover(dt);
+        if Input::singleton().is_action_just_pressed("usar") {
+            self.usar();
+        }
+        self.actualizar_mano(dt);
+        self.actualizar_cartel();
+    }
+}
+
+impl Jugador {
+    fn mover(&mut self, dt: f32) {
+        let input = Input::singleton();
+        let mut v = self.base().get_velocity();
+
+        // REQ-JUG-04: gravedad del proyecto; salto solo apoyado.
+        if !self.base().is_on_floor() {
+            v.y -= self.gravedad * dt;
+        } else if input.is_action_just_pressed("saltar") {
+            v.y = VEL_SALTO;
+        }
+
+        // REQ-JUG-01: WASD relativo a hacia dónde mira; REQ-JUG-03: correr con Shift.
+        let ejes = input.get_vector("izquierda", "derecha", "adelante", "atras");
+        let basis = self.base().get_global_transform().basis;
+        let mut dir = basis * Vector3::new(ejes.x, 0.0, ejes.y);
+        dir.y = 0.0;
+        let vel = if input.is_action_pressed("correr") { VEL_CORRER } else { VEL_CAMINAR };
+        if dir.length() > 0.01 {
+            let dir = dir.normalized();
+            v.x = dir.x * vel;
+            v.z = dir.z * vel;
+        } else {
+            v.x = 0.0;
+            v.z = 0.0;
+        }
+        self.base_mut().set_velocity(v);
+        self.base_mut().move_and_slide();
+
+        // REQ-JUG-06: empuja suavemente los objetos con física que toca.
+        let n = self.base().get_slide_collision_count();
+        for i in 0..n {
+            let Some(choque) = self.base_mut().get_slide_collision(i) else { continue };
+            let Some(obj) = choque.get_collider() else { continue };
+            if let Ok(mut cuerpo) = obj.try_cast::<RigidBody3D>() {
+                let normal = choque.get_normal();
+                let impulso = -normal * cuerpo.get_mass() * 0.6;
+                cuerpo.apply_central_impulse(Vector3::new(impulso.x, 0.0, impulso.z));
+            }
+        }
+    }
+
+    /// REQ-INT-01
+    pub fn objetivo(&mut self) -> Option<Objetivo> {
+        let rayo = self.rayo.as_mut()?;
+        rayo.force_raycast_update();
+        if !rayo.is_colliding() {
+            return None;
+        }
+        let mut nodo: Option<Gd<Node>> = rayo.get_collider()?.try_cast::<Node>().ok();
+        // El objeto puede ser el cuerpo físico o un hijo de un equipo: se sube hasta 4 niveles.
+        for _ in 0..4 {
+            let n = nodo?;
+            let n = match n.try_cast::<Comida>() {
+                Ok(c) => return Some(Objetivo::Comida(c)),
+                Err(n) => n,
+            };
+            let n = match n.try_cast::<Hervidor>() {
+                Ok(h) => return Some(Objetivo::Hervidor(h)),
+                Err(n) => n,
+            };
+            let n = match n.try_cast::<BloqueStock>() {
+                Ok(b) => return Some(Objetivo::Bloque(b)),
+                Err(n) => n,
+            };
+            nodo = n.get_parent();
+        }
+        None
+    }
+
+    fn clic_izquierdo(&mut self) {
+        if self.mano.is_some() {
+            // REQ-INT-06: soltar.
+            self.soltar();
+        } else if let Some(Objetivo::Comida(c)) = self.objetivo() {
+            // REQ-INT-03: agarrar.
+            self.agarrar(c);
+        }
+    }
+
+    pub fn agarrar(&mut self, mut c: Gd<Comida>) {
+        c.bind_mut().sostenida = true;
+        c.set_gravity_scale(0.0);
+        if let Some(r) = &mut self.rayo {
+            r.add_exception(&c);
+        }
+        self.segundos_en_mano = 0.0;
+        self.mano = Some(c);
+    }
+
+    pub fn soltar(&mut self) -> Option<Gd<Comida>> {
+        let mut c = self.mano.take()?;
+        if !c.is_instance_valid() {
+            return None;
+        }
+        c.bind_mut().sostenida = false;
+        c.set_gravity_scale(1.0);
+        if let Some(r) = &mut self.rayo {
+            r.remove_exception(&c);
+        }
+        Some(c)
+    }
+
+    /// REQ-INT-06: tirar hacia adelante.
+    fn tirar(&mut self) {
+        let adelante = self.adelante();
+        if let Some(mut c) = self.soltar() {
+            c.set_linear_velocity(adelante * VEL_TIRO);
+        }
+    }
+
+    fn adelante(&self) -> Vector3 {
+        self.camara.as_ref().map(|c| -c.get_global_transform().basis.col_c()).unwrap_or(Vector3::FORWARD)
+    }
+
+    /// REQ-INT-07: E usa equipos o saca del depósito, con la mano libre.
+    pub fn usar(&mut self) {
+        if self.mano.is_some() {
+            return;
+        }
+        match self.objetivo() {
+            Some(Objetivo::Hervidor(mut h)) => h.bind_mut().alternar(),
+            Some(Objetivo::Bloque(mut b)) => {
+                let sacado = b.bind_mut().sacar();
+                if let Some((producto, pos)) = sacado {
+                    // REQ-DEP-05: aparece como objeto físico en la mano.
+                    let mut c = Comida::crear(&producto);
+                    c.set_position(pos);
+                    if let Some(mut padre) = self.base().get_parent() {
+                        padre.add_child(&c);
+                    }
+                    c.set_global_position(pos);
+                    self.agarrar(c);
+                }
+            }
+            _ => {}
+        }
+    }
+
+    /// REQ-INT-03, REQ-INT-04, REQ-INT-05
+    fn actualizar_mano(&mut self, dt: f32) {
+        let Some(c) = &self.mano else { return };
+        if !c.is_instance_valid() {
+            self.mano = None;
+            return;
+        }
+        let Some(camara) = &self.camara else { return };
+        let t = camara.get_global_transform();
+        let destino = t.origin - t.basis.col_c() * DIST_MANO;
+        let mut c = c.clone();
+        let diferencia = destino - c.get_global_position();
+
+        self.segundos_en_mano += dt;
+        if self.segundos_en_mano > 0.5 && diferencia.length() > DIST_TRABADO {
+            self.soltar();
+            return;
+        }
+        let mut v = diferencia * RESORTE;
+        if v.length() > VEL_MAX_MANO {
+            v = v.normalized() * VEL_MAX_MANO;
+        }
+        c.set_linear_velocity(v);
+        let giro = c.get_angular_velocity();
+        c.set_angular_velocity(giro * 0.8);
+    }
+
+    /// REQ-INT-02, REQ-INT-08
+    fn actualizar_cartel(&mut self) {
+        let texto = if let Some(c) = self.mano.as_ref().filter(|c| c.is_instance_valid()) {
+            format!("{}\n[Clic] Soltar · [Clic der.] Tirar", c.bind().descripcion())
+        } else {
+            match self.objetivo() {
+                Some(Objetivo::Comida(c)) => format!("[Clic] Agarrar {}", c.bind().descripcion().to_lowercase()),
+                Some(Objetivo::Hervidor(h)) => h.bind().cartel(),
+                Some(Objetivo::Bloque(b)) => b.bind().cartel(),
+                None => String::new(),
+            }
+        };
+        let arbol = self.base().get_tree();
+        if let Some(n) = arbol.get_first_node_in_group(hud::GRUPO) {
+            if let Ok(mut h) = n.try_cast::<Hud>() {
+                h.bind_mut().set_cartel(&texto);
+            }
+        }
+    }
+}

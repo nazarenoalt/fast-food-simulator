@@ -1,0 +1,19 @@
+(
+    id: "barra_mediana",
+    nombre: "Barra mediana",
+    ancho: 2.4, profundidad: 0.8, alto_mostrador: 0.95,
+    color: (0.8, 0.8, 0.82),
+    ruedas: true,
+    precio: 480000,
+    anclajes: [
+        (id: "mostrador_izq", pos: (-0.75, 0.95, 0.0), categorias: [Cocina, Equipamiento]),
+        (id: "mostrador_centro", pos: (0.0, 0.95, 0.0), categorias: [Cocina, Equipamiento, Decoracion]),
+        (id: "mostrador_der", pos: (0.75, 0.95, 0.0), categorias: [Cocina, Equipamiento, Decoracion]),
+        (id: "lateral", pos: (1.65, 0.0, -0.25), rot_y: 180, categorias: [Deposito, Decoracion]),
+        (id: "sombra", pos: (-1.4, 0.0, -1.0), categorias: [Sombrilla]),
+        (id: "techo", pos: (0.0, 0.0, -0.1), categorias: [Carpa]),
+        (id: "frente", pos: (0.0, 0.0, 0.41), categorias: [Telon, Cerco, Decoracion]),
+        (id: "luz_1", pos: (-0.5, 2.05, 0.05), categorias: [Luz]),
+        (id: "luz_2", pos: (0.5, 2.05, 0.05), categorias: [Luz]),
+    ],
+)

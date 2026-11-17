@@ -1,0 +1,15 @@
+[gd_scene format=3]
+
+[node name="Mundo" type="Node3D"]
+
+[node name="DiaNoche" type="DiaNoche" parent="."]
+
+[node name="Plaza" type="Plaza" parent="."]
+
+[node name="Carrito" type="Carrito" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -23)
+
+[node name="Jugador" type="Jugador" parent="."]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 0, 0.05, -23.85)
+
+[node name="Hud" type="Hud" parent="."]

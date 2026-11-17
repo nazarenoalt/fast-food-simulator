@@ -1,0 +1,11 @@
+[package]
+name = "carrito_game"
+edition.workspace = true
+version.workspace = true
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+godot = { version = "=0.5.5", features = ["api-4-7"] }
+carrito_core = { path = "../core" }

@@ -1,0 +1,119 @@
+//! SPEC-004 · Un bloque de stock en el depósito, con sus unidades visibles.
+
+use carrito_core::deposito::{Bloque, DefBloque, Empaque};
+use carrito_core::forma::TipoPieza;
+use godot::classes::{BoxShape3D, INode3D, Node3D, StaticBody3D};
+use godot::prelude::*;
+
+use crate::datos::catalogo;
+use crate::formas;
+
+#[derive(GodotClass)]
+#[class(base=Node3D, no_init)]
+pub struct BloqueStock {
+    base: Base<Node3D>,
+    bloque: Bloque,
+    /// Un nodo por unidad, en el mismo orden que la grilla.
+    unidades: Vec<Gd<Node3D>>,
+}
+
+impl BloqueStock {
+    pub fn crear(def: DefBloque) -> Gd<Self> {
+        Gd::from_init_fn(|base| Self { base, bloque: Bloque::lleno(def), unidades: Vec::new() })
+    }
+
+    pub fn restantes(&self) -> u32 {
+        self.bloque.restantes
+    }
+
+    pub fn producto(&self) -> &str {
+        &self.bloque.def.producto
+    }
+
+    /// Unidades dibujadas (para pruebas). REQ-DEP-03
+    pub fn unidades_visibles(&self) -> usize {
+        self.unidades.len()
+    }
+
+    /// REQ-DEP-08
+    pub fn cartel(&self) -> String {
+        let nombre = catalogo().producto(&self.bloque.def.producto).map(|p| p.nombre.as_str()).unwrap_or("?");
+        format!(
+            "[E] Sacar {nombre} ({}/{}) — {}",
+            self.bloque.restantes,
+            self.bloque.def.capacidad(),
+            self.bloque.def.nombre
+        )
+    }
+
+    /// Saca una unidad. Devuelve el producto y dónde estaba (para que aparezca ahí). REQ-DEP-04
+    pub fn sacar(&mut self) -> Option<(String, Vector3)> {
+        let producto = self.bloque.sacar()?.to_string();
+        // REQ-DEP-03: se deja de dibujar exactamente la unidad sacada (la última).
+        let mut nodo = self.unidades.pop()?;
+        let pos = nodo.get_global_position();
+        nodo.queue_free();
+        // REQ-DEP-06: bloque vacío → desaparece el paquete y el lugar queda libre.
+        if self.bloque.vacio() {
+            self.base_mut().queue_free();
+        }
+        Some((producto, pos))
+    }
+}
+
+#[godot_api]
+impl INode3D for BloqueStock {
+    fn ready(&mut self) {
+        let def = self.bloque.def.clone();
+        let producto = catalogo().producto(&def.producto).expect("producto del bloque").clone();
+        let [tx, ty, tz] = def.tamano();
+        let mut yo = self.to_gd().upcast::<Node3D>();
+
+        // REQ-DEP-02: cada unidad restante es un objeto 3D real en su lugar (sin física).
+        for pos in self.bloque.posiciones_visibles() {
+            let mut unidad = Node3D::new_alloc();
+            for p in &producto.forma {
+                unidad.add_child(&formas::visual_pieza(p));
+            }
+            unidad.set_position(formas::v3(pos));
+            yo.add_child(&unidad);
+            self.unidades.push(unidad);
+        }
+
+        // REQ-DEP-06: el paquete.
+        let c = def.color_empaque;
+        match def.empaque {
+            Empaque::Bolsa => {
+                let mut bolsa = formas::pieza(TipoPieza::Caja, [tx + 0.01, ty + 0.01, tz + 0.01], [0.0, ty / 2.0, 0.0], c);
+                bolsa.alfa = 0.22;
+                yo.add_child(&formas::visual_pieza(&bolsa));
+                // Nudo de la bolsa.
+                let nudo = formas::pieza(TipoPieza::Esfera, [0.02, 0.0, 0.0], [0.0, ty / 2.0, -tz / 2.0 - 0.015], c);
+                yo.add_child(&formas::visual_pieza(&nudo));
+            }
+            Empaque::Bandeja => {
+                let alto = (ty * 0.45).max(0.015);
+                let e = 0.004;
+                for (m, p) in [
+                    ([tx + 2.0 * e, e, tz + 2.0 * e], [0.0, -e / 2.0, 0.0]),
+                    ([tx + 2.0 * e, alto, e], [0.0, alto / 2.0, tz / 2.0 + e / 2.0]),
+                    ([tx + 2.0 * e, alto, e], [0.0, alto / 2.0, -tz / 2.0 - e / 2.0]),
+                    ([e, alto, tz], [tx / 2.0 + e / 2.0, alto / 2.0, 0.0]),
+                    ([e, alto, tz], [-tx / 2.0 - e / 2.0, alto / 2.0, 0.0]),
+                ] {
+                    yo.add_child(&formas::visual_pieza(&formas::pieza(TipoPieza::Caja, m, p, c)));
+                }
+                let mut film = formas::pieza(TipoPieza::Caja, [tx + 0.008, ty + 0.004, tz + 0.008], [0.0, ty / 2.0, 0.0], [0.95, 0.95, 1.0]);
+                film.alfa = 0.15;
+                yo.add_child(&formas::visual_pieza(&film));
+            }
+        }
+
+        // Cuerpo para que la mira lo detecte y se pueda apoyar cosas encima.
+        let mut cuerpo = StaticBody3D::new_alloc();
+        let mut s = BoxShape3D::new_gd();
+        s.set_size(Vector3::new(tx + 0.01, ty + 0.01, tz + 0.01));
+        cuerpo.add_child(&formas::nodo_colision(s.upcast(), Transform3D::new(Basis::IDENTITY, Vector3::new(0.0, ty / 2.0, 0.0))));
+        yo.add_child(&cuerpo);
+    }
+}

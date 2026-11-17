@@ -1,0 +1,19 @@
+// Base de carrito (SPEC-006). Frente (cliente) = +Z, vendedor del lado -Z.
+// Posiciones de anclajes relativas al centro del piso de la base.
+(
+    id: "barra_chica",
+    nombre: "Barra chica",
+    ancho: 1.6, profundidad: 0.7, alto_mostrador: 0.95,
+    color: (0.8, 0.8, 0.82),
+    ruedas: true,
+    precio: 250000,
+    anclajes: [
+        (id: "mostrador_izq", pos: (-0.4, 0.95, 0.0), categorias: [Cocina, Equipamiento]),
+        (id: "mostrador_der", pos: (0.4, 0.95, 0.0), categorias: [Cocina, Equipamiento, Decoracion]),
+        (id: "lateral", pos: (1.25, 0.0, -0.25), rot_y: 180, categorias: [Deposito, Decoracion]),
+        (id: "sombra", pos: (-1.0, 0.0, -0.95), categorias: [Sombrilla]),
+        (id: "techo", pos: (0.0, 0.0, -0.1), categorias: [Carpa]),
+        (id: "frente", pos: (0.0, 0.0, 0.36), categorias: [Telon, Cerco, Decoracion]),
+        (id: "luz_1", pos: (0.0, 2.05, 0.05), categorias: [Luz]),
+    ],
+)

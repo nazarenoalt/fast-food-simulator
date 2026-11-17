@@ -1,0 +1,24 @@
+// Bloques de stock (SPEC-004): paquetes de N unidades que se ven dentro del depósito.
+// grilla = (columnas en X, filas en Z, capas en Y)
+[
+    (
+        id: "bolsa_panes_12",
+        nombre: "bolsa de panes",
+        producto: "pan_pancho",
+        grilla: (1, 6, 2),
+        separacion: (0.18, 0.047, 0.058),
+        empaque: Bolsa,
+        color_empaque: (0.92, 0.94, 1.0),
+        precio: 1800,
+    ),
+    (
+        id: "caja_salchichas_12",
+        nombre: "paquete de salchichas",
+        producto: "salchicha",
+        grilla: (1, 6, 2),
+        separacion: (0.16, 0.024, 0.025),
+        empaque: Bandeja,
+        color_empaque: (0.78, 0.62, 0.42),
+        precio: 3200,
+    ),
+]

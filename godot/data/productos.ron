@@ -1,0 +1,48 @@
+// Productos del juego (SPEC-003, SPEC-005).
+// Medidas en metros, masa en kg. Las piezas de "forma" usan las convenciones de forma.rs.
+(
+    productos: [
+        (
+            id: "pan_pancho",
+            nombre: "pan de pancho",
+            masa: 0.04,
+            colision: Caja(medidas: (0.17, 0.045, 0.055)),
+            forma: [
+                (tipo: Capsula, medidas: (0.027, 0.17, 0), rot: (0, 0, 90), escala: (1, 0.85, 1), color: (0.86, 0.6, 0.32)),
+                // corte del pan (más claro)
+                (tipo: Caja, medidas: (0.13, 0.004, 0.012), pos: (0, 0.021, 0), color: (0.97, 0.88, 0.7)),
+            ],
+        ),
+        (
+            id: "salchicha",
+            nombre: "salchicha",
+            masa: 0.05,
+            colision: Capsula(radio: 0.011, largo: 0.15),
+            forma: [
+                (tipo: Capsula, medidas: (0.011, 0.15, 0), rot: (0, 0, 90), color: (0.93, 0.55, 0.5), tinte_coccion: true),
+            ],
+            coccion: Some((
+                k: 0.06, t_min: 55, velocidad: 0.0025, punto: 3, pasado: 13,
+                t_quemado: 180, segundos_quemado: 20,
+                color_crudo: (0.93, 0.55, 0.5),
+                color_cocido: (0.72, 0.3, 0.2),
+                color_pasado: (0.5, 0.22, 0.14),
+                color_quemado: (0.12, 0.08, 0.06),
+            )),
+        ),
+        (
+            id: "pancho",
+            nombre: "pancho",
+            masa: 0.09,
+            colision: Caja(medidas: (0.17, 0.06, 0.055)),
+            forma: [
+                (tipo: Capsula, medidas: (0.027, 0.17, 0), rot: (0, 0, 90), escala: (1, 0.85, 1), color: (0.86, 0.6, 0.32)),
+                (tipo: Capsula, medidas: (0.011, 0.155, 0), pos: (0, 0.024, 0), rot: (0, 0, 90), color: (0.72, 0.3, 0.2), tinte_coccion: true),
+            ],
+        ),
+    ],
+    // REQ-ARM-01
+    combinaciones: [
+        (base: "pan_pancho", agregado: "salchicha", resultado: "pancho"),
+    ],
+)
