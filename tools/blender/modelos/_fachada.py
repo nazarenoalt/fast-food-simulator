@@ -200,7 +200,8 @@ def revisar(f, medidas):
                             "Origen en el centro de la base del plano de la fachada (x de %.2f a "
                             "%.2f, piso en %.3f, muro de z %.2f a 0; adelante sale %.2f)" % (
                                 mn.x, mx.x, mn.y, mn.z, mx.z))
-    ok, texto = ciudad.chequeo_materiales(f.objetos, 6, por_que=": fachada armada, como una base de carrito")
+    ok, texto = ciudad.chequeo_materiales(f.objetos, 6, max_objeto=5,
+                                         por_que=": fachada armada, como una base de carrito")
     res = ciudad.reemplazar(res, "Materiales: ", ok, texto)
     # Módulos: alturas del código y origen en su piso.
     alturas = []
