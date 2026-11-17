@@ -114,6 +114,16 @@
     ),
     // ── Equipamiento ────────────────────────────────────────
     (
+        id: "aderecera_tres",
+        nombre: "Aderecera de tres pomos",
+        categoria: Equipamiento,
+        precio: 12000,
+        forma: [
+            (tipo: Caja, medidas: (0.3, 0.015, 0.1), pos: (0, 0.0075, -0.22), color: (0.75, 0.75, 0.78), metal: true),
+        ],
+        funcion: Some(Aderezos(tipos: ["mostaza", "ketchup", "mayonesa"], separacion: 0.09)),
+    ),
+    (
         id: "servilletero",
         nombre: "Servilletero",
         categoria: Equipamiento,

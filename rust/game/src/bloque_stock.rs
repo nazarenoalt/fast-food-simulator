@@ -61,53 +61,62 @@ impl BloqueStock {
     }
 }
 
+/// Dibuja las unidades restantes y el paquete de un bloque como hijos de `padre`.
+/// Devuelve los nodos de las unidades, en el orden de la grilla. REQ-DEP-02, REQ-DEP-06
+pub fn construir_visual(padre: &mut Gd<Node3D>, def: &DefBloque, restantes: u32) -> Vec<Gd<Node3D>> {
+    let producto = catalogo().producto(&def.producto).expect("producto del bloque").clone();
+    let [tx, ty, tz] = def.tamano();
+    let mut unidades = Vec::new();
+
+    // REQ-DEP-02: cada unidad restante es un objeto 3D real en su lugar (sin física).
+    for i in 0..restantes {
+        let mut unidad = Node3D::new_alloc();
+        for p in &producto.forma {
+            unidad.add_child(&formas::visual_pieza(p));
+        }
+        unidad.set_position(formas::v3(def.posicion_unidad(i)));
+        padre.add_child(&unidad);
+        unidades.push(unidad);
+    }
+
+    // REQ-DEP-06: el paquete.
+    let c = def.color_empaque;
+    match def.empaque {
+        Empaque::Bolsa => {
+            let mut bolsa = formas::pieza(TipoPieza::Caja, [tx + 0.01, ty + 0.01, tz + 0.01], [0.0, ty / 2.0, 0.0], c);
+            bolsa.alfa = 0.22;
+            padre.add_child(&formas::visual_pieza(&bolsa));
+            let nudo = formas::pieza(TipoPieza::Esfera, [0.02, 0.0, 0.0], [0.0, ty / 2.0, -tz / 2.0 - 0.015], c);
+            padre.add_child(&formas::visual_pieza(&nudo));
+        }
+        Empaque::Bandeja => {
+            let alto = (ty * 0.45).max(0.015);
+            let e = 0.004;
+            for (m, p) in [
+                ([tx + 2.0 * e, e, tz + 2.0 * e], [0.0, -e / 2.0, 0.0]),
+                ([tx + 2.0 * e, alto, e], [0.0, alto / 2.0, tz / 2.0 + e / 2.0]),
+                ([tx + 2.0 * e, alto, e], [0.0, alto / 2.0, -tz / 2.0 - e / 2.0]),
+                ([e, alto, tz], [tx / 2.0 + e / 2.0, alto / 2.0, 0.0]),
+                ([e, alto, tz], [-tx / 2.0 - e / 2.0, alto / 2.0, 0.0]),
+            ] {
+                padre.add_child(&formas::visual_pieza(&formas::pieza(TipoPieza::Caja, m, p, c)));
+            }
+            let mut film =
+                formas::pieza(TipoPieza::Caja, [tx + 0.008, ty + 0.004, tz + 0.008], [0.0, ty / 2.0, 0.0], [0.95, 0.95, 1.0]);
+            film.alfa = 0.15;
+            padre.add_child(&formas::visual_pieza(&film));
+        }
+    }
+    unidades
+}
+
 #[godot_api]
 impl INode3D for BloqueStock {
     fn ready(&mut self) {
         let def = self.bloque.def.clone();
-        let producto = catalogo().producto(&def.producto).expect("producto del bloque").clone();
         let [tx, ty, tz] = def.tamano();
         let mut yo = self.to_gd().upcast::<Node3D>();
-
-        // REQ-DEP-02: cada unidad restante es un objeto 3D real en su lugar (sin física).
-        for pos in self.bloque.posiciones_visibles() {
-            let mut unidad = Node3D::new_alloc();
-            for p in &producto.forma {
-                unidad.add_child(&formas::visual_pieza(p));
-            }
-            unidad.set_position(formas::v3(pos));
-            yo.add_child(&unidad);
-            self.unidades.push(unidad);
-        }
-
-        // REQ-DEP-06: el paquete.
-        let c = def.color_empaque;
-        match def.empaque {
-            Empaque::Bolsa => {
-                let mut bolsa = formas::pieza(TipoPieza::Caja, [tx + 0.01, ty + 0.01, tz + 0.01], [0.0, ty / 2.0, 0.0], c);
-                bolsa.alfa = 0.22;
-                yo.add_child(&formas::visual_pieza(&bolsa));
-                // Nudo de la bolsa.
-                let nudo = formas::pieza(TipoPieza::Esfera, [0.02, 0.0, 0.0], [0.0, ty / 2.0, -tz / 2.0 - 0.015], c);
-                yo.add_child(&formas::visual_pieza(&nudo));
-            }
-            Empaque::Bandeja => {
-                let alto = (ty * 0.45).max(0.015);
-                let e = 0.004;
-                for (m, p) in [
-                    ([tx + 2.0 * e, e, tz + 2.0 * e], [0.0, -e / 2.0, 0.0]),
-                    ([tx + 2.0 * e, alto, e], [0.0, alto / 2.0, tz / 2.0 + e / 2.0]),
-                    ([tx + 2.0 * e, alto, e], [0.0, alto / 2.0, -tz / 2.0 - e / 2.0]),
-                    ([e, alto, tz], [tx / 2.0 + e / 2.0, alto / 2.0, 0.0]),
-                    ([e, alto, tz], [-tx / 2.0 - e / 2.0, alto / 2.0, 0.0]),
-                ] {
-                    yo.add_child(&formas::visual_pieza(&formas::pieza(TipoPieza::Caja, m, p, c)));
-                }
-                let mut film = formas::pieza(TipoPieza::Caja, [tx + 0.008, ty + 0.004, tz + 0.008], [0.0, ty / 2.0, 0.0], [0.95, 0.95, 1.0]);
-                film.alfa = 0.15;
-                yo.add_child(&formas::visual_pieza(&film));
-            }
-        }
+        self.unidades = construir_visual(&mut yo, &def, self.bloque.restantes);
 
         // Cuerpo para que la mira lo detecte y se pueda apoyar cosas encima.
         let mut cuerpo = StaticBody3D::new_alloc();

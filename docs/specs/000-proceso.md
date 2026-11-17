@@ -40,6 +40,11 @@ Estado: Borrador | Aprobada | Implementada
 | CAR | 006 Carrito modular |
 | DIA | 007 Día y noche |
 | MUN | 008 Mundo (plaza) |
+| CLI | 009 Clientes |
+| ECO | 010 Economía |
+| PRO | 011 Proveedor |
+| ADE | 012 Aderezos |
+| AMB | 013 Ambientación |
 
 ## Convenciones de código
 

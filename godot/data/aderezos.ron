@@ -1,0 +1,6 @@
+// Aderezos (SPEC-012). "usos" = cuántas veces se puede usar un pomo lleno.
+[
+    (id: "mostaza", nombre: "mostaza", color: (0.92, 0.72, 0.08), usos: 40),
+    (id: "ketchup", nombre: "ketchup", color: (0.8, 0.08, 0.05), usos: 40),
+    (id: "mayonesa", nombre: "mayonesa", color: (0.97, 0.94, 0.78), usos: 40),
+]

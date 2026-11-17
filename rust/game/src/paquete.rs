@@ -1,0 +1,60 @@
+//! SPEC-011 · Paquete que llega del proveedor: se agarra y se lleva al depósito.
+
+use carrito_core::deposito::DefBloque;
+use godot::classes::{BoxShape3D, IRigidBody3D, Node3D, PhysicsMaterial, RigidBody3D};
+use godot::prelude::*;
+
+use crate::bloque_stock;
+use crate::datos::catalogo;
+use crate::formas;
+
+#[derive(GodotClass)]
+#[class(base=RigidBody3D, no_init)]
+pub struct Paquete {
+    base: Base<RigidBody3D>,
+    def: DefBloque,
+    /// Lo tiene el jugador en la mano. REQ-PRO-05
+    pub sostenido: bool,
+    /// Ya se acomodó en el depósito (está por desaparecer).
+    pub acomodado: bool,
+}
+
+impl Paquete {
+    pub fn crear(def: DefBloque) -> Gd<Self> {
+        Gd::from_init_fn(|base| Self { base, def, sostenido: false, acomodado: false })
+    }
+
+    pub fn def(&self) -> &DefBloque {
+        &self.def
+    }
+
+    pub fn descripcion(&self) -> String {
+        carrito_core::aderezos::capitalizar(&format!("{} ({} unidades)", self.def.nombre, self.def.capacidad()))
+    }
+}
+
+#[godot_api]
+impl IRigidBody3D for Paquete {
+    fn ready(&mut self) {
+        let def = self.def.clone();
+        let [tx, ty, tz] = def.tamano();
+        let masa_unidad = catalogo().producto(&def.producto).map(|p| p.masa).unwrap_or(0.05);
+        let mut yo = self.to_gd();
+        yo.set_mass(masa_unidad * def.capacidad() as f32 + 0.05);
+        yo.set_angular_damp(2.0);
+        let mut mat = PhysicsMaterial::new_gd();
+        mat.set_friction(1.0);
+        mat.set_bounce(0.05);
+        yo.set_physics_material_override(&mat);
+
+        // El dibujo se arma con la base del paquete en y = 0; el cuerpo está centrado.
+        let mut visual = Node3D::new_alloc();
+        visual.set_position(Vector3::new(0.0, -ty / 2.0, 0.0));
+        yo.add_child(&visual);
+        bloque_stock::construir_visual(&mut visual, &def, def.capacidad());
+
+        let mut s = BoxShape3D::new_gd();
+        s.set_size(Vector3::new(tx + 0.01, ty + 0.01, tz + 0.01));
+        yo.add_child(&formas::nodo_colision(s.upcast(), Transform3D::IDENTITY));
+    }
+}
