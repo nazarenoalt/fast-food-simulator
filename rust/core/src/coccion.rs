@@ -36,6 +36,16 @@ pub enum Punto {
 }
 
 impl Punto {
+    /// Igual que `nombre`, en masculino (chorizo, pan).
+    pub fn nombre_masculino(self) -> &'static str {
+        match self {
+            Punto::Crudo => "crudo",
+            Punto::Cocido => "cocido",
+            Punto::Pasado => "pasado",
+            Punto::Quemado => "quemado",
+        }
+    }
+
     /// Para mostrar en pantalla (femenino/masculino lo maneja quien lo muestra).
     pub fn nombre(self) -> &'static str {
         match self {

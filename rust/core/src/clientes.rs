@@ -2,6 +2,7 @@
 
 use crate::azar::Azar;
 use crate::coccion::Punto;
+use crate::tostado::EstadoPan;
 
 pub const LUGARES_FILA: usize = 6; // REQ-CLI-03
 pub const SEPARACION_FILA: f32 = 0.85;
@@ -136,6 +137,8 @@ pub struct Entregado {
     pub producto: String,
     /// Punto de cocción de la parte cocinada (la salchicha del pancho), si tiene.
     pub punto: Option<Punto>,
+    /// Estado del pan, si el producto lleva pan tostado (choripán). REQ-PAR-07
+    pub pan: Option<EstadoPan>,
     pub aderezos: Vec<String>,
 }
 
@@ -144,6 +147,8 @@ pub enum Rechazo {
     OtroProducto,
     Crudo,
     Quemado,
+    PanBlando,
+    PanQuemado,
 }
 
 impl Rechazo {
@@ -152,6 +157,8 @@ impl Rechazo {
             Rechazo::OtroProducto => "¡Esto no es lo que pedí!",
             Rechazo::Crudo => "¡Está cruda!",
             Rechazo::Quemado => "¡Está quemada!",
+            Rechazo::PanBlando => "¡El pan está blando!",
+            Rechazo::PanQuemado => "¡El pan está quemado!",
         }
     }
 }
@@ -176,6 +183,12 @@ pub fn evaluar(
     match entregado.punto {
         Some(Punto::Crudo) => return Err(Rechazo::Crudo),
         Some(Punto::Quemado) => return Err(Rechazo::Quemado),
+        _ => {}
+    }
+    // REQ-PAR-07: el pan del choripán tiene que estar tostado.
+    match entregado.pan {
+        Some(EstadoPan::Blando) => return Err(Rechazo::PanBlando),
+        Some(EstadoPan::Quemado) => return Err(Rechazo::PanQuemado),
         _ => {}
     }
     let faltan = pedido.aderezos.iter().filter(|a| !entregado.aderezos.contains(a)).count() as f32;
@@ -204,6 +217,7 @@ mod tests {
         Entregado {
             producto: "pancho".into(),
             punto: Some(punto),
+            pan: None,
             aderezos: ad.iter().map(|s| s.to_string()).collect(),
         }
     }
@@ -273,11 +287,38 @@ mod tests {
         let ped = pedido(&["mostaza"]);
         assert_eq!(evaluar(&ped, &entregado(Punto::Crudo, &["mostaza"]), 2500.0, 0.0), Err(Rechazo::Crudo));
         assert_eq!(evaluar(&ped, &entregado(Punto::Quemado, &["mostaza"]), 2500.0, 0.0), Err(Rechazo::Quemado));
-        let otro = Entregado { producto: "salchicha".into(), punto: Some(Punto::Cocido), aderezos: vec![] };
+        let otro = Entregado { producto: "salchicha".into(), punto: Some(Punto::Cocido), pan: None, aderezos: vec![] };
         assert_eq!(evaluar(&ped, &otro, 2500.0, 0.0), Err(Rechazo::OtroProducto));
         let mut pac = Paciencia::default();
         pac.penalizar(PENALIDAD_RECHAZO_S);
         assert_eq!(pac.restante, 80.0);
+    }
+
+    #[test]
+    fn req_par_07_choripan_con_pan_blando_o_quemado_se_rechaza() {
+        let ped = Pedido { producto: "choripan".into(), aderezos: vec![] };
+        let choripan = |punto, pan| Entregado {
+            producto: "choripan".into(),
+            punto: Some(punto),
+            pan: Some(pan),
+            aderezos: vec![],
+        };
+        assert_eq!(evaluar(&ped, &choripan(Punto::Cocido, EstadoPan::Blando), 3000.0, 0.0), Err(Rechazo::PanBlando));
+        assert_eq!(evaluar(&ped, &choripan(Punto::Cocido, EstadoPan::Quemado), 3000.0, 0.0), Err(Rechazo::PanQuemado));
+        assert_eq!(evaluar(&ped, &choripan(Punto::Crudo, EstadoPan::Tostado), 3000.0, 0.0), Err(Rechazo::Crudo));
+        assert_eq!(evaluar(&ped, &choripan(Punto::Quemado, EstadoPan::Tostado), 3000.0, 0.0), Err(Rechazo::Quemado));
+    }
+
+    #[test]
+    fn req_par_07_choripan_con_chorizo_cocido_y_pan_tostado_se_acepta() {
+        let ped = Pedido { producto: "choripan".into(), aderezos: vec![] };
+        let e = Entregado {
+            producto: "choripan".into(),
+            punto: Some(Punto::Cocido),
+            pan: Some(EstadoPan::Tostado),
+            aderezos: vec![],
+        };
+        assert!(evaluar(&ped, &e, 3000.0, 0.0).is_ok());
     }
 
     #[test]

@@ -71,6 +71,37 @@
             )),
         ),
         (
+            id: "pan_choripan",
+            nombre: "pan de choripán",
+            masa: 0.08,
+            pan: true, // REQ-PAR-06
+            por_lados: true,
+            colision: Caja(medidas: (0.2, 0.05, 0.065)),
+            forma: [
+                // Dos mitades: cada una toma el color del tostado de su cara.
+                (tipo: Caja, medidas: (0.2, 0.025, 0.065), pos: (0, -0.0125, 0), color: (0.9, 0.76, 0.52), tinte_lado: Some(0)),
+                (tipo: Caja, medidas: (0.2, 0.025, 0.065), pos: (0, 0.0125, 0), color: (0.9, 0.76, 0.52), tinte_lado: Some(1)),
+            ],
+            coccion: Some((
+                k: 0.15, t_min: 90, velocidad: 0.0020, punto: 4, pasado: 15,
+                t_quemado: 1000, segundos_quemado: 1000,
+                color_crudo: (0.9, 0.76, 0.52),
+                color_cocido: (0.72, 0.46, 0.2),
+                color_pasado: (0.16, 0.1, 0.07),
+                color_quemado: (0.16, 0.1, 0.07),
+            )),
+        ),
+        (
+            id: "choripan",
+            nombre: "choripán",
+            masa: 0.18,
+            colision: Caja(medidas: (0.2, 0.07, 0.065)),
+            forma: [
+                (tipo: Caja, medidas: (0.2, 0.05, 0.065), color: (0.72, 0.46, 0.2)),
+                (tipo: Capsula, medidas: (0.015, 0.19, 0), pos: (0, 0.03, 0), rot: (0, 0, 90), color: (0.5, 0.22, 0.14)),
+            ],
+        ),
+        (
             id: "pancho",
             nombre: "pancho",
             masa: 0.09,
@@ -133,5 +164,6 @@
     // REQ-ARM-01
     combinaciones: [
         (base: "pan_pancho", agregado: "salchicha", resultado: "pancho"),
+        (base: "pan_choripan", agregado: "chorizo", resultado: "choripan"), // REQ-PAR-07
     ],
 )

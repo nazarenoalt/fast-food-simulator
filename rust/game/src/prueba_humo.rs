@@ -23,6 +23,7 @@ use crate::parrilla::Parrilla;
 use crate::peaton::Peaton;
 use crate::plancha::Plancha;
 use crate::transito::{Autos, Nubes};
+use carrito_core::tostado::EstadoPan;
 
 #[derive(GodotClass)]
 #[class(base=Node, init)]
@@ -521,6 +522,38 @@ impl INode for PruebaHumo {
                 let pa = todos::<Parrilla>(&mundo).pop().unwrap();
                 let e = pa.bind().estado();
                 self.chequear(e.carbon == 0.0 && !e.encendida, "CA-PAR-02 sin carbón la parrilla se apaga sola");
+                // CA-PAR-03: pan tostado (avance de las dos caras forzado) en la vereda.
+                let base = Vector3::new(-5.0, 0.3, plaza::Z_VEREDA);
+                let mut pan = self.agregar_comida("pan_choripan", base);
+                pan.bind_mut().forzar_avance(5.0);
+                self.chequear(
+                    pan.bind().estado_pan() == Some(EstadoPan::Tostado),
+                    "REQ-PAR-06 el pan con avance 5 está tostado",
+                );
+                self.pan = Some(pan);
+                self.esperar(60);
+            }
+            22 => {
+                let pan = self.pan.clone().unwrap();
+                let mut c = self.chorizo.clone().unwrap();
+                c.bind_mut().forzar_avance(12.0);
+                c.set_global_position(pan.get_global_position() + Vector3::new(0.0, 0.09, 0.0));
+                c.set_global_rotation(Vector3::ZERO);
+                c.set_linear_velocity(Vector3::ZERO);
+                self.esperar(90);
+            }
+            23 => {
+                let choripanes: Vec<_> =
+                    todos::<Comida>(&mundo).into_iter().filter(|c| c.bind().producto() == "choripan").collect();
+                self.chequear(choripanes.len() == 1, &format!("REQ-PAR-07 se armó un choripán ({})", choripanes.len()));
+                if let Some(ch) = choripanes.first() {
+                    let ped = carrito_core::clientes::Pedido { producto: "choripan".into(), aderezos: vec![] };
+                    let r = carrito_core::clientes::evaluar(&ped, &ch.bind().entregado(), 3000.0, 0.0);
+                    self.chequear(
+                        r.is_ok(),
+                        &format!("CA-PAR-03 el cliente acepta el choripán ({:?})", ch.bind().detalle()),
+                    );
+                }
                 self.terminar();
             }
             _ => {}

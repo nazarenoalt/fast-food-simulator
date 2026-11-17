@@ -47,6 +47,9 @@ pub struct DefProducto {
     /// REQ-ADE-05: si es un repuesto, qué aderezo repone.
     #[serde(default)]
     pub repone: Option<String>,
+    /// REQ-PAR-06: pan que se tuesta por cada cara (pan del choripán).
+    #[serde(default)]
+    pub pan: bool,
     /// REQ-PAR-01: si es una bolsa de carbón, cuántos kg trae.
     #[serde(default)]
     pub carbon: Option<f32>,
@@ -229,6 +232,18 @@ pub(crate) mod tests {
         assert_eq!(h.coccion.clone().unwrap(), crate::lados::perfil_chorizo());
         let lados: Vec<_> = h.forma.iter().filter_map(|p| p.tinte_lado).collect();
         assert_eq!(lados, vec![0, 1]);
+    }
+
+    #[test]
+    fn req_par_06_07_pan_de_choripan_y_choripan_en_datos() {
+        let c = catalogo_real();
+        let pan = c.producto("pan_choripan").unwrap();
+        assert!(pan.pan && pan.por_lados);
+        assert_eq!(pan.coccion.clone().unwrap(), crate::tostado::perfil_pan());
+        assert_eq!(crate::armado::combinar(&c.combinaciones, "pan_choripan", "chorizo"), Some("choripan"));
+        let m = pan.masa + c.producto("chorizo").unwrap().masa;
+        assert!((c.producto("choripan").unwrap().masa - m).abs() < 1e-6, "REQ-ARM-05");
+        assert!(c.bloques.iter().any(|b| b.producto == "pan_choripan"));
     }
 
     #[test]

@@ -7,6 +7,7 @@ use carrito_core::coccion::{EstadoCoccion, PerfilCoccion};
 use carrito_core::datos::{Colision, DefProducto};
 use carrito_core::lados::CoccionLados;
 use carrito_core::plancha::{entorno_por_lados, lado_abajo};
+use carrito_core::tostado::{EstadoPan, estado_lado, estado_pan};
 use godot::classes::{
     Area3D, BoxShape3D, CapsuleShape3D, Engine, IRigidBody3D, MeshInstance3D, PhysicsMaterial, RigidBody3D,
     StandardMaterial3D,
@@ -29,6 +30,9 @@ pub struct Comida {
     cocina: bool,
     /// Texto extra, ej. "salchicha cocida" en un pancho.
     detalle: Option<String>,
+    /// REQ-PAR-07: estado guardado de un armado (choripán): chorizo y pan al encastrar.
+    punto_fijo: Option<carrito_core::coccion::Punto>,
+    pan_fijo: Option<EstadoPan>,
     /// Lo tiene el jugador en la mano.
     pub sostenida: bool,
     /// Ya se usó en un armado (está por desaparecer).
@@ -66,6 +70,8 @@ impl Comida {
             lados,
             cocina,
             detalle: None,
+            punto_fijo: None,
+            pan_fijo: None,
             sostenida: false,
             consumida: false,
             entorno: None,
@@ -82,11 +88,25 @@ impl Comida {
     }
 
     pub fn punto(&self) -> Option<carrito_core::coccion::Punto> {
+        if self.punto_fijo.is_some() {
+            return self.punto_fijo;
+        }
         // REQ-PLA-05: el más grave de los dos lados.
         if let (Some((p, _)), Some(l)) = (&self.coccion, &self.lados) {
             return Some(l.punto(p));
         }
         self.coccion.as_ref().map(|(p, e)| e.punto(p))
+    }
+
+    /// REQ-PAR-06: estado del pan (del pan suelto, o el guardado en un choripán).
+    pub fn estado_pan(&self) -> Option<EstadoPan> {
+        if self.pan_fijo.is_some() {
+            return self.pan_fijo;
+        }
+        match (&self.coccion, &self.lados) {
+            (Some((p, _)), Some(l)) if self.def.pan => Some(estado_pan(l, p)),
+            _ => None,
+        }
     }
 
     /// REQ-PLA-04
@@ -123,6 +143,14 @@ impl Comida {
         let mut s = capitalizar(&self.def.nombre);
         if let Some(d) = &self.detalle {
             s += &format!(" ({d})");
+        } else if let (Some((p, _)), Some(l), true) = (&self.coccion, &self.lados, self.def.pan) {
+            // REQ-PAR-06: el pan se describe por tostado, no por cocción.
+            let abajo = self.lado_abajo();
+            s += &format!(
+                " (abajo {}, arriba {})",
+                estado_lado(l.lados[abajo].punto(p)).nombre(),
+                estado_lado(l.lados[1 - abajo].punto(p)).nombre()
+            );
         } else if let (Some((p, _)), Some(l)) = (&self.coccion, &self.lados) {
             s += &format!(" ({})", l.descripcion(p, self.lado_abajo()));
         } else if let Some((p, e)) = &self.coccion {
@@ -169,6 +197,7 @@ impl Comida {
         carrito_core::clientes::Entregado {
             producto: self.def.id.clone(),
             punto: self.punto(),
+            pan: self.estado_pan(),
             aderezos: self.aderezos.clone(),
         }
     }
@@ -258,7 +287,7 @@ impl Comida {
                 continue;
             }
             let Ok(mut otra) = cuerpo.try_cast::<Comida>() else { continue };
-            let (resultado, heredado, nombre_agregado) = {
+            let (resultado, heredado, nombre_agregado, punto_agregado) = {
                 let o = otra.bind();
                 if o.sostenida || o.consumida {
                     continue;
@@ -267,7 +296,7 @@ impl Comida {
                 let Some(r) = armado::combinar(&catalogo().combinaciones, &self.def.id, &o.def.id) else {
                     continue;
                 };
-                (r.to_string(), o.coccion.clone(), o.def.nombre.clone())
+                (r.to_string(), o.coccion.clone(), o.def.nombre.clone(), o.punto())
             };
 
             let mut nueva = Comida::crear(&resultado);
@@ -277,7 +306,17 @@ impl Comida {
                 if let Some((p, e)) = &heredado {
                     n.detalle = Some(format!("{nombre_agregado} {}", e.punto(p).nombre()));
                 }
-                n.coccion = heredado;
+                if self.def.pan {
+                    // REQ-PAR-07: el choripán guarda el estado del chorizo y del pan.
+                    let pan = self.estado_pan();
+                    n.punto_fijo = punto_agregado;
+                    n.pan_fijo = pan;
+                    let punto = punto_agregado.map(|p| p.nombre_masculino()).unwrap_or("");
+                    n.detalle =
+                        Some(format!("{nombre_agregado} {punto}, pan {}", pan.map(|p| p.nombre()).unwrap_or("")));
+                } else {
+                    n.coccion = heredado;
+                }
                 n.cocina = false;
             }
             let t = self.base().get_global_transform();

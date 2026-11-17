@@ -30,9 +30,10 @@ que reponer. El pan se tuesta en la misma parrilla.
 - **REQ-PAR-06** El pan de choripán tiene un avance de **tostado** por cada cara, con las
   mismas fórmulas que la cocción pero con sus propios valores. Estados: **Blando**, **Tostado**,
   **Quemado**. Cada cara se ve del color de su avance.
-- **REQ-PAR-07** El choripán se arma por encastre (SPEC-005) con un chorizo cocido y un pan
-  tostado de al menos una cara. Con el pan blando o quemado o el chorizo crudo, el cliente
-  lo rechaza (REQ-CLI-08).
+- **REQ-PAR-07** El choripán se arma por encastre (SPEC-005): `pan de choripán + chorizo →
+  choripán`, que guarda el estado del chorizo y del pan. Está bien con un chorizo cocido y un
+  pan tostado de al menos una cara (sin cara quemada). Con el pan blando o quemado o el chorizo crudo o quemado, el
+  cliente lo rechaza (REQ-CLI-08).
 
 ## Criterios de aceptación
 

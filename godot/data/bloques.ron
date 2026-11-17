@@ -81,4 +81,14 @@
         color_empaque: (0.78, 0.62, 0.42),
         precio: 2400,
     ),
+    (
+        id: "bolsa_panes_choripan_12",
+        nombre: "bolsa de panes de choripán",
+        producto: "pan_choripan",
+        grilla: (1, 6, 2),
+        separacion: (0.21, 0.052, 0.068),
+        empaque: Bolsa,
+        color_empaque: (0.92, 0.94, 1.0),
+        precio: 2200,
+    ),
 ]
