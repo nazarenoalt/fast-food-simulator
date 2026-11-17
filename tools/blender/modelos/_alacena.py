@@ -512,7 +512,7 @@ def abrir(m):
     for p in m["puertas"]:
         c = copia(p)
         # Bisagra en −X (la puerta se extiende hacia +X): abre con ángulo positivo.
-        c.rotation_euler.z = math.radians(100 if max(v.co.x for v in p.data.vertices) > 0.01 else -100)
+        c.rotation_euler.z = math.radians(110 if max(v.co.x for v in p.data.vertices) > 0.01 else -110)
         objs.append(c)
     for i, k in enumerate(m["cajones"]):
         c = copia(k)
@@ -574,8 +574,10 @@ def hoja_revision(m, revision):
     cuadros = base.sacar_fotos([
         ("Frente: lado del vendedor (el que se ve) · día", v, "atras", "dia"),
         ("3/4 lado del vendedor · día", v, "vendedor_derecha", "dia"),
-        ("Abierta (copias solo para la foto) · día", abiertos, "vendedor_derecha", "dia"),
-        ("Con stock: bolsas de 12 panes y bandejas · día", lleno, "vendedor_derecha", "dia"),
+        ("Abierta (copias solo para la foto) · día", abiertos, "vendedor_derecha", "dia")
+        if m["puertas"] or m["cajones"] else
+        ("Adentro: piso y 2 estantes · día", v, "vendedor_frente", "dia"),
+        ("Con stock: bolsas de 12 panes y bandejas · día", lleno, "vendedor_frente", "dia"),
         ("En la bahía 1 de la barra chica · día", en_carro, "vendedor", "dia"),
         ("3/4 lado del vendedor · atardecer", v, "vendedor_derecha", "atardecer"),
     ])

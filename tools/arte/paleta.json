@@ -39,6 +39,8 @@
         {"nombre": "M_Hojas1", "hex": "#336B2E", "metalico": 0.0, "rugosidad": 0.9},
         {"nombre": "M_Hojas2", "hex": "#3D7833", "metalico": 0.0, "rugosidad": 0.9},
         {"nombre": "M_Hojas3", "hex": "#2E6629", "metalico": 0.0, "rugosidad": 0.9},
+        {"nombre": "M_FlorLila1", "hex": "#6F5F99", "metalico": 0.0, "rugosidad": 0.9},
+        {"nombre": "M_FlorLila2", "hex": "#8574AE", "metalico": 0.0, "rugosidad": 0.9},
         {"nombre": "M_Piedra", "hex": "#B2B2AD", "metalico": 0.0, "rugosidad": 0.9},
         {"nombre": "M_Agua", "hex": "#4C80B2", "metalico": 0.0, "rugosidad": 0.1, "alfa": 0.7}
       ]

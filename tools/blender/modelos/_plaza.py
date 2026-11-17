@@ -8,6 +8,10 @@ los árboles y los tramos (cordón, cantero). Como en piezas.py, todo se da en *
 - torno(): pieza de revolución sobre el eje Y (fuente, farol), con un perfil (radio, y).
 - perfil_extruido(): perfil (z, y) estirado a lo largo de X (cordón, cantero).
 - colision_cilindro(): como piezas.colision_cilindro pero con giro (troncos inclinados).
+- poste(): prisma entre dos puntos con las tapas horizontales (patas inclinadas que apoyan
+  planas en el piso: juegos de plaza).
+- caño(): cilindro entre dos puntos cualesquiera (cadenas, pasamanos, travesaños).
+- colision_cajas(): varias cajas en un solo `<nombre>-colonly` (guía 6.1).
 - verts_mundo(), limites(): para los chequeos propios.
 - reemplazar(): cambia una línea de la revisión de comun.revisar() por un chequeo propio.
 - hoja(): fotos y hoja de revisión con la persona de 1,75 m.
@@ -137,6 +141,73 @@ def colision_cilindro(nombre, radio, alto, centro, lados=8, rot=(0.0, 0.0, 0.0))
     """Colisión `<nombre>-colonly` cilíndrica (eje Y), con giro opcional (grados, Godot)."""
     bm = bmesh.new()
     piezas.cilindro(bm, radio, alto, centro, lados=lados, rot=rot)
+    malla = bpy.data.meshes.new(f"{nombre}-colonly")
+    bm.to_mesh(malla)
+    bm.free()
+    obj = bpy.data.objects.new(f"{nombre}-colonly", malla)
+    bpy.context.scene.collection.objects.link(obj)
+    obj.display_type = "WIRE"
+    obj.hide_render = True
+    return obj
+
+
+def poste(bm, base, tope, radio, lados, mat=0, tapa_abajo=False, tapa_arriba=True):
+    """Prisma de `lados` caras de `base` a `tope` (puntos de Godot) con las dos tapas
+    horizontales: una pata inclinada apoya plana en el piso (no se hunde ni flota) y su
+    punta queda a una altura justa. La sección horizontal es un círculo de `radio` (apotema,
+    como torno); medida perpendicular al eje queda apenas más fina (cos de la inclinación).
+    tapa_abajo=False: la tapa apoyada en el piso no se crea (guía 3.6)."""
+    previas = set(bm.faces)
+    giro = math.pi / lados - math.pi / 2
+    r = radio / math.cos(math.pi / lados)
+    anillos = [[bm.verts.new(g2b((c[0] + r * math.cos(giro + 2 * math.pi * k / lados), c[1],
+                                  c[2] + r * math.sin(giro + 2 * math.pi * k / lados))))
+                for k in range(lados)] for c in (base, tope)]
+    a, b = anillos
+    for k in range(lados):
+        bm.faces.new((a[k], a[(k + 1) % lados], b[(k + 1) % lados], b[k]))
+    if tapa_abajo:
+        bm.faces.new(a)
+    if tapa_arriba:
+        bm.faces.new(b)
+    nuevas = [f for f in bm.faces if f not in previas]
+    for f in nuevas:
+        f.material_index = mat
+    bmesh.ops.recalc_face_normals(bm, faces=nuevas)
+    return nuevas
+
+
+def caño(bm, a, b, radio, lados, mat=0, tapas=(True, True)):
+    """Cilindro de `a` a `b` (puntos de Godot), con los anillos perpendiculares al eje."""
+    a, b = Vector(a), Vector(b)
+    d = (b - a).normalized()
+    ref = Vector((0, 1, 0)) if abs(d.y) < 0.9 else Vector((1, 0, 0))
+    u = d.cross(ref).normalized()
+    w = d.cross(u).normalized()
+    previas = set(bm.faces)
+    anillos = [[bm.verts.new(g2b(c + (u * math.cos(2 * math.pi * k / lados) +
+                                       w * math.sin(2 * math.pi * k / lados)) * radio))
+                for k in range(lados)] for c in (a, b)]
+    p0, p1 = anillos
+    for k in range(lados):
+        bm.faces.new((p0[k], p0[(k + 1) % lados], p1[(k + 1) % lados], p1[k]))
+    if tapas[0]:
+        bm.faces.new(p0)
+    if tapas[1]:
+        bm.faces.new(p1)
+    nuevas = [f for f in bm.faces if f not in previas]
+    for f in nuevas:
+        f.material_index = mat
+    bmesh.ops.recalc_face_normals(bm, faces=nuevas)
+    return nuevas
+
+
+def colision_cajas(nombre, cajas):
+    """Varias cajas en un solo objeto `<nombre>-colonly` (guía 6.1: Godot lo importa como
+    malla de triángulos, sirve para objetos fijos). cajas = [(medidas, centro, rot)]."""
+    bm = bmesh.new()
+    for medidas, centro, rot in cajas:
+        piezas.caja(bm, medidas, centro, rot=rot)
     malla = bpy.data.meshes.new(f"{nombre}-colonly")
     bm.to_mesh(malla)
     bm.free()

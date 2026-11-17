@@ -529,6 +529,7 @@ DIRECCIONES = {  # en Blender (frente = −Y)
     "abajo": (Vector((1, -1.1, 0.25)), False),       # 3/4 bajo: ruedas
     "atras": (Vector((0, 1, 0)), True),              # de atrás: lado del vendedor
     "vendedor_derecha": (Vector((1, 1.3, 0.75)), False),  # 3/4 desde atrás, lado +X
+    "vendedor_frente": (Vector((0.3, 1.3, 0.45)), False),  # casi de atrás: se ve adentro
 }
 
 # Alacenas que se ponen en las bahías para la foto (de −X a +X).

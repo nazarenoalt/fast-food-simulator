@@ -74,8 +74,8 @@ sobresale 2 cm, zócalo, 4 ruedas, manija para empujar. Las posiciones de los an
 | `arbol_platano_c` | Árbol (plátano) C | 6 × 8 | 1.200 | ídem | Variante más grande, tronco más grueso, copa de 4 bollos más baja y extendida. La hoja muestra las tres variantes juntas. Hecho por código: `tools/blender/modelos/arbol_platano_c.py` (402 tris). [Hoja de revisión](revisiones/arbol_platano_c.jpg). | P1 | Hecho |
 | `cordon_vereda` | Cordón de vereda (tramo) | 2,0 × 0,12 × 0,20 | 50 | Vereda | Tramo de 2 m con chaflán de 3 cm del lado de la calle (−Z) y 2 cm del lado de la vereda, sin cara de abajo. Medidas del juego actual (`plaza.rs`). Sin colisión, como hoy. Hecho por código: `tools/blender/modelos/cordon_vereda.py` (18 tris). [Hoja de revisión](revisiones/cordon_vereda.jpg). | P2 | Hecho |
 | `cantero` | Borde de cantero (tramo) | 2,0 × 0,1 × 0,1 | 50 | Piedra | Tramo de 2 m de borde de piedra con chaflanes de 2 cm arriba, simétrico. Sin colisión. Hecho por código: `tools/blender/modelos/cantero.py` (18 tris). [Hoja de revisión](revisiones/cantero.jpg). | P3 | Hecho |
-| `arbol_jacaranda_a` | Árbol (jacarandá) A | ≈ 5 × 6 | 1.200 | Tronco, color lila *(agregar a la paleta)* | Toque de color en la plaza. | P3 | Pendiente |
-| `arbol_jacaranda_b` | Árbol (jacarandá) B | ≈ 4 × 5 | 1.200 | ídem | Variante. | P3 | Pendiente |
+| `arbol_jacaranda_a` | Árbol (jacarandá) A | 5,4 × 6,0 | 1.200 | Tronco, FlorLila1/2, Hojas2 | Jacarandá en flor, el toque de color de la plaza. Tronco corto y retorcido que se abre en ramas largas y abiertas, copa ancha y chata de 4 bollos lila (FlorLila1/2) con algo de verde mezclado, desde 3,6 m. Origen en la base del tronco. Colisión `-colonly` solo del tronco. Usa el módulo común `_arbol.py`. Hecho por código: `tools/blender/modelos/arbol_jacaranda_a.py` (412 tris). [Hoja de revisión](revisiones/arbol_jacaranda_a.jpg). | P3 | Hecho |
+| `arbol_jacaranda_b` | Árbol (jacarandá) B | 4,2 × 5,0 | 1.200 | Tronco, FlorLila1/2, Hojas2 | Variante más chica y joven, inclinada 7° hacia −X, tres ramas abiertas y copa chata de 3 bollos con más verde mezclado, desde 3,1 m. La hoja muestra las dos variantes juntas. Hecho por código: `tools/blender/modelos/arbol_jacaranda_b.py` (298 tris). [Hoja de revisión](revisiones/arbol_jacaranda_b.jpg). | P3 | Hecho |
 | `arbusto` | Arbusto | 1,0 × 0,8 × 0,64 | 300 | Hojas1/2/3 | 3 bollos facetados apoyados en el piso (sin cara de abajo), con los tres verdes mezclados. Sin colisión. Hecho por código: `tools/blender/modelos/arbusto.py` (134 tris). [Hoja de revisión](revisiones/arbusto.jpg). | P3 | Hecho |
 
 Piso, pasto, caminos, vereda y calle **no se modelan**: son superficies planas con color que arma el código.
@@ -257,5 +257,5 @@ cuerpo + cabeza + pelo + ropa + accesorio, y de cambiar colores.
 2. ✔ **Comida de la etapa 1** (`pan_pancho`, `pan_pancho_cerrado`, `salchicha`, `pancho`), hecha: chicos, rápidos y se ven de cerca; definen el "sabor" del estilo.
 3. ✔ **`barra_chica` + `hervidor_chico`**: lo que el jugador ve todo el tiempo.
 4. ✔ Resto de accesorios de la etapa 1.
-5. ✔ Plaza de la etapa 1 (banco, farol, árboles, fuente). Faltan los jacarandás (necesitan un color lila en la paleta).
+5. ✔ Plaza de la etapa 1 (banco, farol, árboles, fuente).
 6. Después, cada etapa a medida que se escriben sus specs.

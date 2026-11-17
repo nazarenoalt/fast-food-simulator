@@ -9,14 +9,15 @@ Uso:
     python tools/blender/modelos/toldo_frente.py [--sin-hoja]
 
 Forma: alerito rayado colgado de la mesada, del lado del cliente, sin parantes: una planchuela
-de acero atornillada a la cara del frente justo debajo de la mesada, la lona que sale 0,34 m
+de acero atornillada a la cara del frente justo debajo de la mesada, la lona que sale 0,26 m
 hacia el cliente bajando 14° y un faldón con un festón por raya; dos tornapuntas de acero (en
 las puntas) la sostienen desde la cara del carrito. Decora el frente como en los carritos de
 plaza y no tapa nada: queda abajo del mostrador y arriba del telón (que va de 0,31 a 0,73 m
-en el mismo anclaje, pegado a la cara: la lona está 0,34 m adelante y más arriba).
+en el mismo anclaje, pegado a la cara: la lona está 0,26 m adelante y los festones terminan
+a 0,74 m, arriba del telón: de frente no lo tapan).
 
 Medidas (relativas al anclaje `frente`): ancho de la base; de y = alto_mostrador − 0,30
-(tornapuntas) a alto_mostrador − 0,05 (planchuela); fondo de la cara del carrito a 0,35.
+(tornapuntas) a alto_mostrador − 0,05 (planchuela); fondo de la cara del carrito a 0,27.
 
 Colores (guía 4.2, regla 5): superficie 0 = rayas pares (la primera desde −X), 1 = impares, en
 las tres piezas. El .glb trae rojo y crema; liso = el mismo material en las dos.
@@ -40,9 +41,9 @@ import _techo as t  # noqa: E402
 
 ID = "toldo_frente"
 PRESUPUESTO = 400            # lista (el chico); mediano y grande, proporcional al ancho
-SALE = 0.34                  # hasta la cara de adentro del faldón
+SALE = 0.26                  # hasta la cara de adentro del faldón
 PENDIENTE = 0.25
-FALDON, FESTON = 0.08, 0.025
+FALDON, FESTON = 0.07, 0.025   # los festones terminan arriba del telón (0,73)
 BARRA = (0.03, 0.035)        # planchuela: alto, fondo
 
 
@@ -71,7 +72,7 @@ def construir(tam):
         "esperado": ((-b.w / 2, b.w / 2), (y_pie - 0.02, yb + BARRA[0] / 2), (z0, SALE + t.LONA)),
         "desc": "alero %.2f × %.2f (%d rayas de %.3f), colgado de la mesada" % (b.w, SALE, r.n, r.s),
         "apoyo_z": z0, "origen_txt": "la planchuela apoya en la cara del carrito (z = %.3f)" % z0,
-        "lona_min": 0.70, "lona_txt": "abajo de la mesada y arriba del telón: no tapa el mostrador",
+        "lona_min": 0.735, "lona_txt": "abajo de la mesada y arriba del telón: no tapa el mostrador",
         "con_techo": False,
     }
 
@@ -83,7 +84,7 @@ def revisar(m):
 def hoja(revision):
     rojo, crema, azul = comun.cargar_materiales("M_RojoAcento", "M_BlancoCrema", "M_AzulAcento")
     t.hoja_toldo(ID, construir, "toldo_frente · chico / mediano / grande: 1,6 / 2,4 / 3,4 m · "
-                 "colgado de la mesada, sale 0,35 m", revision,
+                 "colgado de la mesada, sale 0,27 m", revision,
                  [("rojo y crema (el .glb)", rojo, crema), ("azul y crema", azul, crema),
                   ("liso rojo", rojo, rojo)], telon=True)
 

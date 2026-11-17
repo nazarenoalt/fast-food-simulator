@@ -666,9 +666,9 @@ def revisar_techo(m):
     g, b = m["g"], m["b"]
     piezas3 = m["piezas"]
     vis = m["visibles"]
-    res = [chequeo_medidas(vis, m["esperado"], m["desc"])]
+    res = [chequeo_medidas(vis, m["esperado"], m["desc"], tol=m.get("tol", 0.003))]
     todos = verts_g(vis)
-    techo = verts_mat(piezas3, {0, 1})
+    techo = verts_mat(piezas3, m.get("sup_techo", {0, 1}))
     chapa = verts_mat(piezas3, {0})
     lo, hi = caja_g(todos)
     clo, chi = caja_g(chapa)

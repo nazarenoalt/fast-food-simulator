@@ -249,6 +249,7 @@ base (el hex ya está en el espacio de color correcto; no copiar los números de
 | `M_Hierro` | `#262926` | 0,5 | 0,6 | Faroles, patas de bancos, rejas. |
 | `M_Tronco` | `#61452E` | 0 | 1,0 | Troncos y ramas. |
 | `M_Hojas1/2/3` | `#336B2E` `#3D7833` `#2E6629` | 0 | 0,9 | Copas de árboles (mezclar los tres por árbol). |
+| `M_FlorLila1/2` | `#6F5F99` `#8574AE` | 0 | 0,9 | Copa de los jacarandás en flor (mezclar los dos, con algo de `M_Hojas2`). Lila apagado: se lee como jacarandá sin gritar. |
 | `M_Piedra` | `#B2B2AD` | 0 | 0,9 | Fuente, monumentos, bordes de cantero. |
 | `M_Agua` | `#4C80B2` | 0 | 0,1 | Agua de la fuente (alfa 0,7). |
 | **Acentos y luces** |||||
@@ -266,7 +267,7 @@ base (el hex ya está en el espacio de color correcto; no copiar los números de
 1. **No inventar colores.** Si hace falta uno nuevo, se agrega primero a esta tabla y a
    `tools/arte/paleta.json`, con su nombre `M_...`. Después se regeneran `paleta.png`
    (`tools/arte/generar_paleta.py`) y la biblioteca (`tools/blender/biblioteca.py`), y recién ahí se usa.
-2. **Fondo apagado, primer plano vivo.** Lo de la plaza usa colores de baja saturación. Los
+2. **Fondo apagado, primer plano vivo.** Lo de la plaza usa colores de baja saturación (salvo los juegos infantiles, que pueden usar los acentos). Los
    colores saturados (rojo, amarillo, azul) quedan para el carrito, la comida, los carteles y
    las sombrillas.
 3. **Ni blanco ni negro puros.** Nada más claro que `#F7F7F7` ni más oscuro que `#141414`;
@@ -538,3 +539,4 @@ revisión. Si alguno falla, el script termina con error. El resto se revisa a oj
 | v1.2 | Panes abiertos con el relleno hundido (5.1). `M_PanMiga` pasa de `#F7E0B2` a `#E8C88E` (se veía blanca). |
 | v1.3 | Lo aprendido con la etapa 1 completa: origen de objetos no simétricos y chequeos propios (2.4), radio de cilindros a las caras planas (3.2), biseles en piezas finas (3.3), carteles opacos con material `T_<id>` (4.5), copa de árboles desde 2,5 m y agua en movimiento (5.4), `-colonly` de varias cajas y cuándo no lleva (6.1), variantes de color por superficies (6.2), `piezas.py`. |
 | v1.4 | Nuevo material `M_PlasticoClaro` (`#8C939A`, alfa 0,15) para pomos y films: un plástico casi blanco lavaba el color del aderezo (la mostaza se veía crema), porque la transparencia se mezcla en luz lineal. Gris medio + alfa bajo deja ver el color real. |
+| v1.5 | Nuevos `M_FlorLila1` (`#6F5F99`) y `M_FlorLila2` (`#8574AE`) para la copa de los jacarandás. Los juegos infantiles de la plaza pueden usar los acentos vivos (rojo, azul, amarillo). La colisión de una pieza que se mueve va como hija de su `pieza_` (así la sigue). Cadenas: cilindro de 6 lados de 6 mm de radio, sin eslabones. |

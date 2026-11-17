@@ -1,4 +1,4 @@
-"""Construcción común de los árboles de la plaza (`arbol_platano_a`, `_b`, `_c`).
+"""Construcción común de los árboles de la plaza (`arbol_platano_a/b/c`, `arbol_jacaranda_a/b`).
 
 Cada script de modelo (`<id>.py`) define sus PARAMETROS y llama a main(). Con la misma
 semilla, el script da siempre el mismo árbol (random.Random(semilla), nada de azar global).
@@ -17,6 +17,18 @@ Forma (guía 5.4 y 3.4), en ejes de Godot:
     - Sombreado plano (facetado).
     - Los bollos se pisan entre sí (como en todo árbol low poly): las caras que quedan
       adentro de otro bollo no se ven.
+
+Parámetros opcionales (con valores por defecto que dan los plátanos tal cual estaban; los
+usan los jacarandás):
+    - "materiales": los 4 materiales (tronco + 3 de copa); "verdes" indexa los 3 de copa.
+      Por defecto M_Tronco, M_Hojas1/2/3. El jacarandá usa M_FlorLila1/2 y un verde.
+    - "mezcla": parte de las caras de cada bollo que toma otro color de copa (0,15).
+    - "tronco": [(altura, radio relativo)] de los anillos del tronco (la última altura se
+      cambia por la horqueta). Por defecto 5 anillos derechos.
+    - "quiebre": cuánto se corren al azar los anillos del tronco, en radios (0,25). Más
+      alto = tronco retorcido.
+    - "ramas_abiertas": codo de las ramas hacia afuera y abajo (0 = rama casi recta). Con
+      0,3 o más las ramas salen abiertas, casi horizontales, y después suben (jacarandá).
 
 Ajuste de medidas: después de armar la copa, se escala (horizontal alrededor del eje del
 tronco y vertical desde la horqueta) para que el ancho en X y el alto total den justo los del
@@ -98,10 +110,12 @@ def tubo(bm, puntos, radios, lados, mat=0, horizontal=False, tapa_inicio=True, r
     return nuevas
 
 
-def bollo(bm, rng, centro, radios, puntos, mat, otros, aplastar=0.65, piso=None, tope=None):
+def bollo(bm, rng, centro, radios, puntos, mat, otros, aplastar=0.65, piso=None, tope=None,
+          mezcla=0.15):
     """Bollo irregular: envolvente convexa de `puntos` puntos sobre un elipsoide con ruido.
     piso = altura (Godot) debajo de la cual se aplastan los puntos (arbustos en el suelo).
-    tope = ruido máximo hacia afuera en la parte de arriba (evita una punta en el polo)."""
+    tope = ruido máximo hacia afuera en la parte de arriba (evita una punta en el polo).
+    mezcla = parte de las caras que toma uno de los `otros` materiales."""
     oro = math.pi * (3 - math.sqrt(5))
     giro = rng.uniform(0, 2 * math.pi)
     vs = []
@@ -124,7 +138,7 @@ def bollo(bm, rng, centro, radios, puntos, mat, otros, aplastar=0.65, piso=None,
     bmesh.ops.delete(bm, geom=sobran, context="VERTS")
     caras = [g for g in res["geom"] if isinstance(g, bmesh.types.BMFace) and g.is_valid]
     for f in caras:
-        f.material_index = mat if rng.random() > 0.15 else rng.choice(otros)
+        f.material_index = mat if rng.random() > mezcla else rng.choice(otros)
     return caras
 
 
@@ -133,7 +147,7 @@ def bollo(bm, rng, centro, radios, puntos, mat, otros, aplastar=0.65, piso=None,
 def construir(p, nombre, desplazamiento=(0.0, 0.0, 0.0), colision=True):
     """Arma un árbol con los PARAMETROS p. Devuelve un dict con los objetos."""
     rng = random.Random(p["semilla"])
-    mats = comun.cargar_materiales("M_Tronco", "M_Hojas1", "M_Hojas2", "M_Hojas3")
+    mats = comun.cargar_materiales(*p.get("materiales", ("M_Tronco", "M_Hojas1", "M_Hojas2", "M_Hojas3")))
     off = V(*desplazamiento)
 
     # ── Tronco ──
@@ -142,13 +156,15 @@ def construir(p, nombre, desplazamiento=(0.0, 0.0, 0.0), colision=True):
     largo = p["horqueta"] / eje.y
     horqueta = eje * largo
     r0 = p["radio_tronco"]
-    alturas = [0.0, 0.22, 0.9, 1.7, p["horqueta"]]
-    radios = [r0 * 1.25, r0, r0 * 0.93, r0 * 0.86, r0 * 0.78]
+    anillos = p.get("tronco", [(0.0, 1.25), (0.22, 1.0), (0.9, 0.93), (1.7, 0.86), (None, 0.78)])
+    alturas = [y for y, _ in anillos[:-1]] + [p["horqueta"]]
+    radios = [r0 * f for _, f in anillos]
+    quiebre = p.get("quiebre", 0.25)
     puntos = []
     for y, r in zip(alturas, radios):
         c = eje * (y / eje.y)
         if 0 < y < p["horqueta"]:
-            c += V(rng.uniform(-1, 1), 0, rng.uniform(-1, 1)) * r0 * 0.25
+            c += V(rng.uniform(-1, 1), 0, rng.uniform(-1, 1)) * r0 * quiebre
         puntos.append(c)
     bt = bmesh.new()
     tubo(bt, puntos, radios, LADOS_TRONCO, horizontal=True, tapa_inicio=False, rng=rng)
@@ -159,8 +175,9 @@ def construir(p, nombre, desplazamiento=(0.0, 0.0, 0.0), colision=True):
     for i, b in enumerate(p["bollos"]):
         c = horqueta + V(*b["centro"])
         centros.append(c)
-        mat = p["verdes"][i % len(p["verdes"])] - 1   # índice en [Hojas1, Hojas2, Hojas3]
-        bollo(bc, rng, c, b["radios"], b["puntos"], mat, [m for m in (0, 1, 2) if m != mat])
+        mat = p["verdes"][i % len(p["verdes"])] - 1   # índice en los 3 materiales de copa
+        bollo(bc, rng, c, b["radios"], b["puntos"], mat, [m for m in (0, 1, 2) if m != mat],
+              mezcla=p.get("mezcla", 0.15))
     # Ajuste de medidas: ancho en X y alto total justos.
     xs = [v.co.x for v in bc.verts]
     ys = [v.co.z for v in bc.verts]  # Y de Godot = Z de Blender
@@ -182,6 +199,9 @@ def construir(p, nombre, desplazamiento=(0.0, 0.0, 0.0), colision=True):
         ini = horqueta - eje * 0.25
         fin = ini + (c - ini) * b.get("rama", 0.6)
         medio = (ini + fin) / 2 + V(rng.uniform(-1, 1), 0.3, rng.uniform(-1, 1)) * 0.12
+        if p.get("ramas_abiertas"):  # codo: primero sale hacia afuera, después sube
+            h = fin - ini
+            medio += V(h.x, -0.5 * h.y, h.z) * p["ramas_abiertas"]
         grosor = rr * (0.9 if i == 0 else 0.75)
         tubo(bt, [ini, medio, fin], [grosor, grosor * 0.75, grosor * 0.5], LADOS_RAMA, rng=rng)
 
@@ -280,7 +300,8 @@ def main(id_, p, descripcion, juntos=None):
                 o = construir(q, f"foto_{otro_id}", (x, 0, 0), colision=False)
                 todos += [o["tronco"], o["copa"]]
                 x += q["ancho"] / 2
-            pedidos.append(("Las tres variantes juntas · día", todos, "frente", "dia", True))
+            cuantas = {2: "Las tres variantes", 1: "Las dos variantes"}.get(len(juntos), "Las variantes")
+            pedidos.append((f"{cuantas} juntas · día", todos, "frente", "dia", True))
         else:
             pedidos.append(("Arriba · día", c, "arriba", "dia", True))
         plaza.hoja(id_, plaza.m("%s · ancho %.1f × alto %.1f m · árbol · %s" % (
