@@ -250,7 +250,8 @@ base (el hex ya está en el espacio de color correcto; no copiar los números de
 ### 4.2 Reglas de color
 
 1. **No inventar colores.** Si hace falta uno nuevo, se agrega primero a esta tabla y a
-   `paleta.png` (con `tools/arte/generar_paleta.py`), con su nombre `M_...`, y recién ahí se usa.
+   `tools/arte/paleta.json`, con su nombre `M_...`. Después se regeneran `paleta.png`
+   (`tools/arte/generar_paleta.py`) y la biblioteca (`tools/blender/biblioteca.py`), y recién ahí se usa.
 2. **Fondo apagado, primer plano vivo.** Lo de la plaza usa colores de baja saturación. Los
    colores saturados (rojo, amarillo, azul) quedan para el carrito, la comida, los carteles y
    las sombrillas.
@@ -393,14 +394,20 @@ arte/
 godot/
   modelos/<familia>/<id>.glb     ← lo que usa el juego
 tools/
-  blender/                  ← scripts que generan modelos (si se hacen por código)
+  arte/paleta.json          ← la paleta (fuente única de los colores)
   arte/generar_paleta.py    ← regenera paleta.png
+  blender/biblioteca.py     ← regenera la biblioteca (materiales y referencias)
+  blender/comun.py          ← revisión automática, exportación y hoja de revisión
+  blender/modelos/<id>.py   ← un script por cada modelo hecho por código
 ```
+
+Cómo correr los scripts: [`tools/blender/README.md`](../../tools/blender/README.md).
 
 Familias: `comida`, `stock`, `carritos`, `accesorios`, `cocina`, `plaza`, `personajes`, `ciudad`.
 
-Los `.blend` y `.glb` son archivos binarios: antes del primer modelo, activar **Git LFS**
-para `*.blend`, `*.glb` y `*.png` dentro de `arte/` y `godot/modelos/` (ya lo sugiere el README).
+Los `.blend` y `.glb` son archivos binarios. Mientras pesen poco (los low poly pesan entre
+10 y 100 KB) van directo en git. Cuando aparezcan archivos de más de 1 MB (personajes,
+edificios), activar **Git LFS** para `*.blend` y `*.glb` dentro de `arte/` y `godot/modelos/`.
 
 ### 7.3 Exportar desde Blender
 
@@ -427,7 +434,8 @@ dentro de Godot: si algo está mal, se corrige el `.blend` y se vuelve a exporta
 
 ### 8.1 Hoja de presentación
 
-Cada modelo nuevo se presenta con una imagen (`docs/arte/revisiones/<id>.png`) que muestra:
+Cada modelo nuevo se presenta con una imagen (`docs/arte/revisiones/<id>.jpg`) que muestra
+lo siguiente. Los modelos hechos por código la generan solos (`tools/blender/comun.py`):
 
 1. Vista de frente, de costado y en 3/4.
 2. Al lado de la silueta humana de 1,75 m (o de un pan de pancho, si es un objeto de mano).
@@ -435,25 +443,28 @@ Cada modelo nuevo se presenta con una imagen (`docs/arte/revisiones/<id>.png`) q
 
 ### 8.2 Lista de control
 
+Los puntos marcados con ⚙ los revisa solo `comun.revisar()` y salen al pie de la hoja de
+revisión. Si alguno falla, el script termina con error. El resto se revisa a ojo.
+
 **Forma**
-- [ ] Mide lo mismo que en los datos (`.ron`) o que la pieza simple que reemplaza.
+- [ ] ⚙ Mide lo mismo que en los datos (`.ron`) o que la pieza simple que reemplaza.
 - [ ] Se reconoce por su silueta.
 - [ ] Respeta la regla de los 2 metros (sin detalle invisible).
 - [ ] Biseles del ancho correcto; sombreado según su familia (3.4).
 - [ ] Grosor mínimo respetado.
 
 **Técnica**
-- [ ] Triángulos dentro del presupuesto (verlo en *Statistics* de Blender).
+- [ ] ⚙ Triángulos dentro del presupuesto (verlo en *Statistics* de Blender).
 - [ ] Lados de cilindros según la tabla 3.2.
-- [ ] Origen en el lugar correcto (2.4); rotación 0 y escala 1 aplicadas.
+- [ ] ⚙ Origen en el lugar correcto (2.4); rotación 0 y escala 1 aplicadas.
 - [ ] Frente hacia −Y en Blender (vista *Front*).
-- [ ] Normales hacia afuera, sin vértices duplicados ni caras ocultas.
+- [ ] ⚙ Normales hacia afuera, sin vértices duplicados ni sueltos. Sin caras ocultas (a ojo).
 - [ ] Colisión `-colonly` simple (si es fijo) o ninguna (si tiene física).
 - [ ] Piezas especiales con su nombre `pieza_` / `punto_`.
 
 **Color**
-- [ ] Solo materiales de la paleta, con el nombre exacto.
-- [ ] Como máximo 4 materiales (6 en carritos y equipos).
+- [ ] ⚙ Solo materiales de la paleta, con el nombre exacto.
+- [ ] ⚙ Como máximo 4 materiales (6 en carritos y equipos), y todos se usan.
 - [ ] Sin texturas (salvo carteles con texto).
 - [ ] Sin marcas reales.
 
@@ -464,19 +475,20 @@ Cada modelo nuevo se presenta con una imagen (`docs/arte/revisiones/<id>.png`) q
 
 ---
 
-## 9. Pendiente para arrancar
+## 9. Puesta en marcha
 
-Para poder aplicar esta guía falta crear (una sola vez):
-
-1. `arte/biblioteca/materiales.blend` con todos los materiales de la sección 4.1.
-2. `arte/biblioteca/referencias.blend` con la silueta humana, el cubo de mostrador y una
-   escena de luz de día y atardecer parecida a la del juego.
-3. Activar Git LFS.
-4. Hacer que el campo `forma` de los datos pueda apuntar a un `.glb` (ya previsto en
-   SPEC-006, notas de diseño). Esto requiere una spec antes de tocar código.
+1. ✔ `arte/biblioteca/materiales.blend` con todos los materiales de la sección 4.1
+   (se genera con `tools/blender/biblioteca.py`).
+2. ✔ `arte/biblioteca/referencias.blend` con la silueta humana, el mostrador y la luz de
+   día y de atardecer del juego.
+3. Git LFS: postergado hasta que haya archivos pesados (ver 7.2).
+4. **Pendiente:** que el campo `forma` de los datos pueda apuntar a un `.glb` (ya previsto
+   en SPEC-006, notas de diseño). Hasta entonces el juego sigue dibujando las piezas
+   simples. Requiere una spec antes de tocar código.
 
 ## Historial
 
 | Versión | Cambio |
 |---|---|
 | v1 | Primera versión: estilo low poly, paleta tomada de los colores actuales del juego. |
+| v1.1 | Biblioteca creada, paleta en `tools/arte/paleta.json`, revisión automática, hoja de revisión en `.jpg`, Git LFS postergado. |
