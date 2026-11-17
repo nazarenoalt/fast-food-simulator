@@ -20,11 +20,11 @@ Un solo modelo para los tres aderezos: el objeto es `pieza_chorrito` (M_Amarillo
 archivo = mostaza) y el juego le pone el `color` del aderezo (aderezos.ron), igual que hoy.
 
 Medidas = el zigzag de hoy (6 palitos de 0,03 × 0,004 × 0,005 girados ±35°, de x = −0,0625
-a 0,0625): 0,152 de largo y 0,021 de ancho. De alto mide 0,007 (hoy 0,004) porque baja
-3 mm en las ondas, siguiendo la salchicha.
+a 0,0625): 0,152 de largo y 0,021 de ancho. De alto mide 0,006 (hoy 0,004) porque baja
+2,5 mm en las ondas, siguiendo la salchicha.
 Origen: el centro de la caja. Dónde va: comida.rs lo pone a y = 0,037 del centro del pancho
 (arriba de la salchicha de piezas simples). Sobre el modelo `pancho` (salchicha a y = 0,004)
-va a y = Y_EN_PANCHO (0,0156), +0,003 por cada aderezo más, como hoy.
+va a y = Y_EN_PANCHO (0,0152), +0,003 por cada aderezo más, como hoy.
 """
 import math
 import sys
@@ -143,7 +143,7 @@ def hoja_revision(chorrito, revision):
         ("Los tres aderezos · atardecer", tres, "tres_cuartos", "atardecer"),
     ])
     comun.componer_hoja(
-        f"{ID} · 0,152 × 0,007 × 0,021 m · el juego pone el color del aderezo",
+        f"{ID} · 0,152 × 0,006 × 0,021 m · el juego pone el color del aderezo",
         cuadros, revision, comun.RAIZ / f"docs/arte/revisiones/{ID}.jpg",
     )
 

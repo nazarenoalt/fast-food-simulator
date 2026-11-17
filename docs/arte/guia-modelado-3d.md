@@ -97,10 +97,17 @@ Regla simple: **en la vista *Front* de Blender tenés que ver la cara que ve el 
 |---|---|
 | Comida y objetos que se agarran | En el **centro** del objeto (coincide con el centro de su colisión en `productos.ron`). |
 | Accesorios del carrito | En el **punto de apoyo**: centro de la base, a la altura donde se apoya (Z = 0). Es el punto que coincide con el anclaje. |
-| Bases de carrito | Centro del carrito, a nivel del piso. |
-| Mobiliario de la plaza, árboles, faroles | Centro de la base, a nivel del piso. |
-| Bloques de stock (bolsa, bandeja) | Centro de la base del paquete, a nivel de la superficie donde se apoya. |
+| Bases de carrito | Centro del **cuerpo pintado** (el ancho × profundidad del `.ron`), a nivel del piso. No el centro de la caja envolvente: la mesada corrida y la manija la descentran. |
+| Mobiliario de la plaza, árboles, faroles | Centro de la base, a nivel del piso. En árboles y faroles: la base del tronco o de la columna (aunque la copa se incline). |
+| Bloques de stock (bolsa, bandeja) | Centro de la base del cuerpo del paquete, a nivel de la superficie donde se apoya (aunque el nudo de la bolsa sobresalga). |
 | Luces colgantes (foco) | En el punto de donde cuelga (arriba). |
+| Piezas que flotan respecto de su anclaje (telón, sombrilla, techos) | En el anclaje, aunque la pieza quede corrida (el telón empieza a 0,31 m; el paño de la sombrilla va corrido 0,62 m en X). |
+
+**Objetos que no son simétricos.** `comun.revisar()` mide el origen contra el centro de la caja
+envolvente. Si el objeto no es simétrico respecto de su origen (perilla de un solo lado, manija,
+árbol inclinado, nudo de la bolsa), ese chequeo falla aunque el origen esté bien. En ese caso
+**no se mueve el modelo**: el script reemplaza esa línea de la revisión por un chequeo propio
+que dice qué se midió (ej. "batea centrada", "base del tronco en el origen").
 
 Antes de exportar: **aplicar rotación y escala** (Ctrl+A → *All Transforms*). El objeto
 tiene que quedar con rotación 0 y escala 1.
@@ -141,6 +148,10 @@ Para que todo el juego tenga la misma "resolución", la cantidad de lados depend
 | 25 cm a 1 m (fuente chica, mesas redondas) | 24 |
 | Más de 1 m (sombrilla, fuente grande) | 32 |
 
+El radio de un cilindro es el de sus **caras planas**, no el de sus aristas, y una cara plana va
+hacia abajo (o hacia el frente). Si no, una rueda de radio 0,15 queda 3 mm en el aire y una
+salchicha sale más fina que su colisión. `piezas.cilindro()` ya lo hace así.
+
 Esferas: *UV Sphere* con la mitad de anillos que de lados (ej. 12 × 6), o *Ico Sphere* de 1 o
 2 subdivisiones. Las copas de los árboles son la excepción: formas irregulares de 30 a 80
 caras, sin simetría perfecta.
@@ -162,6 +173,8 @@ se vea "terminado" y que la luz dibuje los bordes.
 | Mobiliario urbano, edificios | 2–3 cm |
 
 - Excepción: comida y telas (lona, telón) no llevan bisel; ya son formas suaves.
+- Piezas finas: en una tabla o barra de menos de 8 cm, el bisel va en **alrededor de un cuarto
+  de su grosor** (ej. 1 cm en una tabla de banco de 4 cm), aunque la tabla de arriba diga más.
 
 ### 3.4 Sombreado (suave vs. facetado)
 
@@ -289,8 +302,18 @@ con su material propio, para que el código las encuentre por nombre:
 
 ### 4.5 Texto, logos y carteles
 
-- El texto **no se modela** letra por letra. Va en una imagen chica (`.png`, 256 o 512 px,
-  fondo transparente) aplicada sobre un plano, con colores de la paleta.
+- El texto **no se modela** letra por letra. Va en una imagen chica (`.png`, 256 o 512 px)
+  aplicada sobre la cara del cartel, **solo con colores de la paleta** y dibujada sin
+  suavizado (cada píxel es un color de la paleta).
+- Si el cartel cubre toda la cara, la imagen es **opaca**, con fondo de un color de la paleta:
+  así no hay transparencias ni problemas de orden de dibujo. Fondo transparente solo si el
+  cartel va pegado sobre otra superficie que se tiene que ver.
+- El material del cartel se llama `T_<id>` (ej. `T_telon_panchos`). Es el único material que no
+  sale de la biblioteca; la revisión lo acepta si su imagen usa solo colores de la paleta
+  (`revisar_cartel` en `tools/blender/modelos/pizarra_precios.py`). La imagen va en
+  `godot/modelos/<familia>/texturas/<id>.png` y embebida en el `.glb` (`exportar_glb(..., uvs=True)`).
+- Datos que pueden cambiar (precios): se leen de los `.ron` al correr el script. Si cambian,
+  se vuelve a correr.
 - Tipografía de los carteles del carrito: de trazo grueso, estilo "letrero pintado a mano"
   de carrito porteño (filete simplificado como guarda, sin detalle fino).
 - Nada de marcas reales: los nombres se inventan (ej. "Panchos El Turco", "Mostaza Doña Rosa").
@@ -334,7 +357,11 @@ con su material propio, para que el código las encuentre por nombre:
   frondosos (plátanos, jacarandás, tilos), baldosas, canteros, fuente.
 - Árboles: tronco de pocas caras y copa hecha de 2 a 4 "bollos" irregulares facetados, con
   los tres verdes mezclados. Hacer **3 variantes por especie** (tamaño y forma distintos) para
-  que la plaza no se vea repetida.
+  que la plaza no se vea repetida. La copa empieza a **2,5 m o más** (se pasa caminando por
+  abajo y se ven las ramas).
+- Agua: el agua quieta (espejo de una pileta, batea del hervidor) es una malla `pieza_agua`.
+  El agua en movimiento (chorros, cascadas) **no** va como malla: con transparencia parece un
+  bloque azul. Si se quiere, se hace con partículas en Godot.
 - Todo lo del fondo es más simple que lo del carrito: menos piezas, menos biseles, colores
   apagados.
 
@@ -360,6 +387,10 @@ con su material propio, para que el código las encuentre por nombre:
   no los dibuja). Ejemplo: `banco-colonly`. Nunca usar la malla visual como colisión.
 - Partes que no deben chocar (paño de sombrilla, techo de carpa, telones, cables): sin
   colisión, igual que hoy (`colision: false`).
+- Un `-colonly` puede juntar **varias cajas en un solo objeto** (ej. las 7 cajas del estante).
+  Godot lo importa como malla de triángulos (puede ser cóncava): sirve para objetos fijos.
+- **Sin `-colonly`** cuando el código ya arma la colisión: bloques de stock (la caja sale de la
+  grilla del dato) y el hervidor (la batea son 5 cajas, para que la comida pueda entrar).
 
 ### 6.2 Nombres de piezas que el código usa
 
@@ -370,6 +401,12 @@ Las piezas que el código necesita encontrar llevan un nombre fijo, en minúscul
 | `pieza_` | Pieza que el código mueve o cambia | `pieza_pintura`, `pieza_salchicha`, `pieza_piloto`, `pieza_agua` |
 | `punto_` | Lugar marcado con un *Empty* (posición, sin malla) | `punto_luz`, `punto_lugar_1` (lugar de depósito) |
 | `-colonly` | Colisión invisible | `estante-colonly` |
+
+**Variantes de color dentro de una pieza.** Si una pieza cambia de colores por partes (la
+sombrilla roja o rayada), la pieza tiene varias **superficies** (una por grupo de caras, ej.
+`pieza_pano`: 0 = gajos pares, 1 = impares). El `.glb` trae la variante base y el juego cambia
+el material de cada superficie (`set_surface_override_material`). Sigue siendo un solo modelo
+(4.2, regla 5).
 
 Los *Empties* `punto_` documentan dónde tienen que ir cosas (luz, lugares del depósito,
 interior del hervidor). Sus posiciones tienen que coincidir con las de `accesorios.ron`; si se
@@ -402,6 +439,7 @@ tools/
   arte/generar_paleta.py    ← regenera paleta.png
   blender/biblioteca.py     ← regenera la biblioteca (materiales y referencias)
   blender/comun.py          ← revisión automática, exportación y hoja de revisión
+  blender/piezas.py         ← piezas básicas (caja con bisel, cilindro, colisión, punto_)
   blender/modelos/<id>.py   ← un script por cada modelo hecho por código
 ```
 
@@ -497,3 +535,4 @@ revisión. Si alguno falla, el script termina con error. El resto se revisa a oj
 | v1 | Primera versión: estilo low poly, paleta tomada de los colores actuales del juego. |
 | v1.1 | Biblioteca creada, paleta en `tools/arte/paleta.json`, revisión automática, hoja de revisión en `.jpg`, Git LFS postergado. |
 | v1.2 | Panes abiertos con el relleno hundido (5.1). `M_PanMiga` pasa de `#F7E0B2` a `#E8C88E` (se veía blanca). |
+| v1.3 | Lo aprendido con la etapa 1 completa: origen de objetos no simétricos y chequeos propios (2.4), radio de cilindros a las caras planas (3.2), biseles en piezas finas (3.3), carteles opacos con material `T_<id>` (4.5), copa de árboles desde 2,5 m y agua en movimiento (5.4), `-colonly` de varias cajas y cuándo no lleva (6.1), variantes de color por superficies (6.2), `piezas.py`. |
