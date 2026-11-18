@@ -25,6 +25,7 @@ pub mod plaza; // SPEC-008
 pub mod proveedor; // SPEC-011
 pub mod reloj; // SPEC-007
 pub mod sonido;
+pub mod tienda; // SPEC-017
 pub mod tostado; // SPEC-015 (pan tostado) // SPEC-024
 
 /// Temperatura ambiente en °C.

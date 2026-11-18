@@ -58,10 +58,12 @@ agregar un archivo de datos.
 
 ## Fuera de alcance (próximas etapas)
 
-- Comprar y colocar accesorios desde el juego, el food truck y el tráiler, abrir y cerrar
+- El food truck y el tráiler, abrir y cerrar
   puertas, las alacenas bajo mesada y las vitrinas del kiosco como depósito. Los modelos 3D están en SPEC-025.
 
 ## Notas de diseño
+
+- Comprar, poner, mover, guardar y vender accesorios y bases desde el juego: [SPEC-017](017-tienda.md).
 
 - Las formas de los accesorios son piezas simples (cajas, cilindros) hasta tener modelos de
   Blender. Desde SPEC-025, bases y accesorios pueden usar un modelo `.glb` (`modelo`), y la

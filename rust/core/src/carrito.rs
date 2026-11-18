@@ -152,6 +152,9 @@ pub struct Accesorio {
     /// REQ-MOD-06: colores por superficie de piezas del modelo: (pieza, [color de cada superficie]).
     #[serde(default)]
     pub superficies: Vec<(String, Vec<[f32; 3]>)>,
+    /// REQ-TIE-11: bases donde entra (por tamaño). Si falta, entra en todas.
+    #[serde(default)]
+    pub bases: Option<Vec<String>>,
 }
 
 /// El carrito del jugador (`godot/data/carrito_jugador.ron`). REQ-CAR-07

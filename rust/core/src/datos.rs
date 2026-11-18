@@ -196,6 +196,12 @@ pub fn cargar_catalogo(
                 }
             }
         }
+        // REQ-TIE-11: las bases donde entra tienen que existir.
+        for b in acc.bases.iter().flatten() {
+            if !lista_bases.iter().any(|x| &x.id == b) {
+                return Err(error("accesorios.ron", format!("\"{}\" entra en la base inexistente \"{b}\"", acc.id)));
+            }
+        }
     }
     Ok(Catalogo {
         productos: p.productos,
