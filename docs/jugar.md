@@ -9,7 +9,7 @@
 | Espacio | Saltar |
 | Clic izquierdo | Agarrar / soltar |
 | Clic derecho | Tirar lo que tenés en la mano |
-| E | Usar: prender el hervidor, la plancha o la parrilla, abrir y cerrar la heladera, dar vuelta una hamburguesa, un chorizo o un pan, sacar del depósito, poner aderezo (con la comida en la mano), recargar un pomo (con el repuesto en la mano), echar carbón en la parrilla (con la bolsa en la mano) |
+| E | Usar: prender el hervidor, la plancha o la parrilla, abrir y cerrar la heladera o la puerta del carrito (carro grande y kiosco), dar vuelta una hamburguesa, un chorizo o un pan, sacar del depósito, poner aderezo (con la comida en la mano), recargar un pomo (con el repuesto en la mano), echar carbón en la parrilla (con la bolsa en la mano) |
 | Tab | Panel del proveedor (comprar mercadería) |
 | T | Tiempo ×30 (para ver el atardecer rápido) |
 | C | Traer un cliente al instante (para probar) |
@@ -34,6 +34,9 @@ carrito; llevá el paquete a un lugar libre del estante y queda guardado.
 - **Un accesorio:** agregalo en `godot/data/accesorios.ron` (categoría, forma, función).
 - **Tu carrito:** editá `godot/data/carrito_jugador.ron` (base, color, anclajes, stock inicial).
   Si algo no encaja, el juego muestra el error arriba del carrito.
+- **Papas fritas** ([SPEC-026](specs/026-papas.md)): ya están `freidora` y `freidora_doble`
+  (traen su colador), `tabla_papas` (cuchillo, pelapapas y una papa) y `cartel_cerrado` para los
+  anclajes de mostrador, y `bolsa_papas` y `pack_cajitas` en el proveedor. Freír viene después.
 
 ## Otros platos
 - **Hamburguesa:** E sobre la plancha para prenderla, apoyá una hamburguesa y dale vuelta con

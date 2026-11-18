@@ -58,4 +58,6 @@
     (id: "paloma_aleteo", archivos: ["paloma_aleteo_1.ogg", "paloma_aleteo_2.ogg"], bus: Efectos, volumen_db: -6, espacial: true, distancia_max: 20, enfriamiento: 1),
     // Abrir el panel del proveedor
     (id: "tienda_abrir", archivos: ["tienda_abre.ogg"], bus: Efectos, volumen_db: -8, enfriamiento: 0.2),
+    // Puerta de chapa de una base de carrito: carro grande y kiosco (REQ-CAR-13). No es la de la heladera.
+    (id: "carrito_puerta", archivos: ["puerta_carrito_abre.ogg", "puerta_carrito_cierra.ogg"], bus: Efectos, volumen_db: -4, espacial: true, distancia_max: 10, enfriamiento: 0.3),
 ]

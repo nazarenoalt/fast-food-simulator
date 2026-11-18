@@ -113,4 +113,26 @@
         color_empaque: (0.78, 0.62, 0.42),
         precio: 2000,
     ),
+    // ── Papas fritas (SPEC-026) ──
+    (
+        id: "bolsa_papas",
+        modelo: Some("stock/bolsa_papas"),
+        nombre: "bolsa de papas",
+        producto: "papa_cruda",
+        grilla: (2, 3, 2),
+        separacion: (0.096, 0.064, 0.074),
+        empaque: Bolsa,
+        color_empaque: (0.73, 0.54, 0.34),
+        precio: 2400,
+    ),
+    (
+        id: "pack_cajitas",
+        nombre: "pack de cajitas para papas",
+        producto: "cajita_papas",
+        grilla: (2, 3, 1),
+        separacion: (0.095, 0.115, 0.06),
+        empaque: Bandeja,
+        color_empaque: (0.78, 0.62, 0.42),
+        precio: 1500,
+    ),
 ]

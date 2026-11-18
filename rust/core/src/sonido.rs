@@ -37,9 +37,11 @@ pub mod ids {
     pub const AUTO_PASA: &str = "auto_pasa";
     pub const PALOMA_ALETEO: &str = "paloma_aleteo";
     pub const TIENDA_ABRIR: &str = "tienda_abrir";
+    /// Puerta de una base de carrito (REQ-CAR-13): no es la de la heladera.
+    pub const CARRITO_PUERTA: &str = "carrito_puerta";
 
     /// Todos, para validar los datos.
-    pub const TODOS: [&str; 28] = [
+    pub const TODOS: [&str; 29] = [
         PAJAROS,
         GRILLOS,
         MURMULLO_PLAZA,
@@ -68,6 +70,7 @@ pub mod ids {
         AUTO_PASA,
         PALOMA_ALETEO,
         TIENDA_ABRIR,
+        CARRITO_PUERTA,
     ];
 }
 
