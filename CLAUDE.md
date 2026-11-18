@@ -17,6 +17,7 @@ specs primero ([SPEC-000](docs/specs/000-proceso.md)). Qué sigue: [ROADMAP](doc
 cd rust && cargo fmt --check && cargo clippy --all-targets && cargo test
 GODOT=/ruta/godot tools/prueba_humo.sh   # humo en el motor
 ```
+Modelos `.glb`/`.blend` e imágenes de `docs/arte/` van en Git LFS (`git lfs install` antes de clonar).
 `cargo test` incluye trazabilidad specs↔código y validación de docs (`rust/core/tests/`).
 
 ## Flujo de trabajo (obligatorio)

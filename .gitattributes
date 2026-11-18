@@ -1,0 +1,6 @@
+# Git LFS (TASK-0003): modelos 3D, fuentes de Blender e imágenes de arte.
+# Antes de clonar o commitear modelos: `git lfs install`.
+*.glb filter=lfs diff=lfs merge=lfs -text
+*.blend filter=lfs diff=lfs merge=lfs -text
+docs/arte/**/*.jpg filter=lfs diff=lfs merge=lfs -text
+docs/arte/**/*.png filter=lfs diff=lfs merge=lfs -text
