@@ -14,7 +14,7 @@ Cada modelo sigue la [guía de modelado](guia-modelado-3d.md).
 - **Estado**: Pendiente → En progreso → En revisión → Hecho.
 - ⚠ = objeto que **no** está en ninguna spec todavía; es una propuesta y se confirma al escribir la spec de su etapa.
 
-Resumen: **119 modelos** (más los tamaños de techos y toldos). La etapa 1 tiene 29, y 23 de ellos (P1) reemplazan las piezas simples que el juego usa hoy.
+Resumen: **122 modelos** (más los tamaños de techos y toldos). La etapa 1 tiene 29, y 23 de ellos (P1) reemplazan las piezas simples que el juego usa hoy.
 
 ---
 
@@ -236,17 +236,22 @@ cuerpo + cabeza + pelo + ropa + accesorio, y de cambiar colores.
 
 ## Etapa 6 · Pulido (ciudad alrededor)
 
+El juego ya tiene ciudad (SPEC-013): edificios en cajas de 4 a 12 m de ancho con planta baja de 3,6 m y pisos de 3,0, autos y nubes. Las fachadas se arman en módulos con esas alturas. ⚠ Colores que el código usa y faltan en la paleta: 8 de muro y 3 de toldo (verde, naranja, gris); por ahora las fachadas usan Camino, Terracota y Piedra.
+
 | ID | Objeto | Medidas | Tris | Materiales | Notas | Prio. | Estado |
 |---|---|---|---|---|---|---|---|
-| `fachada_casa_a` | Fachada de casa chorizo | ≈ 9 × 6 × 1 | 2.000 | colores de fachada *(agregar)* | Edificios bajos de barrio frente a la plaza. | P2 | Pendiente |
-| `fachada_casa_b` | Fachada con negocio en planta baja | ≈ 9 × 7 × 1 | 2.000 | ídem | Kiosco / almacén con cortina metálica. | P2 | Pendiente |
-| `fachada_edificio` | Edificio de departamentos | ≈ 9 × 18 × 1 | 2.000 | ídem | Balcones simples. | P3 | Pendiente |
-| `auto_a` | Auto (sedán) | ≈ 1,8 × 1,45 × 4,5 | 2.500 | colores de autos *(agregar)* | Diseño genérico, sin marca. | P3 | Pendiente |
-| `auto_b` | Auto (chico) | ≈ 1,7 × 1,5 × 3,8 | 2.500 | ídem | - | P3 | Pendiente |
+| `fachada_casa_a` | Fachada de casa chorizo | 9 × 6,95 × 0,55 | 2.000 | Camino, BlancoCrema, Piedra, Madera, Hierro, LuzCalida | Casa baja porteña de PB + 1 piso, en módulos que se apilan con las alturas del juego (`pieza_planta_baja` 3,6 m, `pieza_piso_<n>` 3,0 m, `pieza_cornisa` 0,35 m). Puerta de madera con banderola, ventanas con reja abajo y con postigos arriba. Vidrios en `pieza_ventanas_oscuras` y `pieza_ventanas_luz` (se prenden de noche, como las "prendibles" de `ciudad.rs`). El muro (superficie 0) toma el color del edificio. Colisión `-colonly`: una caja. Hecho por código: `tools/blender/modelos/fachada_casa_a.py` (1410 tris). [Hoja de revisión](revisiones/fachada_casa_a.jpg). | P2 | Hecho |
+| `fachada_casa_b` | Fachada con negocio en planta baja | 9 × 6,95 × 1,49 | 2.000 | Terracota, BlancoCrema, Piedra, AzulAcento, Hierro, LuzCalida | Casa con local en PB, con las medidas del código: vidriera que brilla de noche (`pieza_vidriera`), cortina metálica ondulada (`pieza_cortina`, origen en el cajón: se sube escalando en Y) y toldo rayado de 6,6 × 1,3 a 18° (`pieza_toldo`, superficies 0 y 1 para el color). Mismos módulos que la casa A. Hecho por código: `tools/blender/modelos/fachada_casa_b.py` (1454 tris). [Hoja de revisión](revisiones/fachada_casa_b.jpg). | P2 | Hecho |
+| `fachada_edificio` | Edificio de departamentos | 9 × 18,95 × 1,25 | 2.000 | Piedra, BlancoCrema, Baldosa, Hierro, LuzCalida | Edificio de PB + 5 pisos iguales (`pieza_piso_1..5`): PB revestida en piedra con entrada de hierro y portón de cochera; cada piso con cuatro puertas-ventana y dos balcones con baranda. Cornisa lisa. Hecho por código: `tools/blender/modelos/fachada_edificio.py` (1922 tris). [Hoja de revisión](revisiones/fachada_edificio.jpg). | P3 | Hecho |
+| `auto_a` | Auto (sedán) | 1,82 × 1,45 × 4,30 | 2.500 | PinturaCarrito, Hierro, Goma, Acero, LuzFarol, PilotoApagado | Sedán genérico sin marca, de frente a +Z (el código de hoy arma los autos mirando a +X: hay que girarlo 90°). Chapa `pieza_carroceria` (el juego elige el color), ruedas `pieza_rueda_1..4` de radio 0,33 con el origen en el eje, `pieza_faros` y `pieza_luces_traseras` que se prenden de noche. Vidrios opacos (se leen mejor de lejos). Sin `-colonly`: la colisión la arma el código. Hecho por código: `tools/blender/modelos/auto_a.py` (1540 tris). [Hoja de revisión](revisiones/auto_a.jpg). | P3 | Hecho |
+| `auto_b` | Auto (chico) | 1,74 × 1,50 × 3,70 | 2.500 | ídem | Auto chico hatchback, con las mismas piezas que `auto_a`. Ruedas de radio 0,30 (el código las tiene que girar con ese radio). Hecho por código: `tools/blender/modelos/auto_b.py` (1520 tris). [Hoja de revisión](revisiones/auto_b.jpg). | P3 | Hecho |
 | `colectivo` | Colectivo | ≈ 2,5 × 3,0 × 12 | 3.000 | ídem | ⚠ Pasa por la calle. | P3 | Pendiente |
-| `semaforo` | Semáforo | ≈ 0,4 × 3,5 × 0,4 | 500 | Hierro, emisión | - | P3 | Pendiente |
-| `parada_colectivo` | Parada de colectivo | ≈ 2,5 × 2,5 × 1,2 | 800 | Hierro, vidrio | - | P3 | Pendiente |
-| `charco` | Charco | ≈ 1,0 × 0,005 × 0,7 | 30 | Agua | Para el clima con lluvia. | P3 | Pendiente |
+| `semaforo` | Semáforo | ≈ 0,4 × 3,5 × 0,4 | 500 | Hierro, emisión | ⚠ El juego tiene una sola calle sin esquinas (SPEC-013 deja los semáforos afuera). Si una spec lo pide, sería un semáforo peatonal en las sendas (x = ±25). | P3 | Pendiente |
+| `parada_colectivo` | Parada de colectivo | ≈ 2,5 × 2,5 × 1,2 | 800 | Hierro, Vidrio, Madera, AzulAcento | Refugio con dos parantes atrás, techo en voladizo, vidrio trasero y lateral, banco de madera y cenefa azul sin texto; lo abierto da a la calle. Hoy es solo ambientación. Hecho por código: `tools/blender/modelos/parada_colectivo.py` (542 tris). [Hoja de revisión](revisiones/parada_colectivo.jpg). | P3 | Hecho |
+| `charco` | Charco | ≈ 1,0 × 0,005 × 0,7 | 30 | Agua | Lámina de agua irregular (`pieza_agua`) con el borde biselado, sin cara de abajo. Va apoyada sobre la vereda (a 0,011 m). Hoy no hay lluvia en el juego. Hecho por código: `tools/blender/modelos/charco.py` (28 tris). [Hoja de revisión](revisiones/charco.jpg). | P3 | Hecho |
+| `nube_a` | Nube chica | ≈ 30 de largo | 400 | Lona | Nube facetada de 3 bollos con la panza aplastada, como las copas de los árboles. `pieza_nube`: el juego le cambia el color según la hora. Hecho por código: `tools/blender/modelos/nube_a.py` (128 tris). [Hoja de revisión](revisiones/nube_a.jpg). | P3 | Hecho |
+| `nube_b` | Nube mediana | ≈ 45 de largo | 400 | Lona | Ídem, 4 bollos. Hecho por código: `tools/blender/modelos/nube_b.py` (190 tris). [Hoja de revisión](revisiones/nube_b.jpg). | P3 | Hecho |
+| `nube_c` | Nube grande | ≈ 60 de largo | 400 | Lona | Ídem, 5 bollos. Hecho por código: `tools/blender/modelos/nube_c.py` (238 tris). [Hoja de revisión](revisiones/nube_c.jpg). | P3 | Hecho |
 | `paraguas` | Paraguas (NPC) | Ø 1,0 × 0,9 | 400 | colores | Para NPCs cuando llueve. | P3 | Pendiente |
 
 ---

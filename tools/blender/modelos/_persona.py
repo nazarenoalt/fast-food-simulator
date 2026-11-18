@@ -297,8 +297,8 @@ def torso(m, M, P):
          0.092 * w, -0.002, REMERA),
         (tor(0.60), 0.165 * w * hom, 0.112 * w + 0.03 * w * pecho, 0.098 * w, -0.004, REMERA),
         (tor(0.71), 0.174 * w * hom, 0.104 * w + 0.012 * w * pecho, 0.098 * w, -0.002, REMERA),
-        (tor(0.80), 0.182 * w * hom, 0.084 * w, 0.087 * w, 0.004, REMERA),
-        (tor(0.86), 0.158 * w * hom, 0.070 * w, 0.076 * w, 0.010, REMERA),
+        (tor(0.80), 0.178 * w * hom, 0.084 * w, 0.087 * w, 0.004, REMERA),
+        (tor(0.86), 0.150 * w * hom, 0.070 * w, 0.076 * w, 0.010, REMERA),
         (tor(0.915), 0.100 * w * hom ** 0.5, 0.058 * w, 0.064 * w, 0.010, REMERA),
         (tor(0.945), 0.062 * w, 0.052 * w, 0.056 * w, 0.010, REMERA),
     ]
@@ -413,14 +413,21 @@ def brazo(m, M, P, lado, nombre):
     S, U, Lo = f"{nombre}Shoulder", f"{nombre}UpperArm", f"{nombre}LowerArm"
     afuera = V((lado, 0, 0))
     filas = []  # (centro, eje, radio x, radio y, pesos, material de la banda que sigue)
-    tope = hombro + V((-lado * 0.034 * g, 0, 0.022 * g))
-    filas.append((hombro + V((-lado * 0.012 * g, 0, 0.012 * g)), d1, 0.040 * g, 0.046 * g, {U: 0.5, S: 0.5}, REMERA))
-    filas.append((hombro - d1 * 0.02 * g, d1, 0.049 * g, 0.053 * g, {U: 0.85, S: 0.15}, REMERA))
+    # Hombro redondo: el eje del brazo sale de al lado del cuello hacia afuera y se dobla
+    # por encima de la articulación hacia abajo (los anillos siguen la curva).
+    p0 = hombro + V((-lado * 0.070 * g, 0, 0.040 * g))
+    p1 = hombro + V((-lado * 0.018 * g, 0, 0.030 * g))
+    d0 = V((lado, 0, -0.25)).normalized()
+    dm = (V((lado, 0, -1.0)) + d1).normalized()
+    tope = p0 - d0 * 0.03 * g
+    filas.append((p0, d0, 0.034 * g, 0.036 * g, {S: 0.8, U: 0.2}, REMERA))
+    filas.append((p1, dm, 0.043 * g, 0.045 * g, {S: 0.45, U: 0.55}, REMERA))
+    filas.append((hombro - d1 * 0.025 * g, d1, 0.048 * g, 0.050 * g, {U: 0.9, S: 0.1}, REMERA))
     fin_manga = 0.45 if not larga else 1.0
     if not larga:
-        filas.append((hombro + d1 * M["brazo"] * 0.30, d1, 0.050 * g, 0.051 * g, {U: 1.0}, REMERA))
+        filas.append((hombro + d1 * M["brazo"] * 0.30, d1, 0.047 * g, 0.048 * g, {U: 1.0}, REMERA))
         fm = hombro + d1 * M["brazo"] * fin_manga
-        filas.append((fm, d1, 0.050 * g, 0.051 * g, {U: 1.0}, PIEL))      # borde de la manga
+        filas.append((fm, d1, 0.047 * g, 0.048 * g, {U: 1.0}, PIEL))      # borde de la manga
         filas.append((fm, d1, 0.039 * g, 0.041 * g, {U: 1.0}, PIEL))      # brazo adentro
         filas.append((hombro + d1 * M["brazo"] * 0.78, d1, 0.037 * g, 0.039 * g, {U: 1.0}, PIEL))
         mat_brazo = PIEL
@@ -441,7 +448,7 @@ def brazo(m, M, P, lado, nombre):
     else:
         filas.append((codo + d2 * M["antebrazo"] * 0.75, d2, 0.031 * g, 0.028 * g, {Lo: 1.0}, PIEL))
     filas.append((muneca, d2, 0.026 * g, 0.022 * g, {Lo: 0.7, f"{nombre}Hand": 0.3}, PIEL))
-    anillos = [anillo_eje(c, d, rx, ry, 8, ref=afuera) for c, d, rx, ry, _, _ in filas]
+    anillos = [anillo_eje(c, d, ry, rx, 8, ref=ADELANTE) for c, d, rx, ry, _, _ in filas]
     m.loft(anillos, [f[4] for f in filas], [f[5] for f in filas[:-1]],
            tapa_ini=tope, tapa_fin=muneca + d2 * 0.02 * g)
     mano(m, M, lado, nombre, muneca, d2)
