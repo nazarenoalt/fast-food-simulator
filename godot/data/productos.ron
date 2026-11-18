@@ -31,15 +31,105 @@
             )),
         ),
         (
+            id: "hamburguesa",
+            nombre: "hamburguesa",
+            masa: 0.12,
+            precio: Some(3500), // REQ-ECO-03
+            requiere: Some("Plancha"), // REQ-CLI-04
+            por_lados: true, // REQ-PLA-04
+            perecedero: true, // REQ-HEL-03
+            colision: Caja(medidas: (0.11, 0.025, 0.11)),
+            forma: [
+                // Dos mitades: el color de cada una sale del avance de su lado (REQ-PLA-05).
+                (tipo: Cilindro, medidas: (0.055, 0.0125, 0), pos: (0, -0.00625, 0), color: (0.62, 0.3, 0.27), tinte_lado: Some(0)),
+                (tipo: Cilindro, medidas: (0.055, 0.0125, 0), pos: (0, 0.00625, 0), color: (0.62, 0.3, 0.27), tinte_lado: Some(1)),
+            ],
+            coccion: Some((
+                k: 0.03, t_min: 60, velocidad: 0.0012, punto: 6, pasado: 14,
+                t_quemado: 210, segundos_quemado: 15,
+                color_crudo: (0.62, 0.3, 0.27),
+                color_cocido: (0.45, 0.25, 0.14),
+                color_pasado: (0.3, 0.17, 0.1),
+                color_quemado: (0.1, 0.07, 0.06),
+            )),
+        ),
+        (
+            id: "chorizo",
+            nombre: "chorizo",
+            masa: 0.1,
+            por_lados: true, // REQ-PAR-05
+            perecedero: true, // REQ-HEL-03
+            colision: Capsula(radio: 0.016, largo: 0.16),
+            forma: [
+                // Dos capas superpuestas: el color de cada una sale del avance de su lado.
+                (tipo: Capsula, medidas: (0.015, 0.16, 0), pos: (0, -0.005, 0), rot: (0, 0, 90), color: (0.75, 0.3, 0.25), tinte_lado: Some(0)),
+                (tipo: Capsula, medidas: (0.015, 0.16, 0), pos: (0, 0.005, 0), rot: (0, 0, 90), color: (0.75, 0.3, 0.25), tinte_lado: Some(1)),
+            ],
+            coccion: Some((
+                k: 0.05, t_min: 60, velocidad: 0.0012, punto: 10, pasado: 22,
+                t_quemado: 280, segundos_quemado: 60,
+                color_crudo: (0.75, 0.3, 0.25),
+                color_cocido: (0.5, 0.22, 0.14),
+                color_pasado: (0.33, 0.15, 0.1),
+                color_quemado: (0.1, 0.06, 0.05),
+            )),
+        ),
+        (
+            id: "pan_choripan",
+            nombre: "pan de choripán",
+            masa: 0.08,
+            pan: true, // REQ-PAR-06
+            por_lados: true,
+            colision: Caja(medidas: (0.2, 0.05, 0.065)),
+            forma: [
+                // Dos mitades: cada una toma el color del tostado de su cara.
+                (tipo: Caja, medidas: (0.2, 0.025, 0.065), pos: (0, -0.0125, 0), color: (0.9, 0.76, 0.52), tinte_lado: Some(0)),
+                (tipo: Caja, medidas: (0.2, 0.025, 0.065), pos: (0, 0.0125, 0), color: (0.9, 0.76, 0.52), tinte_lado: Some(1)),
+            ],
+            coccion: Some((
+                k: 0.15, t_min: 90, velocidad: 0.0020, punto: 4, pasado: 15,
+                t_quemado: 1000, segundos_quemado: 1000,
+                color_crudo: (0.9, 0.76, 0.52),
+                color_cocido: (0.72, 0.46, 0.2),
+                color_pasado: (0.16, 0.1, 0.07),
+                color_quemado: (0.16, 0.1, 0.07),
+            )),
+        ),
+        (
+            id: "choripan",
+            nombre: "choripán",
+            masa: 0.18,
+            precio: Some(3000), // REQ-ECO-03
+            aderezos: ["chimichurri", "mostaza"], // REQ-ADE-07
+            requiere: Some("Parrilla"), // REQ-CLI-04
+            colision: Caja(medidas: (0.2, 0.07, 0.065)),
+            forma: [
+                (tipo: Caja, medidas: (0.2, 0.05, 0.065), color: (0.72, 0.46, 0.2)),
+                (tipo: Capsula, medidas: (0.015, 0.19, 0), pos: (0, 0.03, 0), rot: (0, 0, 90), color: (0.5, 0.22, 0.14)),
+            ],
+        ),
+        (
             id: "pancho",
             nombre: "pancho",
             masa: 0.09,
             precio: Some(2500), // REQ-ECO-03
-            admite_aderezos: true,
+            aderezos: ["mostaza", "ketchup", "mayonesa", "papas_pay"], // REQ-ADE-07
+            requiere: Some("Hervidor"), // REQ-CLI-04
             colision: Caja(medidas: (0.17, 0.06, 0.055)),
             forma: [
                 (tipo: Capsula, medidas: (0.027, 0.17, 0), rot: (0, 0, 90), escala: (1, 0.85, 1), color: (0.86, 0.6, 0.32)),
                 (tipo: Capsula, medidas: (0.011, 0.155, 0), pos: (0, 0.024, 0), rot: (0, 0, 90), color: (0.72, 0.3, 0.2), tinte_coccion: true),
+            ],
+        ),
+        (
+            id: "bolsa_carbon",
+            nombre: "bolsa de carbón",
+            masa: 1.0,
+            carbon: Some(1.0), // REQ-PAR-01: kg que carga en la parrilla
+            colision: Caja(medidas: (0.2, 0.08, 0.3)),
+            forma: [
+                (tipo: Caja, medidas: (0.2, 0.08, 0.3), color: (0.12, 0.12, 0.13)),
+                (tipo: Caja, medidas: (0.12, 0.002, 0.1), pos: (0, 0.041, 0), color: (0.85, 0.35, 0.1)),
             ],
         ),
         (
@@ -78,9 +168,34 @@
                 (tipo: Cilindro, medidas: (0.018, 0.025, 0), pos: (0, 0.085, 0), color: (0.2, 0.2, 0.2)),
             ],
         ),
+        (
+            id: "repuesto_papas_pay",
+            nombre: "repuesto de papas pay",
+            masa: 0.5,
+            repone: Some("papas_pay"),
+            colision: Caja(medidas: (0.08, 0.19, 0.08)),
+            forma: [
+                (tipo: Cilindro, medidas: (0.038, 0.17, 0), pos: (0, -0.01, 0), color: (0.9, 0.75, 0.35)),
+                (tipo: Cilindro, medidas: (0.039, 0.05, 0), pos: (0, 0.0, 0), color: (0.95, 0.95, 0.95)),
+                (tipo: Cilindro, medidas: (0.018, 0.025, 0), pos: (0, 0.085, 0), color: (0.2, 0.2, 0.2)),
+            ],
+        ),
+        (
+            id: "repuesto_chimichurri",
+            nombre: "repuesto de chimichurri",
+            masa: 0.5,
+            repone: Some("chimichurri"),
+            colision: Caja(medidas: (0.08, 0.19, 0.08)),
+            forma: [
+                (tipo: Cilindro, medidas: (0.038, 0.17, 0), pos: (0, -0.01, 0), color: (0.25, 0.5, 0.12)),
+                (tipo: Cilindro, medidas: (0.039, 0.05, 0), pos: (0, 0.0, 0), color: (0.95, 0.95, 0.95)),
+                (tipo: Cilindro, medidas: (0.018, 0.025, 0), pos: (0, 0.085, 0), color: (0.2, 0.2, 0.2)),
+            ],
+        ),
     ],
     // REQ-ARM-01
     combinaciones: [
         (base: "pan_pancho", agregado: "salchicha", resultado: "pancho"),
+        (base: "pan_choripan", agregado: "chorizo", resultado: "choripan"), // REQ-PAR-07
     ],
 )

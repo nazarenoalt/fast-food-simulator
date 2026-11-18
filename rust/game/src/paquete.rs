@@ -17,11 +17,14 @@ pub struct Paquete {
     pub sostenido: bool,
     /// Ya se acomodó en el depósito (está por desaparecer).
     pub acomodado: bool,
+    /// Temperatura del paquete (°C). REQ-HEL-06
+    pub temp: f32,
 }
 
 impl Paquete {
     pub fn crear(def: DefBloque) -> Gd<Self> {
-        Gd::from_init_fn(|base| Self { base, def, sostenido: false, acomodado: false })
+        let temp = bloque_stock::temp_inicial(&def);
+        Gd::from_init_fn(|base| Self { base, def, sostenido: false, acomodado: false, temp })
     }
 
     pub fn def(&self) -> &DefBloque {
@@ -35,6 +38,16 @@ impl Paquete {
 
 #[godot_api]
 impl IRigidBody3D for Paquete {
+    fn physics_process(&mut self, delta: f64) {
+        // REQ-HEL-06: suelto, se va calentando hasta el ambiente.
+        self.temp = carrito_core::heladera::acercar(
+            self.temp,
+            carrito_core::TEMP_AMBIENTE,
+            carrito_core::heladera::K_PAQUETE,
+            delta as f32,
+        );
+    }
+
     fn ready(&mut self) {
         let def = self.def.clone();
         let [tx, ty, tz] = def.tamano();

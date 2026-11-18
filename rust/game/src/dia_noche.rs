@@ -70,6 +70,14 @@ impl INode for DiaNoche {
         sol.set_shadow(true);
         // REQ-AMB-12: tamaño aparente del disco del sol en el cielo.
         sol.set_param(godot::classes::light_3d::Param::SIZE, 1.0);
+        // REQ-AMB-14: sombras continuas. Se mezclan los tramos de distancia (sin cortes
+        // redondos) y el alcance cubre la plaza.
+        sol.set_shadow_mode(godot::classes::directional_light_3d::ShadowMode::PARALLEL_4_SPLITS);
+        sol.set_blend_splits(true);
+        sol.set_param(godot::classes::light_3d::Param::SHADOW_MAX_DISTANCE, 140.0);
+        sol.set_param(godot::classes::light_3d::Param::SHADOW_FADE_START, 0.85);
+        sol.set_param(godot::classes::light_3d::Param::SHADOW_NORMAL_BIAS, 1.5);
+        sol.set_param(godot::classes::light_3d::Param::SHADOW_BLUR, 1.5);
         sol.set_name("Sol");
         self.base_mut().add_child(&sol);
 

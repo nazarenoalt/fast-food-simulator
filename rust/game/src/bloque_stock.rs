@@ -15,11 +15,23 @@ pub struct BloqueStock {
     bloque: Bloque,
     /// Un nodo por unidad, en el mismo orden que la grilla.
     unidades: Vec<Gd<Node3D>>,
+    /// Temperatura del paquete (°C). REQ-HEL-06
+    temp: f32,
 }
 
 impl BloqueStock {
     pub fn crear(def: DefBloque) -> Gd<Self> {
-        Gd::from_init_fn(|base| Self { base, bloque: Bloque::lleno(def), unidades: Vec::new() })
+        let temp = temp_inicial(&def);
+        Self::crear_con_temp(def, temp)
+    }
+
+    pub fn crear_con_temp(def: DefBloque, temp: f32) -> Gd<Self> {
+        Gd::from_init_fn(|base| Self { base, bloque: Bloque::lleno(def), unidades: Vec::new(), temp })
+    }
+
+    /// REQ-HEL-06
+    pub fn temperatura(&self) -> f32 {
+        self.temp
     }
 
     pub fn restantes(&self) -> u32 {
@@ -63,6 +75,12 @@ impl BloqueStock {
         }
         Some((producto, pos))
     }
+}
+
+/// REQ-HEL-06: la carne viene de la distribuidora a 4 °C; lo demás, a temperatura ambiente.
+pub fn temp_inicial(def: &DefBloque) -> f32 {
+    let perecedero = catalogo().producto(&def.producto).is_some_and(|p| p.perecedero);
+    if perecedero { carrito_core::heladera::TEMP_INTERIOR } else { carrito_core::TEMP_AMBIENTE }
 }
 
 /// Dibuja las unidades restantes y el paquete de un bloque como hijos de `padre`.
@@ -120,6 +138,20 @@ pub fn construir_visual(padre: &mut Gd<Node3D>, def: &DefBloque, restantes: u32)
 
 #[godot_api]
 impl INode3D for BloqueStock {
+    fn physics_process(&mut self, delta: f64) {
+        // REQ-HEL-06: dentro de la heladera toma su temperatura; en el estante, la del ambiente.
+        // El bloque cuelga de un LugarDeposito, y ese de la heladera.
+        let entorno = self
+            .base()
+            .get_parent()
+            .and_then(|l| l.get_parent())
+            .and_then(|h| h.try_cast::<crate::heladera::Heladera>().ok())
+            .map(|h| h.bind().temperatura())
+            .unwrap_or(carrito_core::TEMP_AMBIENTE);
+        self.temp =
+            carrito_core::heladera::acercar(self.temp, entorno, carrito_core::heladera::K_PAQUETE, delta as f32);
+    }
+
     fn ready(&mut self) {
         let def = self.bloque.def.clone();
         let [tx, ty, tz] = def.tamano();

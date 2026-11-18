@@ -50,7 +50,7 @@ impl Pomo {
     /// REQ-ADE-03, REQ-ADE-04
     pub fn aplicar(&mut self, comida: &mut Gd<Comida>) -> Result<(), ErrorAderezo> {
         let mut c = comida.bind_mut();
-        let admite = c.admite_aderezos();
+        let admite = c.admite_aderezo(&self.def.id); // REQ-ADE-07
         let mut puestos = c.aderezos().to_vec();
         self.pomo.aplicar(admite, &mut puestos)?;
         c.set_aderezos(puestos);

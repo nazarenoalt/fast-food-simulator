@@ -12,6 +12,7 @@ use crate::carrito::Carrito;
 use crate::comida::Comida;
 use crate::dia_noche::DiaNoche;
 use crate::gente::Gente;
+use crate::heladera::Heladera;
 use crate::hervidor::Hervidor;
 use crate::jugador::Jugador;
 use crate::lugar_deposito::LugarDeposito;
@@ -19,9 +20,12 @@ use crate::luz::{GRUPO_LUCES_NOCHE, LuzNocturna};
 use crate::negocio::Negocio;
 use crate::palomas::Palomas;
 use crate::paquete::Paquete;
+use crate::parrilla::Parrilla;
 use crate::peaton::Peaton;
+use crate::plancha::Plancha;
 use crate::sonido::Sonido;
 use crate::transito::{Autos, Nubes};
+use carrito_core::tostado::EstadoPan;
 
 #[derive(GodotClass)]
 #[class(base=Node, init)]
@@ -33,6 +37,8 @@ pub struct PruebaHumo {
     fallas: Vec<String>,
     salchicha: Option<Gd<Comida>>,
     pan: Option<Gd<Comida>>,
+    hamburguesa: Option<Gd<Comida>>,
+    chorizo: Option<Gd<Comida>>,
     mundo: Option<Gd<Node>>,
     autos_antes: Vec<f32>,
     nube_antes: Option<Vector3>,
@@ -448,6 +454,265 @@ impl INode for PruebaHumo {
             16 => {
                 let palomas = todos::<Palomas>(&mundo).pop().unwrap();
                 self.chequear(palomas.bind().volando() >= 1, "CA-AMB-02 la paloma salió volando");
+                self.esperar(1);
+            }
+            17 => {
+                // CA-PLA-01: plancha encendida, apoyo una hamburguesa.
+                self.chequear(todos::<Plancha>(&mundo).len() == 1, "REQ-PLA-01 el carrito tiene su plancha");
+                let mut pl = todos::<Plancha>(&mundo).pop().unwrap();
+                pl.bind_mut().alternar();
+                pl.bind_mut().set_temperatura(200.0);
+                let encima = pl.get_global_position() + Vector3::new(0.0, 0.06, 0.0);
+                self.hamburguesa = Some(self.agregar_comida("hamburguesa", encima));
+                // 75 s de juego.
+                self.esperar(75 * 60);
+            }
+            18 => {
+                let h = self.hamburguesa.clone().unwrap();
+                let l = h.bind().estado_lados().expect("la hamburguesa se cocina por lados");
+                self.chequear(
+                    l.lados[0].avance > 6.0 && l.lados[1].avance == 0.0,
+                    &format!(
+                        "CA-PLA-01 se cocina el lado de abajo ({:.1}) y el de arriba sigue crudo ({:.1})",
+                        l.lados[0].avance, l.lados[1].avance
+                    ),
+                );
+                self.chequear(h.bind().punto() == Some(Punto::Crudo), "REQ-PLA-05 con un lado crudo está cruda");
+                // CA-PLA-02: la doy vuelta (E) y espero.
+                h.clone().bind_mut().dar_vuelta();
+                self.esperar(75 * 60);
+            }
+            19 => {
+                let h = self.hamburguesa.clone().unwrap();
+                let l = h.bind().estado_lados().unwrap();
+                self.chequear(
+                    l.lados[1].avance > 6.0 && l.lados[0].avance < 14.0,
+                    &format!(
+                        "REQ-PLA-07 dada vuelta se cocinó el otro lado ({:.1}) y el primero no se pasó ({:.1})",
+                        l.lados[1].avance, l.lados[0].avance
+                    ),
+                );
+                self.chequear(h.bind().punto() == Some(Punto::Cocido), "CA-PLA-02 queda cocida de los dos lados");
+                // CA-PAR-01: sin carbón no se enciende; cargo una bolsa, enciendo y apoyo un chorizo.
+                let mut pa = todos::<Parrilla>(&mundo).pop().expect("REQ-PAR-01 el carrito tiene su parrilla");
+                self.chequear(!pa.bind_mut().alternar(), "REQ-PAR-01 sin carbón no se enciende");
+                self.chequear(pa.bind_mut().cargar(1.0).is_ok(), "REQ-PAR-01 entra una bolsa de carbón");
+                self.chequear(pa.bind_mut().cargar(3.0).is_err(), "REQ-PAR-01 no entra más de 3 kg");
+                self.chequear(pa.bind_mut().alternar(), "REQ-PAR-01 con carbón se enciende");
+                let encima = pa.get_global_position() + Vector3::new(0.0, 0.12, 0.0);
+                self.chorizo = Some(self.agregar_comida("chorizo", encima));
+                self.esperar(90 * 60);
+            }
+            20 => {
+                let pa = todos::<Parrilla>(&mundo).pop().unwrap();
+                let e = pa.bind().estado();
+                self.chequear(e.temp > 100.0, &format!("CA-PAR-01 las brasas se calentaron ({:.0} °C)", e.temp));
+                self.chequear(
+                    e.carbon < 0.5 && e.carbon > 0.0,
+                    &format!("REQ-PAR-02 el carbón baja ({:.2} kg)", e.carbon),
+                );
+                let c = self.chorizo.clone().unwrap();
+                let l = c.bind().estado_lados().expect("el chorizo se cocina por lados");
+                self.chequear(
+                    l.lados[0].avance > 3.0 && l.lados[1].avance == 0.0,
+                    &format!("REQ-PAR-04 se cocina el lado de abajo del chorizo ({:.1})", l.lados[0].avance),
+                );
+                self.esperar(40 * 60);
+            }
+            21 => {
+                // CA-PAR-02: sigue prendida un rato largo: se queda sin carbón y se apaga.
+                let pa = todos::<Parrilla>(&mundo).pop().unwrap();
+                let e = pa.bind().estado();
+                self.chequear(e.carbon == 0.0 && !e.encendida, "CA-PAR-02 sin carbón la parrilla se apaga sola");
+                // CA-PAR-03: pan tostado (avance de las dos caras forzado) en la vereda.
+                let base = Vector3::new(-5.0, 0.3, plaza::Z_VEREDA);
+                let mut pan = self.agregar_comida("pan_choripan", base);
+                pan.bind_mut().forzar_avance(5.0);
+                self.chequear(
+                    pan.bind().estado_pan() == Some(EstadoPan::Tostado),
+                    "REQ-PAR-06 el pan con avance 5 está tostado",
+                );
+                self.pan = Some(pan);
+                self.esperar(60);
+            }
+            22 => {
+                let pan = self.pan.clone().unwrap();
+                let mut c = self.chorizo.clone().unwrap();
+                c.bind_mut().forzar_avance(12.0);
+                c.set_global_position(pan.get_global_position() + Vector3::new(0.0, 0.09, 0.0));
+                c.set_global_rotation(Vector3::ZERO);
+                c.set_linear_velocity(Vector3::ZERO);
+                self.esperar(90);
+            }
+            23 => {
+                let choripanes: Vec<_> =
+                    todos::<Comida>(&mundo).into_iter().filter(|c| c.bind().producto() == "choripan").collect();
+                self.chequear(choripanes.len() == 1, &format!("REQ-PAR-07 se armó un choripán ({})", choripanes.len()));
+                if let Some(ch) = choripanes.first() {
+                    let ped = carrito_core::clientes::Pedido { producto: "choripan".into(), aderezos: vec![] };
+                    let r = carrito_core::clientes::evaluar(&ped, &ch.bind().entregado(), 3000.0, 0.0);
+                    self.chequear(
+                        r.is_ok(),
+                        &format!("CA-PAR-03 el cliente acepta el choripán ({:?})", ch.bind().detalle()),
+                    );
+                }
+                // CA-HEL-01 / CA-HEL-02: una hamburguesa fría en la heladera cerrada y otra afuera.
+                let he = todos::<Heladera>(&mundo).pop().expect("REQ-HEL-01 el carrito tiene su heladera");
+                self.chequear(!he.bind().abierta() && he.bind().temperatura() < 5.0, "REQ-HEL-01 cerrada y a 4 °C");
+                let dentro = he.get_global_transform() * Vector3::new(0.0, 0.12, 0.0);
+                let mut a = self.agregar_comida("hamburguesa", dentro);
+                a.bind_mut().fijar_temperatura(4.0); // sale de un paquete frío (REQ-HEL-06)
+                self.hamburguesa = Some(a);
+                self.pan = Some(self.agregar_comida("hamburguesa", Vector3::new(-6.0, 0.3, plaza::Z_VEREDA)));
+                // 430 s de juego: a 20 °C la carne se echa a perder en unos 417 s.
+                self.esperar(430 * 60);
+            }
+            24 => {
+                let a = self.hamburguesa.clone().unwrap();
+                let fa = a.bind().frescura().map(|f| f.porcentaje).unwrap_or(0.0);
+                self.chequear(fa >= 99.9, &format!("CA-HEL-01 en la heladera sigue fresca ({fa:.1} %)"));
+                let b = self.pan.clone().unwrap();
+                let f = b.bind().frescura().expect("REQ-HEL-03 la hamburguesa es perecedera");
+                self.chequear(
+                    f.echada_a_perder(),
+                    &format!("CA-HEL-02 afuera se echó a perder ({:.1} %)", f.porcentaje),
+                );
+                self.chequear(b.bind().descripcion().contains("echada a perder"), "REQ-HEL-04 el cartel avisa");
+                let ped = carrito_core::clientes::Pedido { producto: "hamburguesa".into(), aderezos: vec![] };
+                let r = carrito_core::clientes::evaluar(&ped, &b.bind().entregado(), 4000.0, 0.0);
+                self.chequear(
+                    r == Err(carrito_core::clientes::Rechazo::EchadaAPerder),
+                    "REQ-HEL-04 el cliente rechaza lo echado a perder",
+                );
+                // REQ-HEL-07: con 30 % de frescura (y cocida) descuenta una estrella.
+                let mut c = a.clone();
+                c.bind_mut().set_frescura(30.0);
+                c.bind_mut().forzar_avance(7.0);
+                let r = carrito_core::clientes::evaluar(&ped, &c.bind().entregado(), 4000.0, 0.0);
+                self.chequear(
+                    r.map(|e| e.estrellas) == Ok(4.0),
+                    &format!("REQ-HEL-07 con frescura dudosa descuenta una estrella ({r:?})"),
+                );
+                // CA-HEL-03: dejo la puerta abierta.
+                let mut he = todos::<Heladera>(&mundo).pop().unwrap();
+                he.bind_mut().alternar();
+                self.esperar(120 * 60);
+            }
+            25 => {
+                let he = todos::<Heladera>(&mundo).pop().unwrap();
+                let t = he.bind().temperatura();
+                self.chequear(
+                    he.bind().abierta() && t > 6.0,
+                    &format!("CA-HEL-03 con la puerta abierta el interior sube ({t:.1} °C)"),
+                );
+                self.chequear(he.bind().cartel().contains("Cerrar"), "CA-HEL-03 el cartel lo muestra");
+                // REQ-HEL-06: la carne llega a 4 °C; lo demás, al ambiente.
+                let cat = crate::datos::catalogo();
+                let carne = Paquete::crear(cat.bloque("caja_hamburguesas_12").unwrap().clone());
+                let panes = Paquete::crear(cat.bloque("bolsa_panes_12").unwrap().clone());
+                self.chequear(
+                    carne.bind().temp == 4.0 && panes.bind().temp == 20.0,
+                    "REQ-HEL-06 los paquetes de carne vienen a 4 °C",
+                );
+                // Llega un cliente nuevo para probar el menú (REQ-CLI-04).
+                let mut gente = todos::<Gente>(&mundo).pop().unwrap();
+                if gente.bind().largo_fila() == 0 {
+                    gente.bind_mut().forzar_cliente();
+                }
+                self.esperar(20 * 60);
+            }
+            26 => {
+                let mut gente = todos::<Gente>(&mundo).pop().unwrap();
+                let pidio = gente.bind().pedido_del_primero();
+                self.chequear(pidio.is_some(), &format!("REQ-CLI-04 el cliente pidió: {pidio:?}"));
+                // REQ-ADE-07: al choripán le entra chimichurri, pero no papas pay ni ketchup.
+                let mut choripan = todos::<Comida>(&mundo)
+                    .into_iter()
+                    .find(|c| c.bind().producto() == "choripan")
+                    .expect("hay un choripán");
+                let mut pomo = |id: &str| todos::<Pomo>(&mundo).into_iter().find(|p| p.bind().aderezo() == id);
+                let mut chimi = pomo("chimichurri").expect("REQ-ADE-01 hay pomo de chimichurri");
+                let antes = chimi.bind().usos();
+                let ok = chimi.bind_mut().aplicar(&mut choripan).is_ok() && chimi.bind().usos() == antes - 1;
+                self.chequear(ok, "REQ-ADE-07 el choripán admite chimichurri");
+                let mut papas = pomo("papas_pay").expect("REQ-ADE-01 hay pomo de papas pay");
+                let mut ketchup = pomo("ketchup").unwrap();
+                self.chequear(
+                    papas.bind_mut().aplicar(&mut choripan).is_err()
+                        && ketchup.bind_mut().aplicar(&mut choripan).is_err(),
+                    "REQ-ADE-07 el choripán no admite papas pay ni ketchup",
+                );
+                // CA-CLI: pide choripán con chimichurri y se lo entrego.
+                let pedido = carrito_core::clientes::Pedido {
+                    producto: "choripan".into(),
+                    aderezos: vec!["chimichurri".into()],
+                };
+                gente.bind_mut().set_pedido_del_primero(pedido);
+                let negocio = todos::<Negocio>(&mundo).pop().unwrap();
+                self.saldo_antes = negocio.bind().saldo();
+                let carrito = todos::<Carrito>(&mundo).pop().unwrap();
+                let bandeja = carrito.bind().pos_bandeja();
+                choripan.set_global_position(bandeja + Vector3::new(0.0, 0.05, 0.0));
+                choripan.set_global_rotation(Vector3::ZERO);
+                choripan.set_linear_velocity(Vector3::ZERO);
+                self.esperar(120);
+            }
+            27 => {
+                let negocio = todos::<Negocio>(&mundo).pop().unwrap();
+                let saldo = negocio.bind().saldo();
+                self.chequear(
+                    saldo >= self.saldo_antes + 3000.0,
+                    &format!("CA-CLI-01 el cliente pagó el choripán (caja {} → {saldo})", self.saldo_antes),
+                );
+                // CA-PLA-03: el siguiente pide hamburguesa.
+                let mut gente = todos::<Gente>(&mundo).pop().unwrap();
+                if gente.bind().largo_fila() == 0 {
+                    gente.bind_mut().forzar_cliente();
+                }
+                self.esperar(20 * 60);
+            }
+            28 => {
+                let mut gente = todos::<Gente>(&mundo).pop().unwrap();
+                gente.bind_mut().set_pedido_del_primero(carrito_core::clientes::Pedido {
+                    producto: "hamburguesa".into(),
+                    aderezos: vec![],
+                });
+                let negocio = todos::<Negocio>(&mundo).pop().unwrap();
+                self.saldo_antes = negocio.bind().saldo();
+                let carrito = todos::<Carrito>(&mundo).pop().unwrap();
+                let bandeja = carrito.bind().pos_bandeja();
+                let mut h = self.agregar_comida("hamburguesa", bandeja + Vector3::new(0.0, 0.05, 0.0));
+                h.bind_mut().fijar_temperatura(4.0);
+                h.bind_mut().forzar_quemado();
+                self.hamburguesa = Some(h);
+                self.esperar(120);
+            }
+            29 => {
+                let gente = todos::<Gente>(&mundo).pop().unwrap();
+                let negocio = todos::<Negocio>(&mundo).pop().unwrap();
+                let sigue = gente.bind().pedido_del_primero().is_some_and(|p| p.producto == "hamburguesa");
+                self.chequear(
+                    negocio.bind().saldo() == self.saldo_antes && sigue,
+                    "CA-PLA-03 el cliente rechaza la hamburguesa quemada y sigue esperando",
+                );
+                // La saco y le doy una bien cocida.
+                if let Some(mut h) = self.hamburguesa.take() {
+                    h.queue_free();
+                }
+                let carrito = todos::<Carrito>(&mundo).pop().unwrap();
+                let bandeja = carrito.bind().pos_bandeja();
+                let mut h = self.agregar_comida("hamburguesa", bandeja + Vector3::new(0.0, 0.05, 0.0));
+                h.bind_mut().fijar_temperatura(4.0);
+                h.bind_mut().forzar_avance(7.0);
+                self.esperar(120);
+            }
+            30 => {
+                let negocio = todos::<Negocio>(&mundo).pop().unwrap();
+                let saldo = negocio.bind().saldo();
+                self.chequear(
+                    saldo >= self.saldo_antes + 3500.0,
+                    &format!("REQ-CLI-04 la hamburguesa cocida se paga (caja {} → {saldo})", self.saldo_antes),
+                );
 
                 // CA-SON-03: el audio (aunque sea el driver Dummy) existe y no rompe nada.
                 let sonidos = todos::<Sonido>(&mundo);
@@ -485,7 +750,7 @@ impl INode for PruebaHumo {
                 son.bind_mut().detener_todo();
                 self.esperar(30);
             }
-            17 => {
+            31 => {
                 self.terminar();
             }
             _ => {}

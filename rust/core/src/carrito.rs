@@ -63,6 +63,20 @@ pub enum Funcion {
     Hervidor {
         interior: [f32; 3],
     },
+    /// Plancha de cocina (SPEC-014): superficie (ancho, profundidad) en metros.
+    Plancha {
+        superficie: [f32; 2],
+    },
+    /// Parrilla de carbón (SPEC-015): superficie (ancho, profundidad) en metros.
+    Parrilla {
+        superficie: [f32; 2],
+    },
+    /// Heladera (SPEC-016): interior útil (ancho, alto, profundidad) y los lugares donde se
+    /// apoya cada bloque de stock, como en el depósito. La puerta mira a +Z del accesorio.
+    Heladera {
+        interior: [f32; 3],
+        lugares: Vec<[f32; 3]>,
+    },
     /// Posiciones (relativas al accesorio) donde se apoya cada bloque de stock.
     Deposito {
         lugares: Vec<[f32; 3]>,
@@ -78,6 +92,25 @@ pub enum Funcion {
         tipos: Vec<String>,
         separacion: f32,
     },
+}
+
+impl Funcion {
+    /// Nombres de todas las funciones (los usa `requiere` de los productos).
+    pub const NOMBRES: [&'static str; 7] =
+        ["Hervidor", "Plancha", "Parrilla", "Heladera", "Deposito", "Luz", "Aderezos"];
+
+    /// REQ-CLI-04: nombre de la función, tal cual se escribe en los datos.
+    pub fn nombre(&self) -> &'static str {
+        match self {
+            Funcion::Hervidor { .. } => "Hervidor",
+            Funcion::Plancha { .. } => "Plancha",
+            Funcion::Parrilla { .. } => "Parrilla",
+            Funcion::Heladera { .. } => "Heladera",
+            Funcion::Deposito { .. } => "Deposito",
+            Funcion::Luz { .. } => "Luz",
+            Funcion::Aderezos { .. } => "Aderezos",
+        }
+    }
 }
 
 /// REQ-CAR-05

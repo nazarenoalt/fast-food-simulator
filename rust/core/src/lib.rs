@@ -14,12 +14,17 @@ pub mod datos; // carga de archivos .ron
 pub mod deposito; // SPEC-004
 pub mod economia; // SPEC-010
 pub mod forma; // piezas visuales simples (compartido)
+pub mod heladera; // SPEC-016
 pub mod hervidor; // SPEC-003 (fuente de calor)
+pub mod lados; // SPEC-014 (cocción por lados)
+pub mod parrilla; // SPEC-015 (carbón)
 pub mod peatones; // SPEC-013
+pub mod plancha; // SPEC-014 (fuente de calor)
 pub mod plaza; // SPEC-008
 pub mod proveedor; // SPEC-011
 pub mod reloj; // SPEC-007
-pub mod sonido; // SPEC-024
+pub mod sonido;
+pub mod tostado; // SPEC-015 (pan tostado) // SPEC-024
 
 /// Temperatura ambiente en °C.
 pub const TEMP_AMBIENTE: f32 = 20.0;

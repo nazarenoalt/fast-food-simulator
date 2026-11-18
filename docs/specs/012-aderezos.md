@@ -9,7 +9,7 @@ Ponerle aderezos a la comida con pomos que se gastan y se recargan.
 ## Requisitos
 
 - **REQ-ADE-01** Los aderezos se definen en `godot/data/aderezos.ron`: id, nombre, color y
-  usos por pomo lleno. Etapa 2: mostaza, ketchup y mayonesa (40 usos cada uno).
+  usos por pomo lleno: mostaza, ketchup, mayonesa, papas pay y chimichurri (40 usos cada uno).
 - **REQ-ADE-02** El accesorio **aderecera** (categoría Equipamiento) tiene un pomo por cada
   aderezo que lista. Cada pomo muestra cuánto le queda (nivel visible).
 - **REQ-ADE-03** Con un producto que admite aderezos en la mano, mirar un pomo y apretar E
@@ -18,6 +18,9 @@ Ponerle aderezos a la comida con pomos que se gastan y se recargan.
 - **REQ-ADE-05** Los repuestos (ej. "repuesto de mostaza") se compran al proveedor como
   cualquier bloque. Con un repuesto en la mano, mirar el pomo de ese aderezo y apretar E lo
   llena y el repuesto se gasta.
+- **REQ-ADE-07** Cada producto declara en `productos.ron` qué aderezos admite. Pancho:
+  mostaza, ketchup, mayonesa y papas pay. Choripán: chimichurri y mostaza. Hamburguesa y el resto:
+  ninguno. Un aderezo que el producto no admite no se pone ("Esto no lleva eso").
 - **REQ-ADE-06** El cartel del pomo dice el aderezo y los usos (ej. "Mostaza (32/40)").
 
 ## Criterios de aceptación
@@ -27,4 +30,4 @@ Ponerle aderezos a la comida con pomos que se gastan y se recargan.
 
 ## Fuera de alcance
 
-- Papas pay, salsas caseras, cantidad de aderezo (poco/mucho).
+- Salsas caseras, cantidad de aderezo (poco/mucho).
