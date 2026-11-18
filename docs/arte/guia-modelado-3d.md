@@ -253,6 +253,11 @@ base (el hex ya está en el espacio de color correcto; no copiar los números de
 | `M_Chimichurri` | `#55702E` | 0 | 0,6 | Chimichurri. |
 | `M_PapelMadera` | `#B98A57` | 0 | 0,9 | Bolsas de papel de panadería y de carbón. |
 | `M_Vidrio` | `#8C9A9C` | 0 | 0,1 | Frascos. Transparente (alfa 0,2); gris medio a propósito, como `M_PlasticoClaro`. |
+| `M_PapaCascara` | `#A8794A` | 0 | 0,85 | Cáscara de la papa cruda (los ojos, en `M_Tronco`). |
+| `M_PapaPulpa` | `#E6C86A` | 0 | 0,6 | Papa pelada y bastones crudos: más pálida y amarilla que `M_PanMiga`. |
+| `M_PapaFrita` | `#E3A73A` | 0 | 0,55 | Papas fritas (dorado). |
+| `M_Aceite` | `#C99A2E` | 0 | 0,1 | Aceite de la freidora. Transparente (alfa 0,7): deja ver el colador de adentro. |
+| `M_Arpillera` | `#A48A5E` | 0 | 1,0 | Bolsas de arpillera (papas). Beige tostado apagado, más gris y oscuro que `M_PapelMadera`. |
 | **Plaza (fondo, colores apagados)** |||||
 | `M_Pasto` | `#3D662B` | 0 | 1,0 | Pasto. |
 | `M_Baldosa` | `#948C80` | 0 | 0,9 | Baldosas de la plaza. |
@@ -572,3 +577,5 @@ revisión. Si alguno falla, el script termina con error. El resto se revisa a oj
 | v1.9 | `comun.py` suma lo que varios modelos repetían: `chequeo_normales_cerrado()` (2.4), `colision_cajas()` (6.1), `reemplazar_linea()` para chequeos propios y las vistas `vendedor` y `tres_cuartos_vendedor` en `encuadrar()`. |
 | v1.10 | Grupo "Personajes" (pieles, pelos y telas) y excepción de 6 materiales en personajes (piel, pelo, remera, pantalón, zapatillas, detalles). Nuevos `M_PlumaGris`, `M_PlumaOscura`, `M_Muro1..4`, `M_ToldoVerde`, `M_ToldoNaranja`. Puntos de los personajes: `punto_pelo` (hueso Head) y `punto_mano_d` (mano derecha). |
 | v1.11 | Las personas traen también `punto_mano_i`, `punto_espalda` y `punto_pecho` para `accesorios_persona` (6.2). |
+| v1.12 | Colores de las papas fritas (SPEC-026): `M_PapaCascara`, `M_PapaPulpa`, `M_PapaFrita` y `M_Aceite`. |
+| v1.13 | Nuevo `M_Arpillera` (`#A48A5E`) para las bolsas de papas de tela (REQ-PAP-03). |

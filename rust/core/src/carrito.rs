@@ -23,6 +23,8 @@ pub enum Categoria {
     Porche,
     /// REQ-TIE-13: cosas de piso para los clientes (mesa alta, banqueta, maceta).
     Mobiliario,
+    /// REQ-CAR-04 / REQ-PAP-07: cartel que cuelga adelante, del canto del mostrador.
+    Cartel,
 }
 
 /// REQ-CAR-03
@@ -61,9 +63,12 @@ pub struct BaseCarrito {
     /// REQ-CAR-11: dónde deja el proveedor el pallet (si falta, al costado del carrito).
     #[serde(default)]
     pub pallet: Option<[f32; 3]>,
-    /// REQ-CAR-11: grados que arranca abierta la puerta del modelo (bases con interior).
+    /// REQ-CAR-11: grados que se abre la puerta del modelo (`pieza_puerta`, REQ-CAR-13).
     #[serde(default)]
     pub puerta: Option<f32>,
+    /// REQ-CAR-11: si la puerta arranca abierta (si no, cerrada).
+    #[serde(default)]
+    pub puerta_abierta: bool,
 }
 
 impl BaseCarrito {
@@ -113,12 +118,26 @@ pub enum Funcion {
         tipos: Vec<String>,
         separacion: f32,
     },
+    /// REQ-PAP-06: objetos sueltos que el accesorio trae ya apoyados.
+    Surtido {
+        objetos: Vec<ObjetoInicial>,
+    },
+}
+
+/// Un producto suelto de un Surtido (REQ-PAP-06): posición y giro en Y relativos al accesorio.
+#[derive(Debug, Clone, PartialEq, Deserialize)]
+pub struct ObjetoInicial {
+    pub producto: String,
+    pub pos: [f32; 3],
+    /// Giro en Y, grados.
+    #[serde(default)]
+    pub rot_y: f32,
 }
 
 impl Funcion {
     /// Nombres de todas las funciones (los usa `requiere` de los productos).
-    pub const NOMBRES: [&'static str; 7] =
-        ["Hervidor", "Plancha", "Parrilla", "Heladera", "Deposito", "Luz", "Aderezos"];
+    pub const NOMBRES: [&'static str; 8] =
+        ["Hervidor", "Plancha", "Parrilla", "Heladera", "Deposito", "Luz", "Aderezos", "Surtido"];
 
     /// REQ-CLI-04: nombre de la función, tal cual se escribe en los datos.
     pub fn nombre(&self) -> &'static str {
@@ -130,6 +149,7 @@ impl Funcion {
             Funcion::Deposito { .. } => "Deposito",
             Funcion::Luz { .. } => "Luz",
             Funcion::Aderezos { .. } => "Aderezos",
+            Funcion::Surtido { .. } => "Surtido",
         }
     }
 }
@@ -336,7 +356,7 @@ mod tests {
     fn req_car_04_05_hay_accesorios_de_todas_las_categorias() {
         use Categoria::*;
         let cat = catalogo_real();
-        for c in [Decoracion, Equipamiento, Cerco, Carpa, Telon, Cocina, Deposito, Sombrilla, Luz, Porche] {
+        for c in [Decoracion, Equipamiento, Cerco, Carpa, Telon, Cocina, Deposito, Sombrilla, Luz, Porche, Cartel] {
             assert!(cat.accesorios.iter().any(|a| a.categoria == c), "falta un accesorio {c:?}");
         }
     }
@@ -353,7 +373,8 @@ mod tests {
         assert!(j[1] >= 0.15, "sobre el piso de adentro");
         let p = k.lugar_pallet();
         assert!(p[2] < -k.profundidad / 2.0, "el pallet queda afuera, del lado del vendedor");
-        assert!(k.puerta.is_some_and(|g| g > 45.0), "la puerta arranca abierta");
+        assert!(k.puerta.is_some_and(|g| g > 45.0) && k.puerta_abierta, "la puerta arranca abierta");
+        assert!(!barra.puerta_abierta && barra.puerta.is_none(), "las barras no tienen puerta");
     }
 
     #[test]

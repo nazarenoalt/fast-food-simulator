@@ -20,5 +20,6 @@
         (id: "techo", pos: (0.0, 0.0, -0.1), categorias: [Carpa]),
         (id: "frente", pos: (0.0, 0.0, 0.36), categorias: [Telon, Cerco, Decoracion]),
         (id: "luz_1", pos: (0.0, 2.05, 0.05), categorias: [Luz]),
+        (id: "cartel", pos: (0.0, 0.938, 0.412), categorias: [Cartel]), // REQ-PAP-07: adelante, en el canto de la mesada
     ],
 )

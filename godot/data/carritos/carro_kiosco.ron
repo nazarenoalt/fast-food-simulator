@@ -14,7 +14,8 @@
     fila: (0.0, 0.0, 1.5), // REQ-CAR-10: frente a la ventana (sigue hacia +X)
     jugador: Some((0.0, 0.16, -0.05)), // REQ-CAR-11: adentro, detrás de la ventana
     pallet: Some((-0.6, 0.0, -1.4)), // REQ-CAR-11: atrás, lejos de la puerta y del porche (sin pisar el cordón)
-    puerta: Some(100.0), // REQ-CAR-11: la puerta arranca abierta (hacia afuera)
+    puerta: Some(100.0), // REQ-CAR-11: se abre 100° (hacia afuera)...
+    puerta_abierta: true, // ...y arranca abierta (REQ-CAR-13: E la cierra)
     anclajes: [
         (id: "mostrador_izq", pos: (-0.57, 1.05, 0.55), categorias: [Cocina, Equipamiento]),
         (id: "mostrador_centro", pos: (0.0, 1.05, 0.55), categorias: [Cocina, Equipamiento, Decoracion]),
@@ -25,5 +26,6 @@
         (id: "lateral_der", pos: (1.6, 0.0, 0.0), categorias: [Porche]),
         (id: "luz_1", pos: (-1.2, 2.15, 0.97), categorias: [Luz]),
         (id: "luz_2", pos: (1.2, 2.15, 0.97), categorias: [Luz]),
+        (id: "cartel", pos: (0.0, 1.038, 1.092), categorias: [Cartel]), // REQ-PAP-07: canto de la repisa de afuera
     ],
 )

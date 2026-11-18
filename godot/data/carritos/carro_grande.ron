@@ -8,6 +8,7 @@
     precio: 950000,
     entrega: (0.5, 1.0, 0.4), // REQ-CAR-10: bandeja de entrega
     fila: (0.5, 0.0, 1.45), // REQ-CAR-10: primer lugar de la fila (sigue hacia +X)
+    puerta: Some(105.0), // REQ-CAR-11/13: puerta del lugar de la garrafa; arranca cerrada, E la abre
     anclajes: [
         (id: "mostrador_izq", pos: (-1.1, 1.0, 0.1), categorias: [Cocina, Equipamiento]),
         (id: "mostrador_centro", pos: (0.0, 1.0, 0.1), categorias: [Cocina, Equipamiento, Decoracion]),
@@ -22,5 +23,6 @@
         (id: "cerco", pos: (0.0, 0.0, 1.8), categorias: [Cerco, Decoracion, Mobiliario]),
         (id: "luz_1", pos: (-0.7, 2.1, 0.2), categorias: [Luz]),
         (id: "luz_2", pos: (0.7, 2.1, 0.2), categorias: [Luz]),
+        (id: "cartel", pos: (0.0, 0.988, 0.662), categorias: [Cartel]), // REQ-PAP-07: adelante, en el canto de la mesada
     ],
 )

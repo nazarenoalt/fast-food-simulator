@@ -202,6 +202,17 @@ pub fn cargar_catalogo(
                 return Err(error("accesorios.ron", format!("\"{}\" entra en la base inexistente \"{b}\"", acc.id)));
             }
         }
+        // REQ-PAP-06: lo que trae un Surtido tiene que existir.
+        if let Some(crate::carrito::Funcion::Surtido { objetos }) = &acc.funcion {
+            for o in objetos {
+                if !p.productos.iter().any(|x| x.id == o.producto) {
+                    return Err(error(
+                        "accesorios.ron",
+                        format!("\"{}\" trae el producto inexistente \"{}\"", acc.id, o.producto),
+                    ));
+                }
+            }
+        }
     }
     Ok(Catalogo {
         productos: p.productos,

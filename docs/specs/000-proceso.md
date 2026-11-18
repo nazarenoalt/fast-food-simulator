@@ -60,6 +60,7 @@ Estado: Borrador | Aprobada | Implementada
 | TIE | 017 Tienda y modo armado |
 | SON | 024 Sonido |
 | MOD | 025 Modelos 3D |
+| PAP | 026 Papas fritas |
 
 ## Convenciones de código
 
