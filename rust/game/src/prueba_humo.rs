@@ -45,6 +45,8 @@ pub struct PruebaHumo {
     panchos_antes: Vec<InstanceId>,
     pedido: Option<carrito_core::clientes::Pedido>,
     saldo_antes: f32,
+    /// Disparos de sonido al empezar cada tramo, para medir los de la etapa 3. REQ-SON-08
+    disparos_ref: u32,
     reputacion_antes: f32,
     perdidos_antes: u32,
     paquetes_antes: usize,
@@ -460,6 +462,7 @@ impl INode for PruebaHumo {
                 // CA-PLA-01: plancha encendida, apoyo una hamburguesa.
                 self.chequear(todos::<Plancha>(&mundo).len() == 1, "REQ-PLA-01 el carrito tiene su plancha");
                 let mut pl = todos::<Plancha>(&mundo).pop().unwrap();
+                self.disparos_ref = disparos_de_sonido(&mundo);
                 pl.bind_mut().alternar();
                 pl.bind_mut().set_temperatura(200.0);
                 let encima = pl.get_global_position() + Vector3::new(0.0, 0.06, 0.0);
@@ -468,6 +471,9 @@ impl INode for PruebaHumo {
                 self.esperar(75 * 60);
             }
             18 => {
+                // REQ-SON-08: sonó el interruptor y empezó el chisporroteo con la carne encima.
+                let d = disparos_de_sonido(&mundo) - self.disparos_ref;
+                self.chequear(d >= 2, &format!("REQ-SON-08 la plancha dispara interruptor y chisporroteo ({d})"));
                 let h = self.hamburguesa.clone().unwrap();
                 let l = h.bind().estado_lados().expect("la hamburguesa se cocina por lados");
                 self.chequear(
@@ -495,6 +501,7 @@ impl INode for PruebaHumo {
                 self.chequear(h.bind().punto() == Some(Punto::Cocido), "CA-PLA-02 queda cocida de los dos lados");
                 // CA-PAR-01: sin carbón no se enciende; cargo una bolsa, enciendo y apoyo un chorizo.
                 let mut pa = todos::<Parrilla>(&mundo).pop().expect("REQ-PAR-01 el carrito tiene su parrilla");
+                self.disparos_ref = disparos_de_sonido(&mundo);
                 self.chequear(!pa.bind_mut().alternar(), "REQ-PAR-01 sin carbón no se enciende");
                 self.chequear(pa.bind_mut().cargar(1.0).is_ok(), "REQ-PAR-01 entra una bolsa de carbón");
                 self.chequear(pa.bind_mut().cargar(3.0).is_err(), "REQ-PAR-01 no entra más de 3 kg");
@@ -504,6 +511,9 @@ impl INode for PruebaHumo {
                 self.esperar(90 * 60);
             }
             20 => {
+                // REQ-SON-08: sonó el carbón al cargar y empezaron las brasas al prender.
+                let d = disparos_de_sonido(&mundo) - self.disparos_ref;
+                self.chequear(d >= 2, &format!("REQ-SON-08 la parrilla dispara carbón y brasas ({d})"));
                 let pa = todos::<Parrilla>(&mundo).pop().unwrap();
                 let e = pa.bind().estado();
                 self.chequear(e.temp > 100.0, &format!("CA-PAR-01 las brasas se calentaron ({:.0} °C)", e.temp));
@@ -595,10 +605,19 @@ impl INode for PruebaHumo {
                 );
                 // CA-HEL-03: dejo la puerta abierta.
                 let mut he = todos::<Heladera>(&mundo).pop().unwrap();
+                // Me paro al lado de la heladera: el sonido 3D no suena lejos. REQ-SON-04
+                if let Some(mut j) = todos::<Jugador>(&mundo).pop() {
+                    j.set_global_position(he.get_global_position() + Vector3::new(0.0, 0.05, 1.0));
+                }
+                self.disparos_ref = disparos_de_sonido(&mundo);
                 he.bind_mut().alternar();
                 self.esperar(120 * 60);
             }
             25 => {
+                self.chequear(
+                    disparos_de_sonido(&mundo) > self.disparos_ref,
+                    "REQ-SON-08 la puerta de la heladera dispara su sonido",
+                );
                 let he = todos::<Heladera>(&mundo).pop().unwrap();
                 let t = he.bind().temperatura();
                 self.chequear(
@@ -757,4 +776,9 @@ impl INode for PruebaHumo {
         }
         self.paso += 1;
     }
+}
+
+/// Cuántos sonidos disparó el juego hasta ahora. REQ-SON-08
+fn disparos_de_sonido(mundo: &Gd<Node>) -> u32 {
+    todos::<Sonido>(mundo).first().map(|s| s.bind().disparos()).unwrap_or(0)
 }
