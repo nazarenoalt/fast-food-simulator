@@ -15,9 +15,8 @@ cerrado. Agregarlos no toca la cocción: freír llega en otra etapa (ROADMAP).
   uno con modelo `comida/<id>`, colisión y masa, y se distinguen a simple vista: cáscara marrón
   con ojos; pelada clara y facetada; bastones crudos pálidos y rectos; bastones dorados y
   torcidos. Todavía no se venden ni se cocinan.
-- **REQ-PAP-02** Son dos productos: `cajita_papas` (vacía, la del bloque `pack_cajitas` del
-  depósito) y `papas_fritas_cajita` (la misma cajita rebosando de papas fritas paradas, lo que
-  se le entrega al cliente), cada uno con su modelo `comida/<id>`.
+- **REQ-PAP-02** Existe `cajita_papas` (cajita de cartón vacía, modelo `comida/cajita_papas`) y
+  el bloque `pack_cajitas` para guardarlas en el depósito.
 - **REQ-PAP-03** Papas crudas en bolsa de arpillera blanda (abultada, boca fruncida y atada
   hacia el vendedor): bloques `bolsa_papas_2kg` (12 papas, 2 × 3 × 2) y `bolsa_papas_5kg`
   (24 papas, 2 × 4 × 3), modelo `stock/<id>`. Los dos entran en un lugar del estante.
@@ -58,7 +57,7 @@ cerrado. Agregarlos no toca la cocción: freír llega en otra etapa (ROADMAP).
 
 - Colores nuevos de la paleta: `M_PapaCascara`, `M_PapaPulpa`, `M_PapaFrita` y `M_Aceite`
   (guía de modelado v1.12) y `M_Arpillera` (v1.13).
-- Cajita: dos productos y no una siempre llena, para que la etapa siguiente llene la vacía.
+- La cajita llena (para entregar) queda para la etapa de vender papas.
 - Bolsa de 5 kg: 25 papas exactas no forman una grilla que entre (a lo ancho entran 2):
   van 24 (≈ 4,8 kg). La de 2 kg lleva 12. Las papas de adentro no se ven (bolsa cerrada).
 - Cartel: categoría propia para que no caiga en un mostrador ni una pizarra en el canto.

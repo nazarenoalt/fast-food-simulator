@@ -218,11 +218,6 @@ impl PruebaHumo {
                     adelante.is_some_and(|p| p.z > 0.6 && p.x.abs() < 0.01 && (p.y - 0.988).abs() < 0.01),
                     &format!("REQ-PAP-07 el cartel de cerrado cuelga adelante ({adelante:?})"),
                 );
-                // REQ-PAP-02: la cajita llena (lo que se entrega) tiene su modelo.
-                let llena = self.agregar_comida("papas_fritas_cajita", base + Vector3::new(0.0, 1.2, 0.1));
-                let con_modelo = crate::modelos::buscar(&llena.clone().upcast(), "papas_fritas_cajita").is_some();
-                llena.free();
-                self.chequear(con_modelo, "REQ-PAP-02 la cajita llena de papas fritas tiene su modelo");
                 let puerta = c.bind().puerta();
                 let cerrada = puerta.as_ref().is_some_and(|p| !p.bind().abierta() && p.bind().angulo() == 0.0);
                 self.chequear(cerrada, "REQ-CAR-11 la puerta del carro grande arranca cerrada");

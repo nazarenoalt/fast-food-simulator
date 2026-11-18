@@ -43,7 +43,7 @@ Cada etapa abre con sus specs (SPEC-000) y cierra con docs al día. Formato en [
 | ID | Tarea | Spec | Estado |
 |---|---|---|---|
 | 0351 | Escribir spec 026 Papas fritas y la puerta en la 006 | 026, 006 | ✅ |
-| 0352 | Modelar papas (4 estados), cajita vacía y llena, y bolsas de arpillera de 2 y 5 kg | 026 | ✅ |
+| 0352 | Modelar papas (4 estados), cajita y bolsas de arpillera de 2 y 5 kg | 026 | ✅ |
 | 0353 | Modelar freidora (simple y doble), colador, pelapapas, cuchillo y cartel de cerrado (anclaje `cartel` adelante) | 026, 006 | ✅ |
 | 0354 | Función Surtido y datos `.ron` con modelo | 026 | ✅ |
 | 0355 | Puerta que se abre y cierra en el carro grande (y el kiosco) | 006 | ✅ |

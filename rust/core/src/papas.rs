@@ -85,20 +85,11 @@ mod tests {
     }
 
     #[test]
-    fn req_pap_02_cajita_vacia_para_el_pack_y_llena_para_el_cliente() {
+    fn req_pap_02_cajita_y_pack() {
         let cat = catalogo_real();
         let cajita = cat.producto("cajita_papas").expect("falta cajita_papas");
         assert_eq!(cajita.modelo.as_deref(), Some("comida/cajita_papas"));
         assert_eq!(cat.bloque("pack_cajitas").expect("falta pack_cajitas").producto, "cajita_papas");
-        let llena = cat.producto("papas_fritas_cajita").expect("falta papas_fritas_cajita");
-        assert_eq!(llena.modelo.as_deref(), Some("comida/papas_fritas_cajita"));
-        // Rebosa: es más alta que la vacía (las papas asoman) y pesa la cajita más la porción.
-        let [vx, vy, _] = caja(&cajita.colision);
-        let [lx, ly, _] = caja(&llena.colision);
-        assert!(ly > vy + 0.02 && lx >= vx, "la llena asoma por arriba de la cajita");
-        let porcion = cat.producto("papas_fritas").unwrap().masa;
-        assert!((llena.masa - (cajita.masa + porcion)).abs() < 1e-6);
-        assert!(llena.coccion.is_none(), "no se cocina: se arma con papas ya fritas");
     }
 
     #[test]
@@ -140,7 +131,7 @@ mod tests {
         assert!(
             ESTADOS
                 .iter()
-                .chain(["pelapapas", "cuchillo", "colador_freidora", "cajita_papas", "papas_fritas_cajita"].iter())
+                .chain(["pelapapas", "cuchillo", "colador_freidora", "cajita_papas"].iter())
                 .all(|id| !menu.contains(&id.to_string()))
         );
     }
