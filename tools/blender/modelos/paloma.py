@@ -22,11 +22,11 @@ Alas plegadas sobre los costados, cruzándose sobre la cola, con una franja oscu
 puntas oscuras. Lo que la hace reconocible de perfil: cabeza chica, pecho inflado y la línea
 del lomo que baja derecha hasta la punta de la cola.
 
-Colores (no hay grises de paloma en la paleta, se usan los más parecidos):
-    M_Vereda (#7A7A78)      cuerpo y cola
+Colores:
+    M_PlumaGris (#8A909C)   cuerpo y cola
     M_Piedra (#B2B2AD)      alas (más claras que el cuerpo, como en la bravía) y cera del pico
-    M_MetalOscuro (#595961) cabeza y cuello (el metálico da un brillo, como el tornasolado
-                            del cuello), franja de las alas y puntas, franja de la cola
+    M_PlumaOscura (#4A5058) cabeza y cuello, franja de las alas y puntas, franja de la cola
+                            (antes era MetalOscuro, que brillaba de más)
     M_Terracota (#B4623E)   patas
 
 Medidas: 0,12 × 0,19 × 0,29 (la lista dice ≈ 0,1 × 0,15 × 0,25, que es chica para una paloma
@@ -187,7 +187,7 @@ def ala(mats, s):
 
 
 def construir():
-    mats = comun.cargar_materiales("M_Vereda", "M_Piedra", "M_MetalOscuro", "M_Terracota")
+    mats = comun.cargar_materiales("M_PlumaGris", "M_Piedra", "M_PlumaOscura", "M_Terracota")
     c = cuerpo(mats)
     cab = cabeza(mats)
     alas = [ala(mats, 1), ala(mats, -1)]

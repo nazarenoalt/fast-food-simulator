@@ -96,6 +96,9 @@ def cabina(bm, P):
     for f in bm.faces:
         if f not in previas:
             f.material_index = r.PINT
+    # Pasarruedas: bloque de goma entre las dos ruedas (que no se vea a través de la cabina).
+    piezas.caja(bm, (2 * ra - 0.02, 0.84 - y0 - 0.01, 2 * (0.95 - 0.12 - 0.03)), (EJE_ADELANTE, (y0 + 0.83) / 2, 0),
+                mat=r.GOMA)
     # Parabrisas (19,4° hacia atrás) y ventanillas (vidrio oscuro opaco, como los autos).
     ang = math.degrees(math.atan2(2.04 - 1.74, 2.02 - 1.17))
     nx, ny = math.cos(math.radians(ang)), math.sin(math.radians(ang))

@@ -266,6 +266,8 @@ base (el hex ya está en el espacio de color correcto; no copiar los números de
 | `M_FlorLila1/2` | `#6F5F99` `#8574AE` | 0 | 0,9 | Copa de los jacarandás en flor (mezclar los dos, con algo de `M_Hojas2`). Lila apagado: se lee como jacarandá sin gritar. |
 | `M_Piedra` | `#B2B2AD` | 0 | 0,9 | Fuente, monumentos, bordes de cantero. |
 | `M_Terracota` | `#B4623E` | 0 | 0,9 | Macetas de barro cocido. |
+| `M_PlumaGris` `M_PlumaOscura` | `#8A909C` `#4A5058` | 0 | 0,85 / 0,8 | Palomas: cuerpo y cabeza. |
+| `M_Muro1..4` | `#DBCCAD` `#9EA8B3` `#8C9980` `#D1B88C` | 0 | 0,9 | Paredes de las fachadas (los mismos tonos que usa hoy `ciudad.rs`). |
 | `M_Agua` | `#4C80B2` | 0 | 0,1 | Agua de la fuente (alfa 0,7). |
 | **Acentos y luces** |||||
 | `M_Amarillo` | `#FACC1A` | 0 | 0,6 | Telones, carteles, detalles de marca. |
@@ -276,6 +278,7 @@ base (el hex ya está en el espacio de color correcto; no copiar los números de
 | `M_Pizarra` | `#141A14` | 0 | 0,9 | Pizarras. |
 | `M_LuzCalida` | `#FFBF73` | 0 | 0,5 | Lamparitas del carrito (emisión). |
 | `M_LuzFarol` | `#FFD18C` | 0 | 0,5 | Faroles de la plaza (emisión). |
+| `M_ToldoVerde` `M_ToldoNaranja` | `#268040` `#D98C1A` | 0 | 0,8 | Toldos de los negocios de la ciudad (junto con RojoAcento y AzulAcento). |
 | **Personajes** |||||
 | `M_Piel1/2/3/4` | `#EBC3A0` `#D19C74` `#A46E4C` `#664332` | 0 | 0,6 | Tonos de piel, de claro a oscuro. **El juego elige uno por persona.** |
 | `M_PeloNegro` `M_PeloCastano` `M_PeloRubio` `M_PeloCanoso` | `#231D19` `#533824` `#B89560` `#A9A6A0` | 0 | 0,8 | Pelo y cejas. **El juego elige uno por persona.** |
@@ -292,7 +295,7 @@ base (el hex ya está en el espacio de color correcto; no copiar los números de
    las sombrillas.
 3. **Ni blanco ni negro puros.** Nada más claro que `#F7F7F7` ni más oscuro que `#141414`;
    con la luz del atardecer los extremos "se queman".
-4. **Máximo 4 materiales por objeto** (6 en bases de carrito y equipos de cocina). Más
+4. **Máximo 4 materiales por objeto** (6 en bases de carrito, equipos de cocina, vehículos, fachadas y personajes). Más
    materiales = objeto más ruidoso y más lento de dibujar.
 5. **Variantes por color, no por modelo.** La sombrilla roja y la rayada son el mismo modelo
    con distintos materiales. Mismo criterio para todo lo que venga en colores.
@@ -566,3 +569,4 @@ revisión. Si alguno falla, el script termina con error. El resto se revisa a oj
 | v1.7 | Colores de la etapa 4: `M_CarneCruda`, `M_Lechuga`, `M_Tomate`, `M_Chimichurri`, `M_PapelMadera`, `M_Vidrio`, `M_Carbon`, `M_Brasa`. |
 | v1.8 | Corrección de 3.2: `piezas.cilindro()` mide el radio en las aristas salvo con `radio_a_caras=True` (la v1.3 decía lo contrario). Nuevo `M_Terracota` (`#B4623E`) para macetas. |
 | v1.9 | `comun.py` suma lo que varios modelos repetían: `chequeo_normales_cerrado()` (2.4), `colision_cajas()` (6.1), `reemplazar_linea()` para chequeos propios y las vistas `vendedor` y `tres_cuartos_vendedor` en `encuadrar()`. |
+| v1.10 | Grupo "Personajes" (pieles, pelos y telas) y excepción de 6 materiales en personajes (piel, pelo, remera, pantalón, zapatillas, detalles). Nuevos `M_PlumaGris`, `M_PlumaOscura`, `M_Muro1..4`, `M_ToldoVerde`, `M_ToldoNaranja`. Puntos de los personajes: `punto_pelo` (hueso Head) y `punto_mano_d` (mano derecha). |

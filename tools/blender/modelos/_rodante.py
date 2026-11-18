@@ -80,6 +80,8 @@ def pared_con_vanos(bm, plano, u0, u1, v0, v1, n_out, n_in, vanos, m_out, m_in, 
     de adentro en n_in; los cantos de los huecos llevan m_jamba y los del borde, m_borde."""
     def p(u, v, n):
         return g2b((u, v, n) if plano == "z" else (n, v, u))
+    mats_vano = [v[4] if len(v) > 4 else m_jamba for v in vanos]
+    vanos = [v[:4] for v in vanos]
     us = sorted({u0, u1} | {c for a, b, *_ in vanos for c in (a, b)})
     vs = sorted({v0, v1} | {c for *_, a, b in vanos for c in (a, b)})
     us = [u for u in us if u0 - 1e-9 <= u <= u1 + 1e-9]
@@ -91,11 +93,14 @@ def pared_con_vanos(bm, plano, u0, u1, v0, v1, n_out, n_in, vanos, m_out, m_in, 
             vert[i, j, k] = bm.verts.new(p(us[i], vs[j], (n_out, n_in)[k]))
         return vert[i, j, k]
 
+    def vano_de(i, j):
+        cu, cv = (us[i] + us[i + 1]) / 2, (vs[j] + vs[j + 1]) / 2
+        return next((k for k, (a, b, c, d) in enumerate(vanos) if a < cu < b and c < cv < d), None)
+
     def lleno(i, j):
         if not (0 <= i < len(us) - 1 and 0 <= j < len(vs) - 1):
             return False
-        cu, cv = (us[i] + us[i + 1]) / 2, (vs[j] + vs[j + 1]) / 2
-        return not any(a < cu < b and c < cv < d for a, b, c, d in vanos)
+        return vano_de(i, j) is None
 
     nuevas = []
     for i in range(len(us) - 1):
@@ -114,7 +119,7 @@ def pared_con_vanos(bm, plano, u0, u1, v0, v1, n_out, n_in, vanos, m_out, m_in, 
                 if lleno(*vecino):
                     continue
                 f = bm.faces.new((V(*a, 0), V(*b, 0), V(*b, 1), V(*a, 1)))
-                f.material_index = m_borde if en_borde else m_jamba
+                f.material_index = m_borde if en_borde else mats_vano[vano_de(*vecino)]
                 nuevas.append(f)
     return nuevas
 
@@ -167,7 +172,7 @@ def casilla(bm, P):
     mats = [PINT] * (m - 1) + [PINT] + [CREMA] * (m - 1) + [PINT]
     prisma_x(bm, anillo, x0 + t - EPS, x1 - t + EPS, mats, PINT, PINT)
     # Costados con la ventana (cliente, +Z) y la puerta (vendedor, −Z), y los pasarruedas.
-    arcos = [(e["x"] - e["arco"], e["x"] + e["arco"], y0, e["y_arco"]) for e in P["ejes"] if e["caja"]]
+    arcos = [(e["x"] - e["arco"], e["x"] + e["arco"], y0, e["y_arco"], GOMA) for e in P["ejes"] if e["caja"]]
     va, vb, vy0, vy1 = P["ventana"]
     pa, pb = P["puerta"]
     u0, u1 = x0 + t - EPS, x1 - t + EPS
@@ -622,7 +627,7 @@ def hoja_revision(m, revision, titulo, vistas):
         al["colision"].hide_render = True
         con_alacenas += _alacena.visibles(al)
     luz = bpy.data.lights.new("ref_relleno", "POINT")
-    luz.energy = 250
+    luz.energy = 60
     luz.shadow_soft_size = 0.5
     relleno = bpy.data.objects.new("ref_relleno", luz)
     bpy.context.scene.collection.objects.link(relleno)

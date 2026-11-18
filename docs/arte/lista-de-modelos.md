@@ -126,7 +126,7 @@ cuerpo + cabeza + pelo + ropa + accesorio, y de cambiar colores.
 | `accesorios_persona` | Gorra, mochila, bolso, anteojos | — | 300 c/u | paleta | Para variar NPCs. | P3 | Pendiente |
 | `vendedor` | Personaje del jugador (brazos) | — | 1.500 | piel, ropa | ⚠ Solo si se decide mostrar las manos en primera persona. | P3 | Pendiente |
 | `perro` | Perro de plaza | 0,23 × 0,55 × 0,79 | 1.500 | Madera, Tronco, BlancoCrema, Carbon | Perro mestizo "caramelo" parado, con pechera y medias crema y orejas semiparadas. Sin esqueleto: `pieza_cabeza`, `pieza_cola` y las cuatro `pieza_pata_*`, cada una con el origen en su articulación, listas para animar. Origen en el piso entre las patas, sin colisión. Hecho por código: `tools/blender/modelos/perro.py` (992 tris). [Hoja de revisión](revisiones/perro.jpg). | P3 | Hecho |
-| `paloma` | Paloma | 0,12 × 0,19 × 0,29 | 300 | Vereda, Piedra, MetalOscuro, Terracota | Paloma bravía: cuerpo de huevo con el pecho inflado, cuello grueso, cola en abanico y patas rosadas. Sin esqueleto, como el código de hoy (`palomas.rs`): `pieza_cabeza` con el origen en la base del cuello (picotea girando en X) y `pieza_ala_izq/der` con el origen en el hombro (se abren en Y y aletean en Z: el código tiene que armar esa rotación). Origen en el piso entre las patas, sin colisión. ⚠ Pendiente: agregar a la paleta `M_PlumaGris` (≈ `#8A909C`) y `M_PlumaOscura` (≈ `#4A5058`) y volver a correrla (hoy la cabeza usa MetalOscuro, que brilla). Hecho por código: `tools/blender/modelos/paloma.py` (298 tris). [Hoja de revisión](revisiones/paloma.jpg). | P3 | Hecho |
+| `paloma` | Paloma | 0,12 × 0,19 × 0,29 | 300 | PlumaGris, Piedra, PlumaOscura, Terracota | Paloma bravía: cuerpo de huevo con el pecho inflado, cuello grueso, cola en abanico y patas rosadas. Sin esqueleto, como el código de hoy (`palomas.rs`): `pieza_cabeza` con el origen en la base del cuello (picotea girando en X) y `pieza_ala_izq/der` con el origen en el hombro (se abren en Y y aletean en Z: el código tiene que armar esa rotación). Origen en el piso entre las patas, sin colisión. Hecho por código: `tools/blender/modelos/paloma.py` (298 tris). [Hoja de revisión](revisiones/paloma.jpg). | P3 | Hecho |
 
 ### Plaza (`plaza/`)
 
@@ -237,7 +237,7 @@ cuerpo + cabeza + pelo + ropa + accesorio, y de cambiar colores.
 
 ## Etapa 6 · Pulido (ciudad alrededor)
 
-El juego ya tiene ciudad (SPEC-013): edificios en cajas de 4 a 12 m de ancho con planta baja de 3,6 m y pisos de 3,0, autos y nubes. Las fachadas se arman en módulos con esas alturas. ⚠ Colores que el código usa y faltan en la paleta: 8 de muro y 3 de toldo (verde, naranja, gris); por ahora las fachadas usan Camino, Terracota y Piedra.
+El juego ya tiene ciudad (SPEC-013): edificios en cajas de 4 a 12 m de ancho con planta baja de 3,6 m y pisos de 3,0, autos y nubes. Las fachadas se arman en módulos con esas alturas. Los colores de pared (`M_Muro1..4`) y de toldo (`M_ToldoVerde`, `M_ToldoNaranja`, más los acentos) ya están en la paleta; el juego los aplica sobre la superficie 0 del muro y las del toldo.
 
 | ID | Objeto | Medidas | Tris | Materiales | Notas | Prio. | Estado |
 |---|---|---|---|---|---|---|---|
@@ -264,4 +264,3 @@ El juego ya tiene ciudad (SPEC-013): edificios en cajas de 4 a 12 m de ancho con
 3. ✔ **Etapa 2** (lo que el juego ya tiene), **etapa 4** (comida, equipos y stock), **etapa 5** (accesorios, alacenas, techos y toldos) y **etapa 6** (fachadas, autos, nubes): hechos como propuesta, antes de sus specs.
 4. En curso: personajes con esqueleto (etapa 3), colectivo, paraguas, food truck, tráiler y lo chico de la etapa 2.
 5. **Para que el juego use los modelos hace falta la spec SPEC-006 v2** (que `forma` pueda apuntar a un `.glb`). Cada fila marca lo que esa spec tendría que resolver: anclajes nuevos (bahías, piso, techo), choques entre accesorios y piezas que el código mueve o tiñe.
-6. Pendiente de paleta: colores de muro y toldo de la ciudad, y los grises de la paloma.
