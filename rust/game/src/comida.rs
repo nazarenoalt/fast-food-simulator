@@ -25,6 +25,8 @@ pub struct Comida {
     cocina: bool,
     /// Texto extra, ej. "salchicha cocida" en un pancho.
     detalle: Option<String>,
+    /// Velocidad vertical del cuadro anterior, para oír cuando se apoya. REQ-SON-08
+    vy_anterior: f32,
     /// Lo tiene el jugador en la mano.
     pub sostenida: bool,
     /// Ya se usó en un armado (está por desaparecer).
@@ -58,6 +60,7 @@ impl Comida {
             coccion,
             cocina,
             detalle: None,
+            vy_anterior: 0.0,
             sostenida: false,
             consumida: false,
             entorno: None,
@@ -298,6 +301,13 @@ impl IRigidBody3D for Comida {
 
     fn physics_process(&mut self, delta: f64) {
         let dt = delta as f32;
+        // REQ-SON-08: golpe suave cuando cae y se apoya (frena de golpe al bajar).
+        let vy = self.base().get_linear_velocity().y;
+        if !self.sostenida && self.vy_anterior < -0.8 && vy > self.vy_anterior * 0.3 {
+            let pos = self.base().get_global_position();
+            crate::sonido::sonar_en(&self.to_gd(), carrito_core::sonido::ids::APOYAR, pos);
+        }
+        self.vy_anterior = vy;
         if self.cocina {
             // REQ-COC-02: fuera de toda fuente, el entorno es el ambiente.
             let cuadro = Engine::singleton().get_physics_frames();

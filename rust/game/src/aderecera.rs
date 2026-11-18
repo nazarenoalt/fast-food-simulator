@@ -56,6 +56,8 @@ impl Pomo {
         c.set_aderezos(puestos);
         drop(c);
         self.actualizar_nivel();
+        // REQ-SON-08
+        crate::sonido::sonar_en(&self.to_gd(), carrito_core::sonido::ids::POMO, self.base().get_global_position());
         Ok(())
     }
 

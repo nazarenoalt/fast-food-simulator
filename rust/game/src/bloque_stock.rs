@@ -26,6 +26,10 @@ impl BloqueStock {
         self.bloque.restantes
     }
 
+    pub fn empaque(&self) -> Empaque {
+        self.bloque.def.empaque
+    }
+
     pub fn producto(&self) -> &str {
         &self.bloque.def.producto
     }

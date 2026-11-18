@@ -2,6 +2,7 @@
 
 use carrito_core::forma::TipoPieza;
 use carrito_core::hervidor::{AguaHervidor, TEMP_MAX_AGUA};
+use carrito_core::sonido::ids;
 use godot::classes::{Area3D, BoxShape3D, INode3D, Node3D, StandardMaterial3D};
 use godot::prelude::*;
 
@@ -30,6 +31,10 @@ impl Hervidor {
     pub fn alternar(&mut self) {
         self.agua.alternar();
         self.actualizar_piloto();
+        // REQ-SON-08: interruptor y, mientras está prendido, el hervor.
+        let yo = self.to_gd().upcast::<Node3D>();
+        crate::sonido::sonar_en(&yo, ids::HERVIDOR_INTERRUPTOR, yo.get_global_position());
+        crate::sonido::bucle(&yo, ids::HERVIDOR_HIERVE, self.agua.encendido);
     }
 }
 
