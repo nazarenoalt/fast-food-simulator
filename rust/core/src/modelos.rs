@@ -1,4 +1,4 @@
-//! SPEC-014 · Modelos 3D: rutas, piezas con nombre fijo y validación de los datos.
+//! SPEC-025 · Modelos 3D: rutas, piezas con nombre fijo y validación de los datos.
 //! Sin Godot: el juego (`rust/game/src/modelos.rs`) carga los `.glb`.
 
 use crate::datos::Catalogo;

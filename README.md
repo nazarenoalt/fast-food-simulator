@@ -4,7 +4,7 @@ Simulador de carrito de comida rápida (panchos, hamburguesas, choripanes) en 3D
 física real, frente a una plaza. Hecho con **Godot 4.7** y **Rust** (godot-rust 0.5).
 
 > Estado y próximas tareas: [`docs/ROADMAP.md`](docs/ROADMAP.md).
-> Desde [SPEC-014](docs/specs/014-modelos.md) el carrito, sus accesorios, la comida y la plaza
+> Desde [SPEC-025](docs/specs/025-modelos.md) el carrito, sus accesorios, la comida y la plaza
 > usan modelos 3D hechos con la [guía de modelado](docs/arte/guia-modelado-3d.md).
 
 | | |

@@ -11,9 +11,12 @@ use crate::aderecera;
 use crate::bloque_stock::BloqueStock;
 use crate::comida::Comida;
 use crate::datos::catalogo;
+use crate::heladera::Heladera;
 use crate::hervidor::Hervidor;
 use crate::lugar_deposito::LugarDeposito;
 use crate::luz::LuzNocturna;
+use crate::parrilla::Parrilla;
+use crate::plancha::Plancha;
 use crate::{formas, modelos};
 
 const ACERO: [f32; 3] = [0.82, 0.83, 0.85];
@@ -28,6 +31,8 @@ pub struct Carrito {
     base_forzada: GString,
     base_def: Option<BaseCarrito>,
     bandeja: Option<Gd<Area3D>>,
+    /// Funciones de los accesorios colocados (REQ-CLI-04: qué se puede cocinar).
+    funciones: Vec<&'static str>,
 }
 
 impl Carrito {
@@ -72,6 +77,11 @@ impl Carrito {
     }
 
     /// Aderezos que el carrito tiene (para los pedidos). REQ-CLI-04
+    /// REQ-CLI-04: productos que se pueden pedir en este carrito, con los aderezos que admiten.
+    pub fn menu(&self) -> Vec<carrito_core::clientes::ItemMenu> {
+        crate::datos::catalogo().menu_para(&self.funciones)
+    }
+
     pub fn aderezos_disponibles(&self) -> Vec<String> {
         let yo = self.to_gd();
         crate::util::todos::<aderecera::Pomo>(&yo, aderecera::GRUPO)
@@ -231,6 +241,18 @@ impl Carrito {
                 Some(Funcion::Hervidor { interior }) => {
                     nodo.add_child(&Hervidor::crear(*interior, c.accesorio.modelo.clone()));
                 }
+                Some(Funcion::Plancha { superficie }) => {
+                    // REQ-PLA-01
+                    nodo.add_child(&Plancha::crear(*superficie));
+                }
+                Some(Funcion::Parrilla { superficie }) => {
+                    // REQ-PAR-01
+                    nodo.add_child(&Parrilla::crear(*superficie));
+                }
+                Some(Funcion::Heladera { interior, lugares }) => {
+                    // REQ-HEL-01
+                    nodo.add_child(&Heladera::crear(*interior, lugares.clone()));
+                }
                 Some(Funcion::Deposito { lugares }) => {
                     // REQ-DEP-07: cada lugar es un nodo que guarda a lo sumo un bloque.
                     for (i, lugar) in lugares.iter().enumerate() {
@@ -288,6 +310,8 @@ impl INode3D for Carrito {
                 self.construir_base(&armado);
                 self.construir_bandeja(&armado.base);
                 self.construir_accesorios(&armado);
+                self.funciones =
+                    armado.colocados.iter().filter_map(|c| c.accesorio.funcion.as_ref()).map(|f| f.nombre()).collect();
                 self.base_def = Some(armado.base.clone());
             }
             Err(e) => {

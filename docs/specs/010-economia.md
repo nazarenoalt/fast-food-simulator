@@ -12,8 +12,8 @@ La plata que entra y sale, y la fama del puesto, para que vender bien tenga sent
   y se resta lo comprado al proveedor.
 - **REQ-ECO-02** No se puede gastar más de lo que hay en la caja: la compra se rechaza con un
   aviso.
-- **REQ-ECO-03** Precio de venta de cada producto en `productos.ron` (pancho: $2.500, con los
-  aderezos incluidos).
+- **REQ-ECO-03** Precio de venta de cada producto en `productos.ron` (pancho: $2.500, hamburguesa:
+  $3.500, choripán: $3.000, con los aderezos incluidos; valores a ajustar en la etapa 2.5).
 - **REQ-ECO-04** Reputación de 0 a 5 estrellas; arranca en 3. Con cada cliente se acerca un
   10% a las estrellas que dio: `rep = rep + (estrellas − rep) × 0,1`.
 - **REQ-ECO-05** Estadísticas del día: ventas, ingresos, gastos, clientes atendidos y

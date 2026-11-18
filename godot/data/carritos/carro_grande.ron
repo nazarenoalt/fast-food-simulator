@@ -1,6 +1,6 @@
 (
     id: "carro_grande",
-    modelo: Some("carritos/carro_grande"), // SPEC-014
+    modelo: Some("carritos/carro_grande"), // SPEC-025
     nombre: "Carro grande",
     ancho: 3.4, profundidad: 1.2, alto_mostrador: 1.0,
     color: (0.8, 0.8, 0.82),
@@ -14,6 +14,8 @@
         (id: "mostrador_der", pos: (1.1, 1.0, 0.1), categorias: [Cocina, Equipamiento, Decoracion]),
         (id: "lateral", pos: (2.15, 0.0, -0.35), rot_y: 180, categorias: [Deposito, Decoracion]),
         (id: "lateral_izq", pos: (-2.15, 0.0, -0.35), rot_y: 180, categorias: [Deposito, Decoracion]),
+        (id: "parrilla", pos: (-2.15, 0.92, 0.45), categorias: [Cocina]),
+        (id: "heladera", pos: (2.95, 0.0, -0.35), rot_y: 180, categorias: [Cocina]),
         (id: "sombra", pos: (-1.9, 0.0, -1.25), categorias: [Sombrilla]),
         (id: "techo", pos: (0.0, 0.0, -0.2), categorias: [Carpa]),
         (id: "frente", pos: (0.0, 0.0, 0.61), categorias: [Telon, Cerco, Decoracion]),

@@ -23,7 +23,7 @@ pub struct Hervidor {
     zona_agua: Option<Gd<Area3D>>,
     piloto: Option<Gd<StandardMaterial3D>>,
     mat_agua: Option<Gd<StandardMaterial3D>>,
-    /// SPEC-014: modelo 3D (el dibujo; la colisión de la batea la arma el código).
+    /// SPEC-025: modelo 3D (el dibujo; la colisión de la batea la arma el código).
     modelo: Option<String>,
 }
 

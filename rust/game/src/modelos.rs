@@ -1,4 +1,4 @@
-//! SPEC-014 · Carga los modelos 3D (`.glb`) y toca las piezas que el código cambia.
+//! SPEC-025 · Carga los modelos 3D (`.glb`) y toca las piezas que el código cambia.
 //! Las reglas (rutas, nombres de piezas, validación) están en `carrito_core::modelos`.
 
 use std::cell::RefCell;
@@ -181,16 +181,19 @@ pub fn luces_de_noche(raiz: &Gd<Node3D>) {
 
 /// Dibujo de un producto: su modelo, o sus piezas simples si no tiene o no carga.
 /// Devuelve el nodo y los materiales que toman el color de la cocción (REQ-MOD-05, REQ-COC-06).
-pub fn visual_producto(def: &DefProducto) -> (Gd<Node3D>, Vec<Gd<StandardMaterial3D>>) {
+pub fn visual_producto(
+    def: &DefProducto,
+) -> (Gd<Node3D>, Vec<Gd<StandardMaterial3D>>, [Vec<Gd<StandardMaterial3D>>; 2]) {
     if let Some(m) = def.modelo.as_deref().and_then(instanciar) {
         let mut tintes = Vec::new();
         for pieza in buscar_prefijos(&m, reglas::PIEZAS_COCCION) {
             tintes.extend(materiales_propios(&pieza).into_iter().map(|(_, mat)| mat));
         }
-        return (m, tintes);
+        return (m, tintes, [Vec::new(), Vec::new()]);
     }
     let mut nodo = Node3D::new_alloc();
     let mut tintes = Vec::new();
+    let mut tintes_lado = [Vec::new(), Vec::new()];
     for p in &def.forma {
         let mi = formas::visual_pieza(p);
         if p.tinte_coccion {
@@ -198,7 +201,13 @@ pub fn visual_producto(def: &DefProducto) -> (Gd<Node3D>, Vec<Gd<StandardMateria
                 tintes.push(mat.cast::<StandardMaterial3D>());
             }
         }
+        // REQ-PLA (cocción por lados, SPEC-014): cada cara toma el color de su lado.
+        if let Some(lado) = p.tinte_lado.filter(|l| *l < 2) {
+            if let Some(mat) = mi.get_material_override() {
+                tintes_lado[lado].push(mat.cast::<StandardMaterial3D>());
+            }
+        }
         nodo.add_child(&mi);
     }
-    (nodo, tintes)
+    (nodo, tintes, tintes_lado)
 }

@@ -1,4 +1,4 @@
-# SPEC-014 · Modelos 3D
+# SPEC-025 · Modelos 3D
 
 Estado: **Implementada (etapa 1)**
 

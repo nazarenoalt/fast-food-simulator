@@ -42,7 +42,7 @@ agregar un archivo de datos.
 - **REQ-CAR-11** Una base puede definir además, relativos a ella: dónde aparece el jugador
   (`jugador`, si no, el lugar de la escena), dónde deja el proveedor el pallet (`pallet`, si
   no, al costado del carrito) y cuántos grados arranca abierta la puerta de su modelo
-  (`puerta`, para las bases con interior, SPEC-014).
+  (`puerta`, para las bases con interior, SPEC-025).
 - **REQ-CAR-12** El **carro kiosco** (carro de chorizos de esquina) es una base con interior:
   el vendedor trabaja adentro, sobre un piso a 0,15 m, detrás de una vitrina con ventana de
   atención; trae techo y cartel propios (no tiene anclajes de sombrilla ni de carpa) y un
@@ -59,10 +59,10 @@ agregar un archivo de datos.
 ## Fuera de alcance (próximas etapas)
 
 - Comprar y colocar accesorios desde el juego, el food truck y el tráiler, abrir y cerrar
-  puertas, las alacenas bajo mesada y las vitrinas del kiosco como depósito. Los modelos 3D están en SPEC-014.
+  puertas, las alacenas bajo mesada y las vitrinas del kiosco como depósito. Los modelos 3D están en SPEC-025.
 
 ## Notas de diseño
 
 - Las formas de los accesorios son piezas simples (cajas, cilindros) hasta tener modelos de
-  Blender. Desde SPEC-014, bases y accesorios pueden usar un modelo `.glb` (`modelo`), y la
+  Blender. Desde SPEC-025, bases y accesorios pueden usar un modelo `.glb` (`modelo`), y la
   forma simple queda de respaldo.

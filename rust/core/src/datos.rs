@@ -35,12 +35,19 @@ pub struct DefProducto {
     pub forma: Vec<Pieza>,
     #[serde(default)]
     pub coccion: Option<PerfilCoccion>,
+    /// REQ-PLA-04: se cocina por lados (hamburguesa): cada lado tiene su propio estado.
+    #[serde(default)]
+    pub por_lados: bool,
     /// REQ-ECO-03: precio de venta (solo productos que se venden).
     #[serde(default)]
     pub precio: Option<f32>,
-    /// REQ-ADE-03
+    /// REQ-ADE-07: aderezos que admite (vacío = ninguno).
     #[serde(default)]
-    pub admite_aderezos: bool,
+    pub aderezos: Vec<String>,
+    /// REQ-CLI-04: función del carrito que hace falta para ofrecerlo (`Hervidor`, `Plancha`,
+    /// `Parrilla`...). Sin valor, siempre se puede.
+    #[serde(default)]
+    pub requiere: Option<String>,
     /// REQ-ADE-05: si es un repuesto, qué aderezo repone.
     #[serde(default)]
     pub repone: Option<String>,
@@ -50,6 +57,26 @@ pub struct DefProducto {
     /// REQ-MOD-12: altura (desde el centro) donde se dibujan los aderezos.
     #[serde(default)]
     pub altura_aderezos: Option<f32>,
+    /// REQ-HEL-03: carne que se echa a perder si no se mantiene fría.
+    #[serde(default)]
+    pub perecedero: bool,
+    /// REQ-PAR-06: pan que se tuesta por cada cara (pan del choripán).
+    #[serde(default)]
+    pub pan: bool,
+    /// REQ-PAR-01: si es una bolsa de carbón, cuántos kg trae.
+    #[serde(default)]
+    pub carbon: Option<f32>,
+}
+
+impl DefProducto {
+    /// REQ-ADE-03
+    pub fn admite_aderezos(&self) -> bool {
+        !self.aderezos.is_empty()
+    }
+    /// REQ-ADE-07
+    pub fn admite_aderezo(&self, id: &str) -> bool {
+        self.aderezos.iter().any(|a| a == id)
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Deserialize)]
@@ -77,6 +104,16 @@ impl Catalogo {
     /// Productos que se venden (tienen precio). REQ-CLI-04
     pub fn menu(&self) -> Vec<String> {
         self.productos.iter().filter(|p| p.precio.is_some()).map(|p| p.id.clone()).collect()
+    }
+    /// REQ-CLI-04: productos con precio que se pueden cocinar con las `funciones` del carrito
+    /// (nombres de `Funcion::nombre`), con los aderezos que admiten.
+    pub fn menu_para(&self, funciones: &[&str]) -> Vec<crate::clientes::ItemMenu> {
+        self.productos
+            .iter()
+            .filter(|p| p.precio.is_some())
+            .filter(|p| p.requiere.as_deref().is_none_or(|r| funciones.contains(&r)))
+            .map(|p| crate::clientes::ItemMenu { producto: p.id.clone(), aderezos: p.aderezos.clone() })
+            .collect()
     }
     pub fn producto(&self, id: &str) -> Option<&DefProducto> {
         self.productos.iter().find(|p| p.id == id)
@@ -120,6 +157,19 @@ pub fn cargar_catalogo(
     let aderezos: Vec<DefAderezo> = parsear("aderezos.ron", aderezos)?;
     let error = |archivo: &str, mensaje: String| ErrorDatos { archivo: archivo.into(), mensaje };
     for prod in &p.productos {
+        for a in &prod.aderezos {
+            if !aderezos.iter().any(|x| &x.id == a) {
+                return Err(error("productos.ron", format!("\"{}\" admite un aderezo inexistente \"{a}\"", prod.id)));
+            }
+        }
+        if let Some(r) = &prod.requiere {
+            if !crate::carrito::Funcion::NOMBRES.contains(&r.as_str()) {
+                return Err(error(
+                    "productos.ron",
+                    format!("\"{}\" requiere una función desconocida \"{r}\"", prod.id),
+                ));
+            }
+        }
         if let Some(a) = &prod.repone {
             if !aderezos.iter().any(|x| &x.id == a) {
                 return Err(error("productos.ron", format!("\"{}\" repone un aderezo inexistente \"{a}\"", prod.id)));
@@ -211,6 +261,75 @@ pub(crate) mod tests {
     }
 
     #[test]
+    fn req_pla_04_06_hamburguesa_se_cocina_por_lados_con_el_perfil_testeado() {
+        let c = catalogo_real();
+        let h = c.producto("hamburguesa").unwrap();
+        assert!(h.por_lados);
+        assert_eq!(h.coccion.clone().unwrap(), crate::lados::perfil_hamburguesa());
+        // REQ-PLA-05: una mitad por lado, para teñirlas por separado.
+        let lados: Vec<_> = h.forma.iter().filter_map(|p| p.tinte_lado).collect();
+        assert_eq!(lados, vec![0, 1]);
+    }
+
+    #[test]
+    fn req_par_05_chorizo_se_cocina_por_lados_con_el_perfil_testeado() {
+        let c = catalogo_real();
+        let h = c.producto("chorizo").unwrap();
+        assert!(h.por_lados);
+        assert_eq!(h.coccion.clone().unwrap(), crate::lados::perfil_chorizo());
+        let lados: Vec<_> = h.forma.iter().filter_map(|p| p.tinte_lado).collect();
+        assert_eq!(lados, vec![0, 1]);
+    }
+
+    #[test]
+    fn req_hel_01_03_heladera_y_productos_perecederos_en_datos() {
+        let c = catalogo_real();
+        let a = c
+            .accesorios
+            .iter()
+            .find(|a| matches!(a.funcion, Some(crate::carrito::Funcion::Heladera { .. })))
+            .expect("hay una heladera");
+        assert_eq!(a.categoria, crate::carrito::Categoria::Cocina);
+        assert!(c.carrito_jugador.accesorios.values().any(|v| v == &a.id));
+        let perecederos: Vec<_> = c.productos.iter().filter(|p| p.perecedero).map(|p| p.id.as_str()).collect();
+        assert_eq!(perecederos, vec!["hamburguesa", "chorizo"]);
+        assert!(!c.producto("salchicha").unwrap().perecedero, "la salchicha viene envasada");
+    }
+
+    #[test]
+    fn req_par_06_07_pan_de_choripan_y_choripan_en_datos() {
+        let c = catalogo_real();
+        let pan = c.producto("pan_choripan").unwrap();
+        assert!(pan.pan && pan.por_lados);
+        assert_eq!(pan.coccion.clone().unwrap(), crate::tostado::perfil_pan());
+        assert_eq!(crate::armado::combinar(&c.combinaciones, "pan_choripan", "chorizo"), Some("choripan"));
+        let m = pan.masa + c.producto("chorizo").unwrap().masa;
+        assert!((c.producto("choripan").unwrap().masa - m).abs() < 1e-6, "REQ-ARM-05");
+        assert!(c.bloques.iter().any(|b| b.producto == "pan_choripan"));
+    }
+
+    #[test]
+    fn req_par_01_parrilla_y_bolsas_de_carbon_en_datos() {
+        let c = catalogo_real();
+        let a =
+            c.accesorios.iter().find(|a| matches!(a.funcion, Some(crate::carrito::Funcion::Parrilla { .. }))).unwrap();
+        assert_eq!(a.categoria, crate::carrito::Categoria::Cocina);
+        assert!(c.carrito_jugador.accesorios.values().any(|v| v == &a.id));
+        assert_eq!(c.producto("bolsa_carbon").unwrap().carbon, Some(1.0));
+        assert!(c.bloques.iter().any(|b| b.producto == "bolsa_carbon"));
+        assert!(c.bloques.iter().any(|b| b.producto == "chorizo"));
+    }
+
+    #[test]
+    fn req_pla_01_plancha_en_el_carrito_del_jugador() {
+        let c = catalogo_real();
+        let a =
+            c.accesorios.iter().find(|a| matches!(a.funcion, Some(crate::carrito::Funcion::Plancha { .. }))).unwrap();
+        assert_eq!(a.categoria, crate::carrito::Categoria::Cocina);
+        assert!(c.carrito_jugador.accesorios.values().any(|v| v == &a.id));
+    }
+
+    #[test]
     fn req_arm_01_regla_del_pancho_en_datos() {
         let c = catalogo_real();
         assert_eq!(crate::armado::combinar(&c.combinaciones, "pan_pancho", "salchicha"), Some("pancho"));
@@ -232,7 +351,11 @@ pub(crate) mod tests {
     fn req_eco_03_precio_del_pancho() {
         let c = catalogo_real();
         assert_eq!(c.producto("pancho").unwrap().precio, Some(2500.0));
-        assert_eq!(c.menu(), vec!["pancho".to_string()]);
+        let mut menu = c.menu();
+        menu.sort();
+        assert_eq!(menu, vec!["choripan".to_string(), "hamburguesa".to_string(), "pancho".to_string()]);
+        assert_eq!(c.producto("hamburguesa").unwrap().precio, Some(3500.0));
+        assert_eq!(c.producto("choripan").unwrap().precio, Some(3000.0));
     }
 
     #[test]
@@ -241,8 +364,8 @@ pub(crate) mod tests {
         for id in ["mostaza", "ketchup", "mayonesa"] {
             assert_eq!(c.aderezo(id).map(|a| a.usos), Some(40), "{id}");
         }
-        assert!(c.producto("pancho").unwrap().admite_aderezos);
-        assert!(!c.producto("salchicha").unwrap().admite_aderezos);
+        assert!(c.producto("pancho").unwrap().admite_aderezos());
+        assert!(!c.producto("salchicha").unwrap().admite_aderezos());
     }
 
     #[test]
@@ -257,10 +380,60 @@ pub(crate) mod tests {
     #[test]
     fn req_ade_02_aderecera_en_el_carrito() {
         let c = catalogo_real();
-        let a =
-            c.accesorios.iter().find(|a| matches!(a.funcion, Some(crate::carrito::Funcion::Aderezos { .. }))).unwrap();
+        // La aderecera que lleva el jugador tiene un pomo de cada aderezo.
+        let a = c
+            .accesorios
+            .iter()
+            .filter(|a| matches!(a.funcion, Some(crate::carrito::Funcion::Aderezos { .. })))
+            .find(|a| c.carrito_jugador.accesorios.values().any(|v| v == &a.id))
+            .expect("el carrito del jugador lleva una aderecera");
         assert_eq!(a.categoria, crate::carrito::Categoria::Equipamiento);
-        assert!(c.carrito_jugador.accesorios.values().any(|v| v == &a.id));
+        if let Some(crate::carrito::Funcion::Aderezos { tipos, .. }) = &a.funcion {
+            for ad in &c.aderezos {
+                assert!(tipos.contains(&ad.id), "falta el pomo de {}", ad.id);
+            }
+        }
+    }
+
+    #[test]
+    fn req_ade_01_07_papas_pay_y_chimichurri_con_sus_productos() {
+        let c = catalogo_real();
+        for id in ["papas_pay", "chimichurri"] {
+            assert_eq!(c.aderezo(id).map(|a| a.usos), Some(40), "{id}");
+        }
+        assert!(c.producto("pancho").unwrap().admite_aderezo("papas_pay"));
+        assert!(!c.producto("pancho").unwrap().admite_aderezo("chimichurri"));
+        let choripan = c.producto("choripan").unwrap();
+        assert!(choripan.admite_aderezo("chimichurri") && choripan.admite_aderezo("mostaza"));
+        assert!(!choripan.admite_aderezo("ketchup"));
+        assert!(!c.producto("hamburguesa").unwrap().admite_aderezos());
+    }
+
+    #[test]
+    fn req_cli_04_menu_segun_las_funciones_del_carrito() {
+        let c = catalogo_real();
+        let ids = |f: &[&str]| {
+            let mut v: Vec<String> = c.menu_para(f).into_iter().map(|i| i.producto).collect();
+            v.sort();
+            v
+        };
+        assert_eq!(ids(&["Hervidor", "Plancha", "Parrilla"]), vec!["choripan", "hamburguesa", "pancho"]);
+        assert_eq!(ids(&["Hervidor"]), vec!["pancho"], "sin plancha ni parrilla solo hay pancho");
+        assert!(ids(&[]).is_empty());
+    }
+
+    #[test]
+    fn req_cli_04_el_carrito_del_jugador_ofrece_todo_el_menu() {
+        let c = catalogo_real();
+        let colocados: Vec<&str> = c
+            .carrito_jugador
+            .accesorios
+            .values()
+            .filter_map(|id| c.accesorios.iter().find(|a| &a.id == id))
+            .filter_map(|a| a.funcion.as_ref())
+            .map(|f| f.nombre())
+            .collect();
+        assert_eq!(c.menu_para(&colocados).len(), 3);
     }
 
     #[test]

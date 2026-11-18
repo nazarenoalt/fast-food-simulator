@@ -362,7 +362,7 @@ impl Gente {
         let ids: Vec<u64> = self.clientes.keys().copied().collect();
         let mirada = carrito.bind().mirada_fila();
         let primero = self.fila.primero();
-        let menu = catalogo().menu();
+        let menu = carrito.bind().menu();
         let aderezos = carrito.bind().aderezos_disponibles();
 
         for id in ids {

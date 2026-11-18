@@ -9,7 +9,7 @@
 | Espacio | Saltar |
 | Clic izquierdo | Agarrar / soltar |
 | Clic derecho | Tirar lo que tenés en la mano |
-| E | Usar: prender el hervidor, sacar del depósito, poner aderezo (con el pancho en la mano), recargar un pomo (con el repuesto en la mano) |
+| E | Usar: prender el hervidor, la plancha o la parrilla, abrir y cerrar la heladera, dar vuelta una hamburguesa, un chorizo o un pan, sacar del depósito, poner aderezo (con la comida en la mano), recargar un pomo (con el repuesto en la mano), echar carbón en la parrilla (con la bolsa en la mano) |
 | Tab | Panel del proveedor (comprar mercadería) |
 | T | Tiempo ×30 (para ver el atardecer rápido) |
 | C | Traer un cliente al instante (para probar) |
@@ -35,6 +35,17 @@ carrito; llevá el paquete a un lugar libre del estante y queda guardado.
 - **Tu carrito:** editá `godot/data/carrito_jugador.ron` (base, color, anclajes, stock inicial).
   Si algo no encaja, el juego muestra el error arriba del carrito.
 
+## Otros platos
+- **Hamburguesa:** E sobre la plancha para prenderla, apoyá una hamburguesa y dale vuelta con
+  E antes de que se pase. Se cocina el lado que toca la plancha. Se sirve sola, sin aderezos.
+- **Choripán:** cargá carbón (bolsa en la mano y E sobre la parrilla; entran hasta 3 kg) y
+  prendela con E. Apoyá un chorizo y dalo vuelta. Tostá el pan de choripán por una cara como
+  mínimo, sin quemarlo, y soltá el chorizo cocido encima: se arma el choripán. Va con
+  chimichurri o mostaza. El carbón se gasta mientras está prendida: comprá más con Tab.
+- **Heladera:** la carne cruda se echa a perder si queda tibia (se pone verdosa y el cartel
+  avisa). Guardala en la heladera con la puerta cerrada (E la abre y la cierra). Los paquetes de
+  carne del proveedor vienen fríos y se calientan si los dejás en el estante.
+- Cada cliente pide un plato del menú; solo piden lo que tu carrito puede cocinar.
 ## Sonido
 El juego suena con ambiente que cambia con la hora (pájaros de día, grillos de noche, murmullo
 de la plaza) y con cada acción. Los archivos van en `godot/audio/` (`.ogg`) y se declaran en

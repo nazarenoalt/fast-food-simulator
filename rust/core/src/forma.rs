@@ -53,4 +53,8 @@ pub struct Pieza {
     /// Si el color de esta pieza lo da el estado de cocción (ej. la salchicha del pancho).
     #[serde(default)]
     pub tinte_coccion: bool,
+    /// Si el color lo da un lado de un alimento que se cocina por lados (0 = abajo en reposo,
+    /// 1 = arriba). REQ-PLA-05
+    #[serde(default)]
+    pub tinte_lado: Option<usize>,
 }

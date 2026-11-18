@@ -51,8 +51,11 @@ Estado: Borrador | Aprobada | Implementada
 | PRO | 011 Proveedor |
 | ADE | 012 Aderezos |
 | AMB | 013 Ambientación |
+| PLA | 014 Plancha |
+| PAR | 015 Parrilla con carbón y pan tostado |
+| HEL | 016 Heladera y cadena de frío |
 | SON | 024 Sonido |
-| MOD | 014 Modelos 3D |
+| MOD | 025 Modelos 3D |
 
 ## Convenciones de código
 

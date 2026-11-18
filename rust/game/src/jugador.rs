@@ -12,9 +12,12 @@ use crate::aderecera::Pomo;
 use crate::bloque_stock::BloqueStock;
 use crate::comida::Comida;
 use crate::formas;
+use crate::heladera::Heladera;
 use crate::hervidor::Hervidor;
 use crate::hud::{self, Hud};
 use crate::paquete::Paquete;
+use crate::parrilla::Parrilla;
+use crate::plancha::Plancha;
 use crate::sonido;
 use crate::tienda;
 use carrito_core::deposito::Empaque;
@@ -40,6 +43,9 @@ const LARGO_PASO: f32 = 1.6;
 pub enum Objetivo {
     Comida(Gd<Comida>),
     Hervidor(Gd<Hervidor>),
+    Plancha(Gd<Plancha>),
+    Parrilla(Gd<Parrilla>),
+    Heladera(Gd<Heladera>),
     Bloque(Gd<BloqueStock>),
     Paquete(Gd<Paquete>),
     Pomo(Gd<Pomo>),
@@ -261,6 +267,18 @@ impl Jugador {
                 Ok(h) => return Some(Objetivo::Hervidor(h)),
                 Err(n) => n,
             };
+            let n = match n.try_cast::<Plancha>() {
+                Ok(p) => return Some(Objetivo::Plancha(p)),
+                Err(n) => n,
+            };
+            let n = match n.try_cast::<Parrilla>() {
+                Ok(p) => return Some(Objetivo::Parrilla(p)),
+                Err(n) => n,
+            };
+            let n = match n.try_cast::<Heladera>() {
+                Ok(h) => return Some(Objetivo::Heladera(h)),
+                Err(n) => n,
+            };
             let n = match n.try_cast::<BloqueStock>() {
                 Ok(b) => return Some(Objetivo::Bloque(b)),
                 Err(n) => n,
@@ -356,6 +374,18 @@ impl Jugador {
         if self.mano.is_some() {
             // Con algo en la mano, solo se usan los pomos de aderezo (SPEC-012).
             let Some(mut comida) = self.comida_en_mano() else { return };
+            // REQ-PAR-01: una bolsa de carbón en la mano se vuelca en la parrilla.
+            let carbon = comida.bind().carbon();
+            if let (Some(kg), Some(Objetivo::Parrilla(mut parrilla))) = (carbon, self.objetivo()) {
+                match parrilla.bind_mut().cargar(kg) {
+                    Ok(()) => {
+                        self.soltar();
+                        comida.queue_free();
+                    }
+                    Err(e) => hud::avisar(&yo, e.mensaje()),
+                }
+                return;
+            }
             let Some(Objetivo::Pomo(mut pomo)) = self.objetivo() else { return };
             let repone = comida.bind().repone().map(str::to_string);
             let resultado = match repone {
@@ -374,7 +404,21 @@ impl Jugador {
         }
         match self.objetivo() {
             Some(Objetivo::Hervidor(mut h)) => h.bind_mut().alternar(),
+            // REQ-PLA-01
+            Some(Objetivo::Plancha(mut p)) => p.bind_mut().alternar(),
+            // REQ-HEL-01
+            Some(Objetivo::Heladera(mut h)) => h.bind_mut().alternar(),
+            // REQ-PAR-01
+            Some(Objetivo::Parrilla(mut p)) => {
+                if let Err(e) = p.bind_mut().usar() {
+                    hud::avisar(&yo, e.mensaje());
+                }
+            }
+            // REQ-PLA-07: E sobre una hamburguesa suelta la da vuelta.
+            Some(Objetivo::Comida(mut c)) if c.bind().por_lados() => c.bind_mut().dar_vuelta(),
             Some(Objetivo::Bloque(mut b)) => {
+                // REQ-HEL-06: lo que sale del paquete conserva la temperatura del paquete.
+                let temp = b.bind().temperatura();
                 let empaque = b.bind().empaque();
                 let sacado = b.bind_mut().sacar();
                 if let Some((producto, pos)) = sacado {
@@ -383,6 +427,7 @@ impl Jugador {
                     sonido::sonar_en(&self.to_gd(), id, pos);
                     // REQ-DEP-05: aparece como objeto físico en la mano.
                     let mut c = Comida::crear(&producto);
+                    c.bind_mut().fijar_temperatura(temp);
                     c.set_position(pos);
                     if let Some(mut padre) = self.base().get_parent() {
                         padre.add_child(&c);
@@ -430,6 +475,9 @@ impl Jugador {
             if let Ok(c) = m.clone().try_cast::<Comida>() {
                 let c = c.bind();
                 let mut t = format!("{}\n[Clic] Soltar · [Clic der.] Tirar", c.descripcion());
+                if let (Some(_), Some(Objetivo::Parrilla(_))) = (c.carbon(), &objetivo) {
+                    t += " · [E] Cargar carbón en la parrilla";
+                }
                 if let Some(Objetivo::Pomo(p)) = &objetivo {
                     let p = p.bind();
                     if c.repone().is_some() {
@@ -449,8 +497,17 @@ impl Jugador {
             }
         } else {
             match objetivo {
-                Some(Objetivo::Comida(c)) => format!("[Clic] Agarrar {}", c.bind().descripcion().to_lowercase()),
+                Some(Objetivo::Comida(c)) => {
+                    let mut t = format!("[Clic] Agarrar {}", c.bind().descripcion().to_lowercase());
+                    if c.bind().por_lados() {
+                        t += " · [E] Dar vuelta";
+                    }
+                    t
+                }
                 Some(Objetivo::Hervidor(h)) => h.bind().cartel(),
+                Some(Objetivo::Plancha(p)) => p.bind().cartel(),
+                Some(Objetivo::Parrilla(p)) => p.bind().cartel(),
+                Some(Objetivo::Heladera(h)) => h.bind().cartel(),
                 Some(Objetivo::Bloque(b)) => b.bind().cartel(),
                 Some(Objetivo::Paquete(p)) => format!("[Clic] Agarrar {}", p.bind().descripcion().to_lowercase()),
                 Some(Objetivo::Pomo(p)) => format!("{} — agarrá un pancho y apretá E para ponerle", p.bind().cartel()),

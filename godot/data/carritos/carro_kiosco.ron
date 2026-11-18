@@ -4,7 +4,7 @@
 // Posiciones relativas al centro del piso de la base (a nivel de la calle).
 (
     id: "carro_kiosco",
-    modelo: Some("carritos/carro_kiosco"), // SPEC-014
+    modelo: Some("carritos/carro_kiosco"), // SPEC-025
     nombre: "Carro kiosco",
     ancho: 3.2, profundidad: 1.7, alto_mostrador: 1.05,
     color: (0.78, 0.13, 0.1),

@@ -19,9 +19,11 @@ y se van) y juzgan lo que les diste.
   llegan más clientes. Cuando alguien se va, los de atrás avanzan.
 
 ### Pedido
-- **REQ-CLI-04** Cuando el primero de la fila llega a su lugar, pide: un producto del menú
-  (etapa 2: pancho) y entre 0 y 2 aderezos entre los que el carrito tiene disponibles.
-  Un 25% lo pide sin aderezos.
+- **REQ-CLI-04** Cuando el primero de la fila llega a su lugar, pide: un producto del menú y
+  entre 0 y 2 aderezos entre los que ese producto admite (SPEC-012) y el carrito tiene
+  disponibles. Un 25% lo pide sin aderezos. El **menú** son los productos con precio que el
+  carrito puede cocinar: pancho (con hervidor), hamburguesa (con plancha) y choripán (con
+  parrilla). Cada uno tiene la misma chance.
 - **REQ-CLI-05** El pedido se muestra en un globo sobre su cabeza (ej. "Pancho con
   mostaza y ketchup"). El color del globo muestra la paciencia: verde, amarillo, rojo.
 - **REQ-CLI-06** Paciencia: 100 s desde que pide. Mientras espera en la fila (sin pedir
@@ -33,7 +35,8 @@ y se van) y juzgan lo que les diste.
   que nadie sostiene apoyado en la bandeja se le entrega al primero de la fila que esté
   esperando.
 - **REQ-CLI-08** Evaluación de lo entregado:
-  - Otro producto, salchicha cruda o quemada → lo **rechaza**: queda en la bandeja, dice por
+  - Otro producto, salchicha o chorizo crudos o quemados, pan del choripán blando o quemado
+    (SPEC-015), carne echada a perder (SPEC-016) → lo **rechaza**: queda en la bandeja, dice por
     qué y pierde 20 s de paciencia.
   - Si lo acepta: estrellas = 5 − 1 por aderezo pedido que falta − 0,5 por aderezo que no
     pidió − 1,5 si la salchicha está pasada − hasta 1,5 según cuánta paciencia gastó.
