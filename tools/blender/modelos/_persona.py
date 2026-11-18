@@ -42,7 +42,21 @@ cuello los anillos de la unión se reparten entre los dos huesos (máx. 2–3 po
 
 ── Animaciones ────────────────────────────────────────────────────────────────
 Acciones calculadas por código para las medidas de cada variante (los pies apoyados no
-patinan: las piernas se resuelven con IK analítica). 30 cuadros por segundo. Ver ANIMACIONES.
+patinan: las piernas se resuelven con IK analítica). 30 cuadros por segundo, todas en loop (el
+último cuadro es igual al primero; en Godot hay que ponerles loop_mode = LOOP_LINEAR):
+    quieto            4 s    respiración y balanceo leve
+    caminar           1 ciclo (adulto 1,0 s a 1,2 m/s), en el lugar
+    trotar            1 ciclo (adulto 0,7 s a 2,8 m/s = VEL_TROTE), en el lugar
+    esperar           8 s    en la fila: cambia el peso, mira a los costados y una vez el reloj
+    charlar           6 s    gestos con las manos, asiente, se encoge de hombros
+    comer             3 s    brazo derecho a la boca (con el pancho en punto_mano_d); el resto
+                             del cuerpo queda en la pose de descanso: para mezclarla arriba de
+                             otra, filtrar RightShoulder…RightHand, Neck y Head
+    caminar_comiendo  3 ciclos de caminar con el brazo de comer (se va comiendo)
+    sentado           6 s    en el banco: el origen es el punto del asiento (0,12 m delante del
+                             centro del banco, como caminos.rs); la cola apoya a 0,45 m
+La velocidad de cada variante está en sus PARAMETROS (vel_caminar, vel_trotar): el código
+tiene que reproducir caminar a velocidad = vel_del_peatón / vel_caminar para no patinar.
 """
 import math
 import sys
@@ -845,7 +859,7 @@ def pelo(estilo, material, nombre=None):
         "rodete": dict(arriba=0.010, borde=0.006, frente=0.98, lados=1.58, atras=1.86, patilla=0.10, pelos=0.15,
                        rodete=True),
         "rulos":  dict(arriba=0.036, borde=0.020, frente=0.92, lados=1.60, atras=1.86, patilla=0.0, pelos=0.55),
-        "pelado": dict(arriba=0.0015, borde=0.008, frente=1.45, lados=1.66, atras=2.12, patilla=0.0, pelos=0.2,
+        "pelado": dict(arriba=0.006, borde=0.008, frente=1.45, lados=1.66, atras=2.12, patilla=0.0, pelos=0.2,
                        coronilla=1.10),
     }
     E = estilos[estilo]
@@ -1472,7 +1486,7 @@ def exportar_glb(objetos, ruta, animaciones=True):
         export_animation_mode="ACTIONS",
         export_force_sampling=True,
         export_frame_step=1,
-        export_optimize_animation_size=False,
+        export_optimize_animation_size=True,   # saca las claves que no cambian (pesa ~1/3)
         export_anim_slide_to_zero=True,
         export_reset_pose_bones=True,
         export_rest_position_armature=True,
