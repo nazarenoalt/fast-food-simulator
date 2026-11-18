@@ -92,6 +92,15 @@ impl ICharacterBody3D for Jugador {
             .try_to::<f64>()
             .unwrap_or(9.8) as f32;
 
+        // REQ-JUG-08 / REQ-CAR-11: si la base dice dónde aparece el jugador (ej. adentro del
+        // carro kiosco), se lo pone ahí; si no, queda donde lo dejó la escena.
+        let tree = self.base().get_tree();
+        if let Some(c) = tree.get_first_node_in_group(crate::carrito::GRUPO) {
+            if let Some(p) = c.try_cast::<crate::carrito::Carrito>().ok().and_then(|c| c.bind().posicion_jugador()) {
+                self.base_mut().set_global_position(p);
+            }
+        }
+
         // REQ-JUG-05: cápsula de 1,75 m y radio 0,3; ojos a 1,65 m.
         let mut forma = CapsuleShape3D::new_gd();
         forma.set_radius(RADIO);

@@ -42,7 +42,8 @@ diseño de SPEC-006 dejó previsto ("el campo de forma podrá apuntar a un `.glb
 - **REQ-MOD-09** Si un modelo no se puede cargar en el juego, se dibujan las piezas simples
   y se avisa en la consola: el juego no se rompe.
 
-### Contenido de la etapa 1
+### Contenido
+
 - **REQ-MOD-10** Usan modelo: pan de pancho, salchicha y pancho; las tres bases de carrito;
   el hervidor, el estante, las dos sombrillas, la carpa, el telón, el cerco, el foco, la
   pizarra, el servilletero y la aderecera; la bolsa de panes y la bandeja de salchichas;
@@ -52,6 +53,8 @@ diseño de SPEC-006 dejó previsto ("el campo de forma podrá apuntar a un `.glb
 - **REQ-MOD-12** En el pancho con modelo la salchicha va hundida entre las mitades del pan:
   la colisión del pancho mide lo mismo que el pan (0,17 × 0,045 × 0,055) y los aderezos se
   dibujan a la altura que dice el dato (`altura_aderezos`, 0,0152 m en el pancho).
+- **REQ-MOD-13** El carro kiosco (REQ-CAR-12) y el porche de nylon usan su modelo; la puerta
+  del kiosco arranca abierta (REQ-CAR-11), girando `pieza_puerta` sobre su bisagra.
 
 ## Criterios de aceptación
 
@@ -66,8 +69,8 @@ diseño de SPEC-006 dejó previsto ("el campo de forma podrá apuntar a un `.glb
 
 - Personajes (peatones y clientes, con esqueleto y animaciones), palomas y perro.
 - Ciudad: fachadas, autos, nubes.
-- Alacenas bajo mesada (bahías), techos y toldos, food truck, tráiler y carro kiosco
-  (necesitan anclajes nuevos).
+- Alacenas bajo mesada (bahías), techos y toldos, food truck y tráiler (necesitan anclajes
+  nuevos).
 - Pomos y repuestos de aderezo, chorrito de aderezo, comida y equipos de la etapa 4.
 
 ## Notas de diseño

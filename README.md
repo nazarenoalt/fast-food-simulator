@@ -12,6 +12,7 @@ física real, frente a una plaza. Hecho con **Godot 4.7** y **Rust** (godot-rust
 
 | | |
 |---|---|
+| ![Carro kiosco](docs/capturas/15_kiosco.jpg) | ![Adentro del kiosco](docs/capturas/16_kiosco_adentro.jpg) |
 | ![Carrito con modelos 3D](docs/capturas/12_modelos_carrito.jpg) | ![Plaza con modelos 3D](docs/capturas/14_modelos_plaza.jpg) |
 | ![Clientes en la fila](docs/capturas/8_fila_clientes.png) | ![Plaza con gente](docs/capturas/9_plaza_viva.png) |
 | ![Atardecer](docs/capturas/10_atardecer.png) | ![Noche en la ciudad](docs/capturas/11_noche_ciudad.png) |

@@ -6,7 +6,7 @@ use std::collections::HashMap;
 
 use carrito_core::datos::DefProducto;
 use carrito_core::modelos::{self as reglas, ruta_glb};
-use godot::classes::base_material_3d::Feature;
+use godot::classes::base_material_3d::{Feature, TextureParam};
 use godot::classes::{MeshInstance3D, Node, Node3D, PackedScene, ResourceLoader, StandardMaterial3D};
 use godot::prelude::*;
 
@@ -162,8 +162,18 @@ pub fn pintar_superficies(pieza: &Gd<Node3D>, colores: &[[f32; 3]]) {
 /// REQ-MOD-07: las partes que brillan (`pieza_lampara`, `pieza_luz`, …) se prenden solo de noche.
 pub fn luces_de_noche(raiz: &Gd<Node3D>) {
     for pieza in buscar_prefijos(raiz, reglas::PIEZAS_LUZ) {
-        for (_, m) in materiales_propios(&pieza) {
-            let energia = if m.get_feature(Feature::EMISSION) { m.get_emission_energy_multiplier().max(1.0) } else { 2.0 };
+        for (_, mut m) in materiales_propios(&pieza) {
+            let energia = if m.get_feature(Feature::EMISSION) {
+                m.get_emission_energy_multiplier().max(1.0)
+            } else {
+                // Un cartel sin brillo propio: de noche brilla con su mismo dibujo.
+                let albedo = m.get_albedo();
+                m.set_emission(albedo);
+                if let Some(t) = m.get_texture(TextureParam::ALBEDO) {
+                    m.set_texture(TextureParam::EMISSION, &t);
+                }
+                0.8
+            };
             nocturno::registrar(m, energia);
         }
     }

@@ -44,6 +44,7 @@ pub struct PruebaHumo {
     lugar: Option<Gd<LugarDeposito>>,
     superpuestos: usize,
     muestras: usize,
+    reintentos: u32,
 }
 
 /// Material (de la primera superficie) de la pieza `nombre` de un modelo. SPEC-014
@@ -51,6 +52,24 @@ fn material_pieza(raiz: &Gd<Node>, nombre: &str) -> Option<Gd<StandardMaterial3D
     let n = raiz.find_child_ex(nombre).recursive(true).owned(false).done()?;
     let mi = n.try_cast::<MeshInstance3D>().ok()?;
     mi.get_active_material(0)?.try_cast::<StandardMaterial3D>().ok()
+}
+
+/// Material de la primera parte que brilla de noche (lamparita, tubo de luz…). REQ-MOD-07
+fn material_luz(raiz: &Gd<Node>) -> Option<Gd<StandardMaterial3D>> {
+    let carrito = todos::<Carrito>(raiz).pop()?.upcast::<Node>();
+    let mut pila = vec![carrito];
+    while let Some(n) = pila.pop() {
+        let nombre = n.get_name().to_string();
+        if carrito_core::modelos::PIEZAS_LUZ.iter().any(|p| nombre.starts_with(p)) {
+            if let Some(m) = n.clone().try_cast::<MeshInstance3D>().ok().and_then(|mi| mi.get_active_material(0)) {
+                if let Ok(m) = m.try_cast::<StandardMaterial3D>() {
+                    return Some(m);
+                }
+            }
+        }
+        pila.extend(n.get_children().iter_shared());
+    }
+    None
 }
 
 fn parecido(c: Color, esperado: [f32; 3]) -> bool {
@@ -145,6 +164,27 @@ impl INode for PruebaHumo {
                 let jugadores = todos::<Jugador>(&mundo);
                 let z = jugadores.first().map(|j| j.get_global_position().z).unwrap_or(0.0);
                 self.chequear(z < plaza::Z_VEREDA, "REQ-JUG-08 jugador detrás del mostrador");
+                // CA-CAR-03: si la base dice dónde aparece el jugador (carro kiosco), arranca ahí
+                // adentro, y la puerta del modelo está abierta.
+                if let Some(c) = todos::<Carrito>(&mundo).pop() {
+                    if let Some(p) = c.bind().posicion_jugador() {
+                        let j = jugadores.first().map(|j| j.get_global_position()).unwrap_or(Vector3::ZERO);
+                        let d = Vector2::new(j.x - p.x, j.z - p.z).length();
+                        let puerta = c
+                            .clone()
+                            .upcast::<Node>()
+                            .find_child_ex("pieza_puerta")
+                            .recursive(true)
+                            .owned(false)
+                            .done()
+                            .and_then(|n| n.try_cast::<Node3D>().ok())
+                            .map(|n| n.get_rotation_degrees().y);
+                        self.chequear(
+                            d < 0.3 && j.y > 0.1 && puerta.is_some_and(|g| g > 45.0),
+                            &format!("CA-CAR-03 el jugador arranca adentro (a {d:.2} m, y {:.2}) y la puerta está abierta ({puerta:?}°)", j.y),
+                        );
+                    }
+                }
                 self.chequear(todos::<Hervidor>(&mundo).len() == 1, "REQ-CAR-07 el carrito tiene su hervidor");
 
                 // CA-DEP-01: saco 3 panes, quedan 9 visibles.
@@ -258,8 +298,8 @@ impl INode for PruebaHumo {
                     &format!("CA-DIA-01 de noche todas las luces prendidas ({prendidas}/{})", luces.len()),
                 );
                 // CA-MOD-03: la lamparita del foco (modelo) brilla de noche.
-                let brillo = material_pieza(&mundo, "pieza_lampara").map(|m| m.get_emission_energy_multiplier());
-                self.chequear(brillo.is_some_and(|b| b > 0.0), &format!("CA-MOD-03 de noche la lamparita brilla ({brillo:?})"));
+                let brillo = material_luz(&mundo).map(|m| m.get_emission_energy_multiplier());
+                self.chequear(brillo.is_some_and(|b| b > 0.0), &format!("CA-MOD-03 de noche las luces del carrito brillan ({brillo:?})"));
                 let mut dn = todos::<DiaNoche>(&mundo).pop().unwrap();
                 dn.bind_mut().set_minuto(12.0 * 60.0);
                 self.esperar(10);
@@ -272,8 +312,8 @@ impl INode for PruebaHumo {
                     .filter(|l| l.bind().encendida())
                     .count();
                 self.chequear(prendidas == 0, "REQ-DIA-06 de día las luces apagadas");
-                let brillo = material_pieza(&mundo, "pieza_lampara").map(|m| m.get_emission_energy_multiplier());
-                self.chequear(brillo == Some(0.0), &format!("CA-MOD-03 de día la lamparita está apagada ({brillo:?})"));
+                let brillo = material_luz(&mundo).map(|m| m.get_emission_energy_multiplier());
+                self.chequear(brillo == Some(0.0), &format!("CA-MOD-03 de día las luces del carrito están apagadas ({brillo:?})"));
                 // CA-MOD-01: el carrito es el modelo, pintado del color de la config.
                 let color = crate::datos::catalogo().carrito_jugador.color.unwrap_or([0.0; 3]);
                 let carrito: Option<Gd<Node>> = todos::<Carrito>(&mundo).pop().map(|c| c.upcast());
@@ -408,6 +448,15 @@ impl INode for PruebaHumo {
             12 => {
                 let mut negocio = todos::<Negocio>(&mundo).pop().unwrap();
                 let (rep, perdidos) = (negocio.bind().reputacion(), negocio.bind().perdidos_de_hoy());
+                // El primero de la fila puede venir caminando todavía (su paciencia corre recién
+                // cuando llega): se le da hasta 20 s de juego antes de dar la falla.
+                if perdidos == self.perdidos_antes && self.reintentos < 20 {
+                    self.reintentos += 1;
+                    let mut gente = todos::<Gente>(&mundo).pop().unwrap();
+                    gente.bind_mut().set_paciencia_del_primero(0.3);
+                    self.esperar(60);
+                    self.paso -= 1; // se repite este paso
+                } else {
                 self.chequear(
                     perdidos == self.perdidos_antes + 1 && rep < self.reputacion_antes,
                     &format!("CA-CLI-02 se fue enojado y bajó la reputación ({:.2} → {rep:.2})", self.reputacion_antes),
@@ -428,6 +477,7 @@ impl INode for PruebaHumo {
                 self.paquetes_antes = todos::<Paquete>(&mundo).len();
                 dn.bind_mut().set_minuto(10.0 * 60.0 + 59.0);
                 self.esperar(5);
+                }
             }
             13 => {
                 let n = todos::<Paquete>(&mundo).len();

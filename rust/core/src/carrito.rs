@@ -19,6 +19,8 @@ pub enum Categoria {
     Deposito,
     Sombrilla,
     Luz,
+    /// REQ-CAR-04: cerramiento para comer al costado del carro (porche de nylon).
+    Porche,
 }
 
 /// REQ-CAR-03
@@ -51,11 +53,25 @@ pub struct BaseCarrito {
     /// REQ-MOD-01: modelo 3D ("familia/id" → godot/modelos/familia/id.glb).
     #[serde(default)]
     pub modelo: Option<String>,
+    /// REQ-CAR-11: dónde aparece el jugador (si falta, el lugar de la escena).
+    #[serde(default)]
+    pub jugador: Option<[f32; 3]>,
+    /// REQ-CAR-11: dónde deja el proveedor el pallet (si falta, al costado del carrito).
+    #[serde(default)]
+    pub pallet: Option<[f32; 3]>,
+    /// REQ-CAR-11: grados que arranca abierta la puerta del modelo (bases con interior).
+    #[serde(default)]
+    pub puerta: Option<f32>,
 }
 
 impl BaseCarrito {
     pub fn anclaje(&self, id: &str) -> Option<&Anclaje> {
         self.anclajes.iter().find(|a| a.id == id)
+    }
+
+    /// REQ-CAR-11 / REQ-PRO-04: lugar del pallet del proveedor, relativo a la base.
+    pub fn lugar_pallet(&self) -> [f32; 3] {
+        self.pallet.unwrap_or([self.ancho / 2.0 + 1.35, 0.0, -1.0])
     }
 }
 
@@ -274,9 +290,34 @@ mod tests {
     fn req_car_04_05_hay_accesorios_de_todas_las_categorias() {
         use Categoria::*;
         let cat = catalogo_real();
-        for c in [Decoracion, Equipamiento, Cerco, Carpa, Telon, Cocina, Deposito, Sombrilla, Luz] {
+        for c in [Decoracion, Equipamiento, Cerco, Carpa, Telon, Cocina, Deposito, Sombrilla, Luz, Porche] {
             assert!(cat.accesorios.iter().any(|a| a.categoria == c), "falta un accesorio {c:?}");
         }
+    }
+
+    #[test]
+    fn req_car_11_lugares_del_jugador_del_pallet_y_puerta() {
+        let cat = catalogo_real();
+        let barra = cat.bases.iter().find(|b| b.id == "barra_chica").unwrap();
+        assert_eq!(barra.jugador, None, "sin dato, el jugador queda donde lo deja la escena");
+        assert_eq!(barra.lugar_pallet(), [barra.ancho / 2.0 + 1.35, 0.0, -1.0], "pallet por defecto al costado");
+        let k = cat.bases.iter().find(|b| b.id == "carro_kiosco").unwrap();
+        let j = k.jugador.expect("el kiosco dice dónde aparece el jugador");
+        assert!(j[0].abs() < k.ancho / 2.0 && j[2].abs() < k.profundidad / 2.0, "aparece adentro del kiosco");
+        assert!(j[1] >= 0.15, "sobre el piso de adentro");
+        let p = k.lugar_pallet();
+        assert!(p[2] < -k.profundidad / 2.0, "el pallet queda afuera, del lado del vendedor");
+        assert!(k.puerta.is_some_and(|g| g > 45.0), "la puerta arranca abierta");
+    }
+
+    #[test]
+    fn req_car_12_carro_kiosco() {
+        let cat = catalogo_real();
+        let k = cat.bases.iter().find(|b| b.id == "carro_kiosco").expect("falta el carro kiosco");
+        let cats: Vec<Categoria> = k.anclajes.iter().flat_map(|a| a.categorias.clone()).collect();
+        assert!(!cats.contains(&Categoria::Sombrilla) && !cats.contains(&Categoria::Carpa), "trae techo propio");
+        assert!(cats.contains(&Categoria::Porche), "tiene lugar para el porche");
+        assert!(k.entrega[2] > k.profundidad / 2.0, "la entrega es en la repisa de afuera");
     }
 
     #[test]
@@ -323,7 +364,8 @@ mod tests {
     fn req_car_10_bandeja_sobre_el_mostrador_y_fila_adelante() {
         for b in catalogo_real().bases {
             assert!((b.entrega[1] - b.alto_mostrador).abs() < 0.01, "{}: bandeja a la altura del mostrador", b.id);
-            assert!(b.entrega[0].abs() < b.ancho / 2.0 && b.entrega[2].abs() < b.profundidad / 2.0);
+            // Sobre el mostrador, o en la repisa de afuera del carro kiosco (REQ-CAR-12).
+            assert!(b.entrega[0].abs() < b.ancho / 2.0 && b.entrega[2].abs() < b.profundidad / 2.0 + 0.2, "{}", b.id);
             assert!(b.fila[2] > b.profundidad / 2.0 + 0.3, "{}: la fila va adelante del carrito", b.id);
         }
     }
@@ -338,10 +380,13 @@ mod tests {
 
     #[test]
     fn ca_car_01_misma_config_en_carro_grande() {
-        // Todos los anclajes que usa el jugador existen también en el carro grande.
-        let cat = catalogo_real();
-        let mut c = cat.carrito_jugador.clone();
+        // Una config armada para la barra chica funciona igual en el carro grande (mismos anclajes).
+        let mut c = config(
+            "barra_chica",
+            &[("mostrador_izq", "hervidor_chico"), ("lateral", "estante_deposito"), ("sombra", "sombrilla_roja"), ("luz_1", "foco_calido")],
+        );
+        armar_cfg(&c).expect("config de barra chica");
         c.base = "carro_grande".into();
-        armar_cfg(&c).expect("la config del jugador debería funcionar en el carro grande");
+        armar_cfg(&c).expect("la misma config debería funcionar en el carro grande");
     }
 }

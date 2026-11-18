@@ -14,8 +14,13 @@ pub const MATERIAL_PINTURA: &str = "M_PinturaCarrito";
 /// Agua y luz piloto del hervidor. REQ-MOD-05
 pub const PIEZA_AGUA: &str = "pieza_agua";
 pub const PIEZA_PILOTO: &str = "pieza_piloto";
-/// Partes que brillan solo de noche (prefijos). REQ-MOD-07
-pub const PIEZAS_LUZ: &[&str] = &["pieza_lampara", "pieza_luz", "pieza_lamparitas", "pieza_cartel_luz"];
+/// Puerta de las bases con interior (gira en Y sobre su bisagra). REQ-MOD-13
+pub const PIEZA_PUERTA: &str = "pieza_puerta";
+/// Partes que brillan solo de noche (prefijos). REQ-MOD-07. `pieza_luz` cubre también
+/// `pieza_luces` (tubos del carro kiosco); `pieza_cartel` son los carteles luminosos.
+pub const PIEZAS_LUZ: &[&str] = &["pieza_lampara", "pieza_luz", "pieza_luces", "pieza_lamparitas", "pieza_cartel"];
+/// Punto donde una base con luces propias pone su luz nocturna (ej. el carro kiosco). REQ-MOD-07
+pub const PUNTO_LUZ: &str = "punto_luz";
 
 /// Modelos de la bandeja de entrega y del pallet (los arma el carrito, no son datos). REQ-MOD-10
 pub const MODELO_BANDEJA: &str = "carritos/bandeja_entrega";
@@ -182,6 +187,17 @@ mod tests {
         for b in ["bolsa_panes_12", "caja_salchichas_12"] {
             assert!(c.bloque(b).unwrap().modelo.is_some(), "bloque {b}");
         }
+    }
+
+    #[test]
+    fn req_mod_13_kiosco_y_porche_con_modelo() {
+        let c = catalogo_real();
+        let k = c.bases.iter().find(|b| b.id == "carro_kiosco").unwrap();
+        assert_eq!(k.modelo.as_deref(), Some("carritos/carro_kiosco"));
+        let nodos = nodos_glb(&ruta_glb("carritos/carro_kiosco"));
+        assert!(nodos.iter().any(|(n, _)| n == PIEZA_PUERTA), "el modelo tiene la puerta que se abre");
+        let porche = c.accesorios.iter().find(|a| a.id == "porche_nylon").unwrap();
+        assert_eq!(porche.modelo.as_deref(), Some("accesorios/porche_nylon"));
     }
 
     #[test]

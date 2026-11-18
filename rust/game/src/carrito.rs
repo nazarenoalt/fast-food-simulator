@@ -49,10 +49,16 @@ impl Carrito {
         self.base().get_global_transform() * Vector3::new(e[0], e[1], e[2])
     }
 
-    /// Dónde deja los paquetes el proveedor: un pallet al costado, del lado del vendedor.
+    /// Dónde deja los paquetes el proveedor: el pallet (REQ-CAR-11).
     pub fn pos_pallet(&self) -> Vector3 {
-        let ancho = self.base_def.as_ref().map(|b| b.ancho).unwrap_or(1.6);
-        self.base().get_global_transform() * Vector3::new(ancho / 2.0 + 1.35, 0.12, -1.0)
+        let p = self.base_def.as_ref().map(|b| b.lugar_pallet()).unwrap_or([0.8 + 1.35, 0.0, -1.0]);
+        self.base().get_global_transform() * Vector3::new(p[0], p[1] + 0.12, p[2])
+    }
+
+    /// REQ-CAR-11: dónde aparece el jugador, si la base lo define (en coordenadas del mundo).
+    pub fn posicion_jugador(&self) -> Option<Vector3> {
+        let p = self.base_def.as_ref()?.jugador?;
+        Some(self.base().get_global_transform() * formas::v3(p))
     }
 
     /// REQ-CLI-07: comida suelta (que nadie sostiene) apoyada en la bandeja.
@@ -99,8 +105,8 @@ impl Carrito {
         bandeja.add_child(&zona);
         self.bandeja = Some(zona);
 
-        // Pallet del proveedor.
-        let pallet_local = Vector3::new(b.ancho / 2.0 + 1.35, 0.0, -1.0);
+        // Pallet del proveedor. REQ-CAR-11
+        let pallet_local = formas::v3(b.lugar_pallet());
         let mut pallet = Node3D::new_alloc();
         pallet.set_name("Pallet");
         pallet.set_position(pallet_local);
@@ -125,8 +131,18 @@ impl Carrito {
         let mut yo = self.to_gd().upcast::<Node3D>();
         // REQ-MOD-01: el modelo de la base, con su colisión (-colonly, REQ-MOD-04) y el
         // cuerpo pintado del color elegido (REQ-MOD-05, REQ-CAR-09).
-        if let Some(m) = b.modelo.as_deref().and_then(|m| modelos::agregar(&mut yo, m)) {
+        if let Some(mut m) = b.modelo.as_deref().and_then(|m| modelos::agregar(&mut yo, m)) {
             modelos::pintar_material(&m, carrito_core::modelos::MATERIAL_PINTURA, armado.color);
+            // REQ-MOD-07: si la base trae su punto_luz (luces propias), ahí va su luz de noche.
+            if let Some(p) = modelos::buscar(&m, carrito_core::modelos::PUNTO_LUZ) {
+                let mut luz = LuzNocturna::crear([1.0, 0.8, 0.55], 2.0, 7.0, 0.03, true);
+                luz.set_position(p.get_position());
+                m.add_child(&luz);
+            }
+            // REQ-CAR-11 / REQ-MOD-13: la puerta de las bases con interior arranca abierta.
+            if let (Some(grados), Some(mut puerta)) = (b.puerta, modelos::buscar(&m, carrito_core::modelos::PIEZA_PUERTA)) {
+                puerta.rotate_y(grados.to_radians());
+            }
             return;
         }
         let suelo = if b.ruedas { 0.18 } else { 0.02 };
