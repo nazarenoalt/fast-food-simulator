@@ -12,7 +12,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import _nube as nube  # noqa: E402
 
 P = {
-    "id": "nube_c", "semilla": 59, "largo": 60.0, "alto_max": 16.0,
+    "id": "nube_c", "semilla": 59, "largo": 60.0, "alto_max": 17.0,
     "bollos": [
         ((-22.0, 1.5, 0.0), (7.0, 5.5, 6.0), 20),
         ((-12.0, 3.0, 1.5), (10.0, 9.0, 8.5), 28),

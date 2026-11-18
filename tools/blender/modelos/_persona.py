@@ -297,9 +297,10 @@ def torso(m, M, P):
          0.092 * w, -0.002, REMERA),
         (tor(0.60), 0.165 * w * hom, 0.112 * w + 0.03 * w * pecho, 0.098 * w, -0.004, REMERA),
         (tor(0.71), 0.174 * w * hom, 0.104 * w + 0.012 * w * pecho, 0.098 * w, -0.002, REMERA),
-        (tor(0.80), 0.176 * w * hom, 0.084 * w, 0.087 * w, 0.004, REMERA),
-        (tor(0.87), 0.135 * w * hom, 0.064 * w, 0.072 * w, 0.010, REMERA),
-        (tor(0.915), 0.064 * w, 0.052 * w, 0.056 * w, 0.010, REMERA),
+        (tor(0.80), 0.182 * w * hom, 0.084 * w, 0.087 * w, 0.004, REMERA),
+        (tor(0.86), 0.158 * w * hom, 0.070 * w, 0.076 * w, 0.010, REMERA),
+        (tor(0.915), 0.100 * w * hom ** 0.5, 0.058 * w, 0.064 * w, 0.010, REMERA),
+        (tor(0.945), 0.062 * w, 0.052 * w, 0.056 * w, 0.010, REMERA),
     ]
     anillos, pesos, mats = [], [], []
     for z, an, fr, at, yc, mt in filas:
@@ -321,7 +322,7 @@ def torso(m, M, P):
     bandas[2] = PANTALON  # de la cadera al ruedo
     bandas[3] = REMERA    # el escalón del ruedo es la remera vista desde abajo
     m.loft(anillos, pesos, bandas, tapa_ini=V((0, 0.004, ent - 0.03 * w)),
-           tapa_fin=V((0, 0.010 * w, tor(0.93))))
+           tapa_fin=V((0, 0.010 * w, tor(0.965))))
 
 
 def cuello(m, M):
@@ -344,8 +345,8 @@ CABEZA = [
     (0.112, 0.076, 0.096, 0.096, 0.000),
     (0.150, 0.078, 0.094, 0.100, 0.002),
     (0.188, 0.073, 0.084, 0.096, 0.004),
-    (0.214, 0.058, 0.062, 0.076, 0.006),
-    (0.230, 0.032, 0.032, 0.040, 0.006),
+    (0.212, 0.065, 0.070, 0.084, 0.006),
+    (0.229, 0.042, 0.044, 0.054, 0.006),
 ]
 LADOS_CABEZA = 12
 NUCA_REL = V((0, 0.012, 0.030))   # cabeza del hueso Head respecto del mentón (centro)
@@ -363,14 +364,14 @@ def cabeza(m, M):
     o = V((0, 0, M["menton"]))
     anillos = anillos_cabeza(s, o)
     m.loft(anillos, [{"Head": 1.0}] * len(anillos), [PIEL] * (len(anillos) - 1),
-           tapa_ini=o + V((0, -0.070 * s, -0.004 * s)), tapa_fin=o + V((0, 0.006 * s, 0.236 * s)))
+           tapa_ini=o + V((0, -0.070 * s, -0.004 * s)), tapa_fin=o + V((0, 0.006 * s, 0.235 * s)))
     H = {"Head": 1.0}
     # Nariz: cuña chica.
     bm = m.bm
-    base_z, punta_z = o.z + 0.066 * s, o.z + 0.112 * s
+    base_z, punta_z = o.z + 0.069 * s, o.z + 0.104 * s
     y_cara = o.y - 0.094 * s
-    pts = [V((-0.013 * s, y_cara + 0.010 * s, base_z)), V((0.013 * s, y_cara + 0.010 * s, base_z)),
-           V((0, y_cara - 0.013 * s, base_z + 0.007 * s)), V((0, y_cara + 0.004 * s, punta_z)),
+    pts = [V((-0.011 * s, y_cara + 0.008 * s, base_z)), V((0.011 * s, y_cara + 0.008 * s, base_z)),
+           V((0, y_cara - 0.010 * s, base_z + 0.006 * s)), V((0, y_cara + 0.004 * s, punta_z)),
            V((0, y_cara + 0.016 * s, base_z + 0.01 * s))]
     vs = [bm.verts.new(p) for p in pts]
     for v in vs:
@@ -388,10 +389,10 @@ def cabeza(m, M):
         a1 = anillo_eje(c, d, 0.0085 * s, 0.0068 * s, 6, ref=IZQ)
         m.loft([a1], [H], [], tapa_ini=c + d * 0.0045 * s, tapa_fin=c - d * 0.004 * s, mat_tapas=DETALLE)
         # Cejas: barritas del color del pelo, un poco inclinadas.
-        c = V((lado * 0.033 * s, o.y - 0.090 * s, o.z + 0.139 * s))
+        c = V((lado * 0.033 * s, o.y - 0.091 * s, o.z + 0.141 * s))
         e = V((lado, -0.18 * lado * 0, 0.06)).normalized()
-        a1 = anillo_eje(c - e * 0.015 * s, e, 0.0045 * s, 0.006 * s, 4, ref=ARRIBA, giro=math.pi / 4)
-        a2 = anillo_eje(c + e * 0.015 * s + V((0, 0.005 * s, 0.002 * s)), e, 0.0035 * s, 0.005 * s, 4,
+        a1 = anillo_eje(c - e * 0.014 * s, e, 0.0030 * s, 0.0045 * s, 4, ref=ARRIBA, giro=math.pi / 4)
+        a2 = anillo_eje(c + e * 0.014 * s + V((0, 0.005 * s, 0.002 * s)), e, 0.0024 * s, 0.0038 * s, 4,
                         ref=ARRIBA, giro=math.pi / 4)
         m.loft([a1, a2], [H, H], [PELO], tapa_ini="plana", tapa_fin="plana")
         # Orejas: medio disco aplastado al costado.
@@ -412,10 +413,9 @@ def brazo(m, M, P, lado, nombre):
     S, U, Lo = f"{nombre}Shoulder", f"{nombre}UpperArm", f"{nombre}LowerArm"
     afuera = V((lado, 0, 0))
     filas = []  # (centro, eje, radio x, radio y, pesos, material de la banda que sigue)
-    tope = hombro + V((-lado * 0.022 * g, 0, 0.052 * g))
-    filas.append((hombro + V((-lado * 0.012 * g, 0, 0.040 * g)), d1, 0.030 * g, 0.034 * g, {U: 0.5, S: 0.5}, REMERA))
-    filas.append((hombro + V((-lado * 0.004 * g, 0, 0.018 * g)), d1, 0.046 * g, 0.050 * g, {U: 0.6, S: 0.4}, REMERA))
-    filas.append((hombro - d1 * 0.03 * g, d1, 0.050 * g, 0.053 * g, {U: 0.9, S: 0.1}, REMERA))
+    tope = hombro + V((-lado * 0.034 * g, 0, 0.022 * g))
+    filas.append((hombro + V((-lado * 0.012 * g, 0, 0.012 * g)), d1, 0.040 * g, 0.046 * g, {U: 0.5, S: 0.5}, REMERA))
+    filas.append((hombro - d1 * 0.02 * g, d1, 0.049 * g, 0.053 * g, {U: 0.85, S: 0.15}, REMERA))
     fin_manga = 0.45 if not larga else 1.0
     if not larga:
         filas.append((hombro + d1 * M["brazo"] * 0.30, d1, 0.050 * g, 0.051 * g, {U: 1.0}, REMERA))
@@ -790,7 +790,7 @@ def _bvh_cabeza(s=1.0):
     for a, b in zip(vs, vs[1:]):
         for k in range(n):
             bm.faces.new((a[k], a[(k + 1) % n], b[(k + 1) % n], b[k]))
-    for punta, fila in ((V((0, -0.070 * s, -0.004 * s)), vs[0]), (V((0, 0.006 * s, 0.236 * s)), vs[-1])):
+    for punta, fila in ((V((0, -0.070 * s, -0.004 * s)), vs[0]), (V((0, 0.006 * s, 0.235 * s)), vs[-1])):
         c = bm.verts.new(punta)
         for k in range(n):
             bm.faces.new((fila[k], fila[(k + 1) % n], c))
@@ -827,8 +827,8 @@ def pelo(estilo, material, nombre=None):
     # polar baja (rad, desde arriba); patilla: cuánto más baja adelante de las orejas;
     # pelos: irregularidad del grosor (0–1).
     estilos = {
-        "corto":  dict(arriba=0.017, borde=0.006, frente=0.98, lados=1.42, atras=1.80, patilla=0.22, pelos=0.30),
-        "rapado": dict(arriba=0.006, borde=0.004, frente=1.06, lados=1.45, atras=1.82, patilla=0.15, pelos=0.15),
+        "corto":  dict(arriba=0.012, borde=0.003, frente=0.98, lados=1.50, atras=1.84, patilla=0.25, pelos=0.30),
+        "rapado": dict(arriba=0.005, borde=0.002, frente=1.06, lados=1.52, atras=1.86, patilla=0.20, pelos=0.15),
         "raya":   dict(arriba=0.022, borde=0.008, frente=0.86, lados=1.50, atras=1.84, patilla=0.15, pelos=0.25,
                        flequillo=0.016),
         "largo":  dict(arriba=0.015, borde=0.013, frente=0.92, lados=1.90, atras=2.0, patilla=0.0, pelos=0.15,
@@ -1079,9 +1079,9 @@ def _brazo_comer(pose, M, u):
     boca = pose.punta("Neck", P) + V((0, -0.11 * M["s"], 0.015 * M["s"]))
     mano_abajo = pose.cabeza("RightUpperArm", P) + V((0.05 * M["w"], -0.24 * M["k"], -0.27 * M["k"]))
     sube = _ventana(u, 0.32, 0.55, 0.14)
-    muneca = mano_abajo.lerp(boca + V((-0.04 * M["s"], -0.05 * M["s"], -0.09 * M["s"])), sube)
+    muneca = mano_abajo.lerp(boca + V((-0.05 * M["s"], -0.085 * M["s"], -0.115 * M["s"])), sube)
     brazo_ik(pose, "Right", muneca, polo=V((-1.0, 0.6, -0.6)), giro_mano=-60 * sube - 20,
-             flex_mano=10 + 25 * sube)
+             flex_mano=10 - 55 * sube)
     pose.adelante("Head", 7 * sube)
     pose.adelante("Neck", 4 * sube)
 

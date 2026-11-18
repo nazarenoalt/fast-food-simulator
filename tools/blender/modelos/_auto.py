@@ -232,6 +232,6 @@ def main(p, titulo):
             ("3/4 · atardecer", v, "tres_cuartos", "atardecer", False),
             ("Con la persona de 1,75 m · día", v + ["persona"], "tres_cuartos_atras", "dia", False),
             ("Otro color (lo elige el juego) · día", v, "tres_cuartos", "dia", False),
-        ], revision, persona_en=(1.4, 0, -0.6), antes={5: otro_color})
+        ], revision, persona_en=(-1.5, 0, 0.9), antes={5: otro_color})
     if not ok:
         sys.exit(1)

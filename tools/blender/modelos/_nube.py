@@ -8,8 +8,9 @@ de día, anaranjado al atardecer, oscuro de noche: nocturno::set_color_nubes).
 
 Acá, como las copas de los árboles (guía 3.2 y 5.4, _arbol.py): de 3 a 5 "bollos"
 facetados (envolvente convexa de puntos sobre un elipsoide con ruido, sombreado plano),
-más grandes en el medio, con la panza plana (todos los puntos de abajo se aplastan en
-y = 0: un cúmulo tiene la base pareja). Con la misma semilla sale siempre la misma nube.
+más grandes en el medio, con la panza aplastada (la mitad de abajo de cada bollo se
+achata a 0,3: un cúmulo tiene la base pareja). No se aplasta del todo contra un plano: los
+puntos coplanares de la envolvente dejaban triángulos degenerados (se veían negros). Con la misma semilla sale siempre la misma nube.
 
 Objetos (hijos del Empty `<id>`): pieza_nube, un solo material M_Lona (el blanco más claro
 de la paleta; el del código, #F7F7FA, se pasa del límite de la guía 4.2): el juego le cambia
@@ -44,12 +45,13 @@ def construir(p):
     (lona,) = comun.cargar_materiales("M_Lona")
     bm = bmesh.new()
     for centro, radios, puntos in p["bollos"]:
-        arbol.bollo(bm, rng, centro, radios, puntos, 0, [0], aplastar=0.8, piso=0.0, mezcla=0.0)
+        arbol.bollo(bm, rng, centro, radios, puntos, 0, [0], aplastar=0.3, mezcla=0.0)
     # Centrar la caja envolvente en X y Z (la panza ya está en y = 0) y llevar el largo justo
     # (escala pareja en X y Z, como el ajuste de los árboles).
     xs = [v.co.x for v in bm.verts]
     ys = [v.co.y for v in bm.verts]
-    bmesh.ops.translate(bm, vec=Vector((-(max(xs) + min(xs)) / 2, -(max(ys) + min(ys)) / 2, 0)),
+    zs = [v.co.z for v in bm.verts]
+    bmesh.ops.translate(bm, vec=Vector((-(max(xs) + min(xs)) / 2, -(max(ys) + min(ys)) / 2, -min(zs))),
                         verts=bm.verts)
     k = p["largo"] / (max(xs) - min(xs))
     bmesh.ops.scale(bm, vec=Vector((k, k, 1.0)), verts=bm.verts)
