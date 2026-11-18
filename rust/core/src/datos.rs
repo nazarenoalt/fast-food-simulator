@@ -136,6 +136,17 @@ pub fn cargar_catalogo(
     lista_bases.sort_by(|a, b| a.ancho.total_cmp(&b.ancho));
     let accesorios: Vec<Accesorio> = parsear("accesorios.ron", accesorios)?;
     for acc in &accesorios {
+        // REQ-PAP-06
+        if let Some(crate::carrito::Funcion::Surtido { objetos }) = &acc.funcion {
+            for o in objetos {
+                if !p.productos.iter().any(|x| x.id == o.producto) {
+                    return Err(error(
+                        "accesorios.ron",
+                        format!("\"{}\" trae el producto inexistente \"{}\"", acc.id, o.producto),
+                    ));
+                }
+            }
+        }
         if let Some(crate::carrito::Funcion::Aderezos { tipos, .. }) = &acc.funcion {
             for t in tipos {
                 if !aderezos.iter().any(|x| &x.id == t) {

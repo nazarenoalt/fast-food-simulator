@@ -9,7 +9,7 @@
 | Espacio | Saltar |
 | Clic izquierdo | Agarrar / soltar |
 | Clic derecho | Tirar lo que tenés en la mano |
-| E | Usar: prender el hervidor, sacar del depósito, poner aderezo (con el pancho en la mano), recargar un pomo (con el repuesto en la mano) |
+| E | Usar: prender el hervidor, abrir o cerrar la puerta del carro grande, sacar del depósito, poner aderezo (con el pancho en la mano), recargar un pomo (con el repuesto en la mano) |
 | Tab | Panel del proveedor (comprar mercadería) |
 | T | Tiempo ×30 (para ver el atardecer rápido) |
 | C | Traer un cliente al instante (para probar) |
@@ -32,6 +32,9 @@ carrito; llevá el paquete a un lugar libre del estante y queda guardado.
 ## Agregar contenido sin tocar código
 - **Un carrito nuevo:** copiá un archivo de `godot/data/carritos/` y cambiale id, medidas y anclajes.
 - **Un accesorio:** agregalo en `godot/data/accesorios.ron` (categoría, forma, función).
+  Ya hay para las papas fritas: `freidora` (con su colador), `tabla_de_cortar` (con cuchillo y
+  pelapapas) y `cartel_cerrado`; las bolsas de papas y cajitas se compran en el proveedor.
+  Ver [SPEC-025](specs/025-papas.md). El carro grande tiene una puerta trasera (E para abrirla).
 - **Tu carrito:** editá `godot/data/carrito_jugador.ron` (base, color, anclajes, stock inicial).
   Si algo no encaja, el juego muestra el error arriba del carrito.
 

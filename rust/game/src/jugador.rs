@@ -15,6 +15,7 @@ use crate::formas;
 use crate::hervidor::Hervidor;
 use crate::hud::{self, Hud};
 use crate::paquete::Paquete;
+use crate::puerta::PuertaCarrito;
 use crate::sonido;
 use crate::tienda;
 use carrito_core::deposito::Empaque;
@@ -43,6 +44,7 @@ pub enum Objetivo {
     Bloque(Gd<BloqueStock>),
     Paquete(Gd<Paquete>),
     Pomo(Gd<Pomo>),
+    Puerta(Gd<PuertaCarrito>),
 }
 
 #[derive(GodotClass)]
@@ -264,6 +266,10 @@ impl Jugador {
                 Ok(p) => return Some(Objetivo::Pomo(p)),
                 Err(n) => n,
             };
+            let n = match n.try_cast::<PuertaCarrito>() {
+                Ok(p) => return Some(Objetivo::Puerta(p)),
+                Err(n) => n,
+            };
             nodo = n.get_parent();
         }
         None
@@ -365,6 +371,8 @@ impl Jugador {
         }
         match self.objetivo() {
             Some(Objetivo::Hervidor(mut h)) => h.bind_mut().alternar(),
+            // REQ-CAR-12
+            Some(Objetivo::Puerta(mut p)) => p.bind_mut().alternar(),
             Some(Objetivo::Bloque(mut b)) => {
                 let empaque = b.bind().empaque();
                 let sacado = b.bind_mut().sacar();
@@ -442,6 +450,7 @@ impl Jugador {
             match objetivo {
                 Some(Objetivo::Comida(c)) => format!("[Clic] Agarrar {}", c.bind().descripcion().to_lowercase()),
                 Some(Objetivo::Hervidor(h)) => h.bind().cartel(),
+                Some(Objetivo::Puerta(p)) => p.bind().cartel(),
                 Some(Objetivo::Bloque(b)) => b.bind().cartel(),
                 Some(Objetivo::Paquete(p)) => format!("[Clic] Agarrar {}", p.bind().descripcion().to_lowercase()),
                 Some(Objetivo::Pomo(p)) => format!("{} — agarrá un pancho y apretá E para ponerle", p.bind().cartel()),

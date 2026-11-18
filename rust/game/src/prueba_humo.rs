@@ -3,7 +3,7 @@
 
 use carrito_core::coccion::Punto;
 use carrito_core::plaza;
-use godot::classes::{INode, Node, Node3D, PackedScene};
+use godot::classes::{INode, Label3D, Node, Node3D, PackedScene};
 use godot::prelude::*;
 
 use crate::aderecera::Pomo;
@@ -20,6 +20,7 @@ use crate::negocio::Negocio;
 use crate::palomas::Palomas;
 use crate::paquete::Paquete;
 use crate::peaton::Peaton;
+use crate::puerta::PuertaCarrito;
 use crate::sonido::Sonido;
 use crate::transito::{Autos, Nubes};
 
@@ -45,6 +46,20 @@ pub struct PruebaHumo {
     lugar: Option<Gd<LugarDeposito>>,
     superpuestos: usize,
     muestras: usize,
+}
+
+fn nuevo_pap(id: &str) -> bool {
+    matches!(
+        id,
+        "papa_cruda_sin_pelar"
+            | "papa_pelada"
+            | "papa_cortada"
+            | "papas_fritas"
+            | "cajita_papas"
+            | "pelapapas"
+            | "cuchillo"
+            | "colador_freidora"
+    )
 }
 
 fn todos<T: GodotClass + Inherits<Node>>(raiz: &Gd<Node>) -> Vec<Gd<T>> {
@@ -486,6 +501,71 @@ impl INode for PruebaHumo {
                 self.esperar(30);
             }
             17 => {
+                // ── SPEC-025 / REQ-CAR-11: papas, utensilios, puerta y cartel ──
+                let nuevos = [
+                    "papa_cruda_sin_pelar",
+                    "papa_pelada",
+                    "papa_cortada",
+                    "papas_fritas",
+                    "cajita_papas",
+                    "pelapapas",
+                    "cuchillo",
+                    "colador_freidora",
+                ];
+                for (i, id) in nuevos.iter().enumerate() {
+                    self.agregar_comida(id, Vector3::new(60.0 + i as f32 * 0.3, 2.0, 60.0));
+                }
+                let def = crate::datos::catalogo().bloque("bolsa_papas").expect("bolsa_papas").clone();
+                let mut bolsa = BloqueStock::crear(def);
+                self.mundo().add_child(&bolsa);
+                bolsa.set_global_position(Vector3::new(62.0, 1.0, 60.0));
+
+                // Un carro grande aparte, con su puerta.
+                let mut grande = Carrito::con_base("carro_grande");
+                self.mundo().add_child(&grande);
+                grande.set_global_position(Vector3::new(60.0, 0.0, 70.0));
+                self.esperar(30);
+            }
+            18 => {
+                let mundo = self.mundo();
+                self.chequear(
+                    todos::<Comida>(&mundo).iter().filter(|c| nuevo_pap(c.bind().producto())).count() >= 8,
+                    "REQ-PAP-01/02/04 se crean las papas, la cajita y los utensilios",
+                );
+                self.chequear(
+                    todos::<BloqueStock>(&mundo)
+                        .iter()
+                        .any(|b| b.bind().producto() == "papa_cruda_sin_pelar" && b.bind().unidades_visibles() == 12),
+                    "REQ-PAP-03 la bolsa de papas muestra sus 12 papas",
+                );
+                let puertas = todos::<PuertaCarrito>(&mundo);
+                self.chequear(puertas.len() == 1, "REQ-CAR-11 solo el carro grande tiene puerta");
+                if let Some(mut p) = puertas.first().cloned() {
+                    self.chequear(!p.bind().abierta(), "REQ-CAR-12 la puerta arranca cerrada");
+                    p.bind_mut().alternar();
+                    self.esperar(75);
+                } else {
+                    self.esperar(1);
+                }
+                let cartel = todos::<Label3D>(&mundo).iter().any(|l| l.get_text() == "CERRADO");
+                self.chequear(cartel, "REQ-PAP-07 el cartel de cerrado dice CERRADO");
+            }
+            19 => {
+                let mundo = self.mundo();
+                if let Some(mut p) = todos::<PuertaCarrito>(&mundo).first().cloned() {
+                    self.chequear(
+                        p.bind().abierta() && p.bind().progreso() == 1.0,
+                        "REQ-CAR-12 la puerta se abrió del todo",
+                    );
+                    p.bind_mut().alternar();
+                }
+                self.esperar(75);
+            }
+            20 => {
+                let mundo = self.mundo();
+                if let Some(p) = todos::<PuertaCarrito>(&mundo).first() {
+                    self.chequear(!p.bind().abierta() && p.bind().progreso() == 0.0, "REQ-CAR-12 la puerta se cerró");
+                }
                 self.terminar();
             }
             _ => {}

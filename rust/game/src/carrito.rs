@@ -4,6 +4,7 @@ use carrito_core::carrito::{BaseCarrito, CarritoArmado, Funcion, armar};
 use carrito_core::clientes::SEPARACION_FILA;
 use carrito_core::forma::TipoPieza;
 use godot::classes::base_material_3d::BillboardMode;
+use godot::classes::label_3d::DrawFlags;
 use godot::classes::{Area3D, BoxShape3D, INode3D, Label3D, Node3D};
 use godot::prelude::*;
 
@@ -15,6 +16,7 @@ use crate::formas;
 use crate::hervidor::Hervidor;
 use crate::lugar_deposito::LugarDeposito;
 use crate::luz::LuzNocturna;
+use crate::puerta::PuertaCarrito;
 
 const ACERO: [f32; 3] = [0.82, 0.83, 0.85];
 pub const GRUPO: &str = "carrito";
@@ -31,6 +33,13 @@ pub struct Carrito {
 }
 
 impl Carrito {
+    /// Un carrito con otra base que la del jugador (para pruebas).
+    pub fn con_base(base: &str) -> Gd<Self> {
+        let mut c = Self::new_alloc();
+        c.bind_mut().base_forzada = GString::from(base);
+        c
+    }
+
     /// REQ-CAR-10: lugar `i` de la fila (global). La fila sigue hacia +X de la base.
     pub fn posicion_fila(&self, i: usize) -> Vector3 {
         let f = self.base_def.as_ref().map(|b| b.fila).unwrap_or([0.0, 0.0, 1.0]);
@@ -166,6 +175,16 @@ impl Carrito {
         }
     }
 
+    /// REQ-CAR-11: la puerta de la base, si tiene.
+    fn construir_puerta(&mut self, armado: &CarritoArmado) {
+        if let Some(def) = &armado.base.puerta {
+            let mut yo = self.to_gd().upcast::<Node3D>();
+            let mut puerta = PuertaCarrito::crear(def.clone(), armado.color);
+            puerta.set_name("Puerta");
+            yo.add_child(&puerta);
+        }
+    }
+
     fn construir_accesorios(&mut self, armado: &CarritoArmado) {
         let mut yo = self.to_gd().upcast::<Node3D>();
         for c in &armado.colocados {
@@ -197,6 +216,30 @@ impl Carrito {
                 }
                 Some(Funcion::Aderezos { tipos, separacion }) => {
                     aderecera::construir(&mut nodo, tipos, *separacion);
+                }
+                Some(Funcion::Surtido { objetos }) => {
+                    // REQ-PAP-06: objetos sueltos ya apoyados (físicos, se pueden agarrar).
+                    let t = nodo.get_transform();
+                    for o in objetos {
+                        let mut obj = Comida::crear(&o.producto);
+                        obj.set_position(t * formas::v3(o.pos));
+                        obj.set_rotation_degrees(Vector3::new(0.0, c.anclaje.rot_y + o.rot_y, 0.0));
+                        yo.add_child(&obj);
+                    }
+                }
+                Some(Funcion::Cartel { texto, pos, tamano, color }) => {
+                    // REQ-PAP-07: el texto se lee de frente (+Z) y también por detrás.
+                    for (z, giro) in [(pos[2], 0.0), (pos[2] - 0.015, 180.0)] {
+                        let mut l = Label3D::new_alloc();
+                        l.set_text(texto);
+                        l.set_modulate(formas::color(*color));
+                        l.set_font_size(64);
+                        l.set_pixel_size(tamano / 64.0);
+                        l.set_draw_flag(DrawFlags::DOUBLE_SIDED, false);
+                        l.set_position(Vector3::new(pos[0], pos[1], z));
+                        l.set_rotation_degrees(Vector3::new(0.0, giro, 0.0));
+                        nodo.add_child(&l);
+                    }
                 }
                 Some(Funcion::Luz { pos, color, energia, alcance }) => {
                     // REQ-CAR-06: se prende de noche (grupo luces_noche).
@@ -238,6 +281,7 @@ impl INode3D for Carrito {
             Ok(armado) => {
                 self.construir_base(&armado);
                 self.construir_bandeja(&armado.base);
+                self.construir_puerta(&armado);
                 self.construir_accesorios(&armado);
                 self.base_def = Some(armado.base.clone());
             }
