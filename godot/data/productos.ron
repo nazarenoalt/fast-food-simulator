@@ -4,6 +4,7 @@
     productos: [
         (
             id: "pan_pancho",
+            modelo: Some("comida/pan_pancho"), // SPEC-025
             nombre: "pan de pancho",
             masa: 0.04,
             colision: Caja(medidas: (0.17, 0.045, 0.055)),
@@ -15,6 +16,7 @@
         ),
         (
             id: "salchicha",
+            modelo: Some("comida/salchicha"),
             nombre: "salchicha",
             masa: 0.05,
             colision: Capsula(radio: 0.011, largo: 0.15),
@@ -110,15 +112,17 @@
         ),
         (
             id: "pancho",
+            modelo: Some("comida/pancho"),
+            altura_aderezos: Some(0.0152), // REQ-MOD-12: la salchicha va hundida en el pan
             nombre: "pancho",
             masa: 0.09,
             precio: Some(2500), // REQ-ECO-03
             aderezos: ["mostaza", "ketchup", "mayonesa", "papas_pay"], // REQ-ADE-07
             requiere: Some("Hervidor"), // REQ-CLI-04
-            colision: Caja(medidas: (0.17, 0.06, 0.055)),
+            colision: Caja(medidas: (0.17, 0.045, 0.055)), // REQ-MOD-12: mide lo mismo que el pan
             forma: [
                 (tipo: Capsula, medidas: (0.027, 0.17, 0), rot: (0, 0, 90), escala: (1, 0.85, 1), color: (0.86, 0.6, 0.32)),
-                (tipo: Capsula, medidas: (0.011, 0.155, 0), pos: (0, 0.024, 0), rot: (0, 0, 90), color: (0.72, 0.3, 0.2), tinte_coccion: true),
+                (tipo: Capsula, medidas: (0.011, 0.155, 0), pos: (0, 0.004, 0), rot: (0, 0, 90), color: (0.72, 0.3, 0.2), tinte_coccion: true),
             ],
         ),
         (

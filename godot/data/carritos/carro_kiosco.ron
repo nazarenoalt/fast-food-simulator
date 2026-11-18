@@ -1,0 +1,29 @@
+// Base de carrito (SPEC-006). Frente (cliente) = +Z, vendedor del lado -Z.
+// REQ-CAR-12: carro kiosco (carro de chorizos de esquina). El vendedor trabaja adentro,
+// sobre un piso a 0,15 m, detrás de la vitrina; el techo y el cartel vienen con la base.
+// Posiciones relativas al centro del piso de la base (a nivel de la calle).
+(
+    id: "carro_kiosco",
+    modelo: Some("carritos/carro_kiosco"), // SPEC-025
+    nombre: "Carro kiosco",
+    ancho: 3.2, profundidad: 1.7, alto_mostrador: 1.05,
+    color: (0.78, 0.13, 0.1),
+    ruedas: true,
+    precio: 900000,
+    entrega: (0.0, 1.05, 0.97), // REQ-CAR-10: en la repisa de afuera, en el medio de la ventana
+    fila: (0.0, 0.0, 1.5), // REQ-CAR-10: frente a la ventana (sigue hacia +X)
+    jugador: Some((0.0, 0.16, -0.05)), // REQ-CAR-11: adentro, detrás de la ventana
+    pallet: Some((-0.6, 0.0, -1.4)), // REQ-CAR-11: atrás, lejos de la puerta y del porche (sin pisar el cordón)
+    puerta: Some(100.0), // REQ-CAR-11: la puerta arranca abierta (hacia afuera)
+    anclajes: [
+        (id: "mostrador_izq", pos: (-0.57, 1.05, 0.55), categorias: [Cocina, Equipamiento]),
+        (id: "mostrador_centro", pos: (0.0, 1.05, 0.55), categorias: [Cocina, Equipamiento, Decoracion]),
+        (id: "mostrador_der", pos: (0.57, 1.05, 0.55), categorias: [Cocina, Equipamiento, Decoracion]),
+        (id: "atras_izq", pos: (-1.05, 1.05, -0.64), categorias: [Cocina, Equipamiento, Deposito]),
+        (id: "atras_der", pos: (0.15, 1.05, -0.64), categorias: [Cocina, Equipamiento, Deposito]),
+        (id: "frente", pos: (0.0, 0.25, 0.89), categorias: [Telon, Decoracion]),
+        (id: "lateral_der", pos: (1.6, 0.0, 0.0), categorias: [Porche]),
+        (id: "luz_1", pos: (-1.2, 2.15, 0.97), categorias: [Luz]),
+        (id: "luz_2", pos: (1.2, 2.15, 0.97), categorias: [Luz]),
+    ],
+)

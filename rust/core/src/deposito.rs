@@ -23,6 +23,9 @@ pub struct DefBloque {
     pub empaque: Empaque,
     pub color_empaque: [f32; 3],
     pub precio: f32,
+    /// REQ-MOD-01: modelo 3D del empaque (las unidades las sigue dibujando el código).
+    #[serde(default)]
+    pub modelo: Option<String>,
 }
 
 impl DefBloque {
@@ -146,6 +149,7 @@ pub(crate) fn bolsa_panes() -> DefBloque {
         empaque: Empaque::Bolsa,
         color_empaque: [0.9, 0.9, 0.95],
         precio: 1500.0,
+        modelo: None,
     }
 }
 

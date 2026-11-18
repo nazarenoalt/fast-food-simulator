@@ -77,7 +77,7 @@ Cada etapa abre con sus specs (SPEC-000) y cierra con docs al día. Formato en [
 | ID | Tarea | Spec | Estado |
 |---|---|---|---|
 | 0701 | Sonido y música | 013, 024 | 🔄 |
-| 0702 | Modelos de Blender (`.glb`) reemplazan las piezas simples | 006, 013 | ⬜ |
+| 0702 | Modelos de Blender (`.glb`) reemplazan las piezas simples (carritos, comida, plaza y kiosco ya; faltan personajes, ciudad y equipos) | 006, 013, 025 | 🔄 |
 | 0703 | Animaciones | 013 | ⬜ |
 
 ## Etapa 7b · Persistencia y clima (`feat (mundo)`) · PR TASK-0750

@@ -55,6 +55,7 @@ Estado: Borrador | Aprobada | Implementada
 | PAR | 015 Parrilla con carbón y pan tostado |
 | HEL | 016 Heladera y cadena de frío |
 | SON | 024 Sonido |
+| MOD | 025 Modelos 3D |
 
 ## Convenciones de código
 

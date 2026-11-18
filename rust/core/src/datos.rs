@@ -51,6 +51,12 @@ pub struct DefProducto {
     /// REQ-ADE-05: si es un repuesto, qué aderezo repone.
     #[serde(default)]
     pub repone: Option<String>,
+    /// REQ-MOD-01: modelo 3D que reemplaza a `forma`.
+    #[serde(default)]
+    pub modelo: Option<String>,
+    /// REQ-MOD-12: altura (desde el centro) donde se dibujan los aderezos.
+    #[serde(default)]
+    pub altura_aderezos: Option<f32>,
     /// REQ-HEL-03: carne que se echa a perder si no se mantiene fría.
     #[serde(default)]
     pub perecedero: bool,

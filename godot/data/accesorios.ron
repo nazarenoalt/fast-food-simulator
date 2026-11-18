@@ -4,6 +4,7 @@
     // ── Cocina ──────────────────────────────────────────────
     (
         id: "hervidor_chico",
+        modelo: Some("cocina/hervidor_chico"), // SPEC-025
         nombre: "Hervidor baño maría chico",
         categoria: Cocina,
         precio: 45000,
@@ -53,6 +54,7 @@
     // ── Depósito ────────────────────────────────────────────
     (
         id: "estante_deposito",
+        modelo: Some("accesorios/estante_deposito"), // SPEC-025
         nombre: "Estante de depósito",
         categoria: Deposito,
         precio: 30000,
@@ -71,6 +73,7 @@
     // ── Sombrilla ───────────────────────────────────────────
     (
         id: "sombrilla_roja",
+        modelo: Some("accesorios/sombrilla"), // SPEC-025
         nombre: "Sombrilla roja",
         categoria: Sombrilla,
         precio: 18000,
@@ -82,6 +85,9 @@
     ),
     (
         id: "sombrilla_rayada",
+        modelo: Some("accesorios/sombrilla"), // SPEC-025
+        // REQ-MOD-06: mismo modelo que la roja, con los gajos blanco y azul.
+        superficies: [("pieza_pano", [(0.95, 0.95, 0.9), (0.1, 0.45, 0.8)])],
         nombre: "Sombrilla rayada",
         categoria: Sombrilla,
         precio: 22000,
@@ -95,6 +101,7 @@
     // ── Carpa ───────────────────────────────────────────────
     (
         id: "carpa_2x2",
+        modelo: Some("accesorios/carpa_2x2"), // SPEC-025
         nombre: "Carpa 2×2",
         categoria: Carpa,
         precio: 60000,
@@ -109,6 +116,7 @@
     // ── Telón ───────────────────────────────────────────────
     (
         id: "telon_panchos",
+        modelo: Some("accesorios/telon_panchos"), // SPEC-025
         nombre: "Telón \"Panchos\"",
         categoria: Telon,
         precio: 9000,
@@ -121,6 +129,7 @@
     // ── Cerco ───────────────────────────────────────────────
     (
         id: "cerco_bajo",
+        modelo: Some("accesorios/cerco_bajo"), // SPEC-025
         nombre: "Cerco bajo de madera",
         categoria: Cerco,
         precio: 15000,
@@ -134,6 +143,8 @@
     // ── Luz ─────────────────────────────────────────────────
     (
         id: "foco_calido",
+        modelo: Some("accesorios/foco_calido"), // SPEC-025
+        pos_modelo: (0, 0.345, 0), // REQ-MOD-03: el modelo cuelga desde arriba; la lamparita queda en el anclaje
         nombre: "Foco cálido colgante",
         categoria: Luz,
         precio: 5000,
@@ -145,6 +156,7 @@
     // ── Decoración ──────────────────────────────────────────
     (
         id: "pizarra_precios",
+        modelo: Some("accesorios/pizarra_precios"), // SPEC-025
         nombre: "Pizarra de precios",
         categoria: Decoracion,
         precio: 7000,
@@ -153,9 +165,26 @@
             (tipo: Caja, medidas: (0.36, 0.44, 0.015), pos: (0, 0.22, -0.006), rot: (-12, 0, 0), color: (0.55, 0.35, 0.2)),
         ],
     ),
+    // ── Porche ──────────────────────────────────────────────
+    (
+        id: "porche_nylon",
+        modelo: Some("accesorios/porche_nylon"), // SPEC-025
+        nombre: "Porche de nylon",
+        categoria: Porche, // REQ-CAR-04
+        precio: 40000,
+        // Respaldo (REQ-MOD-09): caños y techito; el nylon no choca.
+        forma: [
+            (tipo: Cilindro, medidas: (0.02, 2.1, 0), pos: (2.05, 1.05, 0.9), color: (0.1, 0.45, 0.8)),
+            (tipo: Cilindro, medidas: (0.02, 2.1, 0), pos: (2.05, 1.05, -0.9), color: (0.1, 0.45, 0.8)),
+            (tipo: Caja, medidas: (2.1, 0.03, 1.84), pos: (1.05, 2.12, 0), color: (0.95, 0.95, 0.95), colision: false),
+            (tipo: Caja, medidas: (2.0, 1.8, 0.01), pos: (1.05, 1.0, 0.92), color: (0.92, 0.94, 1.0), alfa: 0.25, colision: false),
+            (tipo: Caja, medidas: (2.0, 1.8, 0.01), pos: (1.05, 1.0, -0.92), color: (0.92, 0.94, 1.0), alfa: 0.25, colision: false),
+        ],
+    ),
     // ── Equipamiento ────────────────────────────────────────
     (
         id: "aderecera_tres",
+        modelo: Some("accesorios/aderecera_tres"), // SPEC-025
         nombre: "Aderecera de tres pomos",
         categoria: Equipamiento,
         precio: 12000,
@@ -176,6 +205,7 @@
     ),
     (
         id: "servilletero",
+        modelo: Some("accesorios/servilletero"), // SPEC-025
         nombre: "Servilletero",
         categoria: Equipamiento,
         precio: 3000,
