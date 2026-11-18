@@ -5,6 +5,8 @@
 name: CI
 on:
   pull_request:
+    # "edited": vuelve a revisar cuando se pega la línea de verificación en la descripción.
+    types: [opened, edited, synchronize, reopened]
   workflow_dispatch:
 
 concurrency:
