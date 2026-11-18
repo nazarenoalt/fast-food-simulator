@@ -1,0 +1,97 @@
+{
+  "_nota": "Fuente única de la paleta (docs/arte/guia-modelado-3d.md, sección 4). La leen tools/arte/generar_paleta.py y tools/blender/biblioteca.py. Para agregar un color: sumarlo acá, a la tabla de la guía, y volver a correr ambos scripts.",
+  "grupos": [
+    {
+      "nombre": "Carrito y equipos",
+      "materiales": [
+        {"nombre": "M_PinturaCarrito", "hex": "#C7211A", "metalico": 0.0, "rugosidad": 0.6},
+        {"nombre": "M_Acero", "hex": "#D1D4D9", "metalico": 0.6, "rugosidad": 0.35},
+        {"nombre": "M_MetalOscuro", "hex": "#595961", "metalico": 0.6, "rugosidad": 0.4},
+        {"nombre": "M_Goma", "hex": "#1F1F1F", "metalico": 0.0, "rugosidad": 0.9},
+        {"nombre": "M_PlasticoNegro", "hex": "#1A1A1A", "metalico": 0.0, "rugosidad": 0.5},
+        {"nombre": "M_MaderaClara", "hex": "#B28C61", "metalico": 0.0, "rugosidad": 0.8},
+        {"nombre": "M_PilotoApagado", "hex": "#400D0D", "metalico": 0.0, "rugosidad": 0.4},
+        {"nombre": "M_Carbon", "hex": "#262322", "metalico": 0.0, "rugosidad": 0.95},
+        {"nombre": "M_Brasa", "hex": "#FF6A1F", "metalico": 0.0, "rugosidad": 0.8, "emision": 2.0}
+      ]
+    },
+    {
+      "nombre": "Comida y empaques",
+      "materiales": [
+        {"nombre": "M_PanCorteza", "hex": "#DB9952", "metalico": 0.0, "rugosidad": 0.75},
+        {"nombre": "M_PanMiga", "hex": "#E8C88E", "metalico": 0.0, "rugosidad": 0.8},
+        {"nombre": "M_SalchichaCruda", "hex": "#ED8C80", "metalico": 0.0, "rugosidad": 0.6},
+        {"nombre": "(ref) Salchicha cocida", "hex": "#B84C33", "solo_referencia": true},
+        {"nombre": "M_Carton", "hex": "#C79E6B", "metalico": 0.0, "rugosidad": 0.9},
+        {"nombre": "M_BolsaPlastica", "hex": "#EBF0FF", "metalico": 0.0, "rugosidad": 0.3, "alfa": 0.35},
+        {"nombre": "M_PlasticoClaro", "hex": "#8C939A", "metalico": 0.0, "rugosidad": 0.15, "alfa": 0.15},
+        {"nombre": "M_CarneCruda", "hex": "#B5474A", "metalico": 0.0, "rugosidad": 0.65},
+        {"nombre": "M_Lechuga", "hex": "#7DAA3C", "metalico": 0.0, "rugosidad": 0.7},
+        {"nombre": "M_Tomate", "hex": "#C83A2A", "metalico": 0.0, "rugosidad": 0.5},
+        {"nombre": "M_Chimichurri", "hex": "#55702E", "metalico": 0.0, "rugosidad": 0.6},
+        {"nombre": "M_PapelMadera", "hex": "#B98A57", "metalico": 0.0, "rugosidad": 0.9},
+        {"nombre": "M_Vidrio", "hex": "#8C9A9C", "metalico": 0.0, "rugosidad": 0.1, "alfa": 0.2}
+      ]
+    },
+    {
+      "nombre": "Plaza (fondo)",
+      "materiales": [
+        {"nombre": "M_Pasto", "hex": "#3D662B", "metalico": 0.0, "rugosidad": 1.0},
+        {"nombre": "M_Baldosa", "hex": "#948C80", "metalico": 0.0, "rugosidad": 0.9},
+        {"nombre": "M_Camino", "hex": "#A38F70", "metalico": 0.0, "rugosidad": 0.95},
+        {"nombre": "M_Vereda", "hex": "#7A7A78", "metalico": 0.0, "rugosidad": 0.9},
+        {"nombre": "M_Asfalto", "hex": "#2B2B2E", "metalico": 0.0, "rugosidad": 0.95},
+        {"nombre": "M_Madera", "hex": "#8C5C33", "metalico": 0.0, "rugosidad": 0.85},
+        {"nombre": "M_Hierro", "hex": "#262926", "metalico": 0.5, "rugosidad": 0.6},
+        {"nombre": "M_Tronco", "hex": "#61452E", "metalico": 0.0, "rugosidad": 1.0},
+        {"nombre": "M_Hojas1", "hex": "#336B2E", "metalico": 0.0, "rugosidad": 0.9},
+        {"nombre": "M_Hojas2", "hex": "#3D7833", "metalico": 0.0, "rugosidad": 0.9},
+        {"nombre": "M_Hojas3", "hex": "#2E6629", "metalico": 0.0, "rugosidad": 0.9},
+        {"nombre": "M_FlorLila1", "hex": "#6F5F99", "metalico": 0.0, "rugosidad": 0.9},
+        {"nombre": "M_FlorLila2", "hex": "#8574AE", "metalico": 0.0, "rugosidad": 0.9},
+        {"nombre": "M_Piedra", "hex": "#B2B2AD", "metalico": 0.0, "rugosidad": 0.9},
+        {"nombre": "M_Terracota", "hex": "#B4623E", "metalico": 0.0, "rugosidad": 0.9},
+        {"nombre": "M_PlumaGris", "hex": "#8A909C", "metalico": 0.0, "rugosidad": 0.85},
+        {"nombre": "M_PlumaOscura", "hex": "#4A5058", "metalico": 0.0, "rugosidad": 0.8},
+        {"nombre": "M_Muro1", "hex": "#DBCCAD", "metalico": 0.0, "rugosidad": 0.9},
+        {"nombre": "M_Muro2", "hex": "#9EA8B3", "metalico": 0.0, "rugosidad": 0.9},
+        {"nombre": "M_Muro3", "hex": "#8C9980", "metalico": 0.0, "rugosidad": 0.9},
+        {"nombre": "M_Muro4", "hex": "#D1B88C", "metalico": 0.0, "rugosidad": 0.9},
+        {"nombre": "M_Agua", "hex": "#4C80B2", "metalico": 0.0, "rugosidad": 0.1, "alfa": 0.7}
+      ]
+    },
+    {
+      "nombre": "Acentos y luces",
+      "materiales": [
+        {"nombre": "M_Amarillo", "hex": "#FACC1A", "metalico": 0.0, "rugosidad": 0.6},
+        {"nombre": "M_RojoAcento", "hex": "#D91F1A", "metalico": 0.0, "rugosidad": 0.6},
+        {"nombre": "M_AzulAcento", "hex": "#1A73CC", "metalico": 0.0, "rugosidad": 0.6},
+        {"nombre": "M_BlancoCrema", "hex": "#F2F2E6", "metalico": 0.0, "rugosidad": 0.7},
+        {"nombre": "M_Lona", "hex": "#F2F2F2", "metalico": 0.0, "rugosidad": 0.9},
+        {"nombre": "M_Pizarra", "hex": "#141A14", "metalico": 0.0, "rugosidad": 0.9},
+        {"nombre": "M_LuzCalida", "hex": "#FFBF73", "metalico": 0.0, "rugosidad": 0.5, "emision": 2.0},
+        {"nombre": "M_LuzFarol", "hex": "#FFD18C", "metalico": 0.0, "rugosidad": 0.5, "emision": 2.0},
+        {"nombre": "M_ToldoVerde", "hex": "#268040", "metalico": 0.0, "rugosidad": 0.8},
+        {"nombre": "M_ToldoNaranja", "hex": "#D98C1A", "metalico": 0.0, "rugosidad": 0.8}
+      ]
+    },
+    {
+      "nombre": "Personajes",
+      "materiales": [
+        {"nombre": "M_Piel1", "hex": "#EBC3A0", "metalico": 0.0, "rugosidad": 0.6},
+        {"nombre": "M_Piel2", "hex": "#D19C74", "metalico": 0.0, "rugosidad": 0.6},
+        {"nombre": "M_Piel3", "hex": "#A46E4C", "metalico": 0.0, "rugosidad": 0.6},
+        {"nombre": "M_Piel4", "hex": "#664332", "metalico": 0.0, "rugosidad": 0.6},
+        {"nombre": "M_PeloNegro", "hex": "#231D19", "metalico": 0.0, "rugosidad": 0.8},
+        {"nombre": "M_PeloCastano", "hex": "#533824", "metalico": 0.0, "rugosidad": 0.8},
+        {"nombre": "M_PeloRubio", "hex": "#B89560", "metalico": 0.0, "rugosidad": 0.8},
+        {"nombre": "M_PeloCanoso", "hex": "#A9A6A0", "metalico": 0.0, "rugosidad": 0.8},
+        {"nombre": "M_Jean", "hex": "#3A4A66", "metalico": 0.0, "rugosidad": 0.9},
+        {"nombre": "M_TelaGris", "hex": "#5C5F66", "metalico": 0.0, "rugosidad": 0.9},
+        {"nombre": "M_TelaBeige", "hex": "#A39478", "metalico": 0.0, "rugosidad": 0.9},
+        {"nombre": "M_TelaVerde", "hex": "#55684A", "metalico": 0.0, "rugosidad": 0.9},
+        {"nombre": "M_TelaBordo", "hex": "#7A3038", "metalico": 0.0, "rugosidad": 0.9}
+      ]
+    }
+  ]
+}

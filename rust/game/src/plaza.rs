@@ -5,8 +5,8 @@ use carrito_core::plaza::{self, Prop, TipoProp};
 use godot::classes::{INode3D, Node3D};
 use godot::prelude::*;
 
-use crate::formas;
 use crate::luz::LuzNocturna;
+use crate::{formas, modelos};
 
 const PASTO: [f32; 3] = [0.24, 0.4, 0.17];
 const BALDOSA: [f32; 3] = [0.58, 0.55, 0.5];
@@ -31,11 +31,22 @@ fn solida(tipo: TipoPieza, medidas: [f32; 3], pos: [f32; 3], c: [f32; 3]) -> Pie
     Pieza { colision: true, ..formas::pieza(tipo, medidas, pos, c) }
 }
 
-fn prop(padre: &mut Gd<Node3D>, p: &Prop) {
+fn prop(padre: &mut Gd<Node3D>, p: &Prop, i: usize) {
     let mut nodo = Node3D::new_alloc();
     nodo.set_position(Vector3::new(p.x, 0.0, p.z));
     nodo.set_rotation_degrees(Vector3::new(0.0, p.rot_y, 0.0));
     padre.add_child(&nodo);
+    // REQ-MOD-11: el modelo del mueble (su colisión viene en el modelo, REQ-MOD-04). Si no
+    // carga, las piezas simples (REQ-MOD-09).
+    if modelos::agregar(&mut nodo, carrito_core::modelos::modelo_prop(p.tipo, i)).is_some() {
+        if p.tipo == TipoProp::Farol {
+            // REQ-MUN-02: los faroles son luces nocturnas.
+            let mut luz = LuzNocturna::crear([1.0, 0.82, 0.55], 3.0, 13.0, 0.12, false);
+            luz.set_position(Vector3::new(0.0, 3.62, 0.0));
+            nodo.add_child(&luz);
+        }
+        return;
+    }
     // REQ-MUN-04: todo el mobiliario tiene colisión.
     match p.tipo {
         TipoProp::Banco => formas::construir(
@@ -126,8 +137,8 @@ impl INode3D for Plaza {
         )));
 
         // REQ-MUN-05: distribución fija.
-        for p in plaza::distribucion() {
-            prop(&mut yo, &p);
+        for (i, p) in plaza::distribucion().iter().enumerate() {
+            prop(&mut yo, p, i);
         }
     }
 }

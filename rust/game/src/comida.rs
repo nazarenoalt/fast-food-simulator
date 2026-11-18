@@ -10,13 +10,12 @@ use carrito_core::lados::CoccionLados;
 use carrito_core::plancha::{entorno_por_lados, lado_abajo};
 use carrito_core::tostado::{EstadoPan, estado_lado, estado_pan};
 use godot::classes::{
-    Area3D, BoxShape3D, CapsuleShape3D, Engine, IRigidBody3D, MeshInstance3D, PhysicsMaterial, RigidBody3D,
-    StandardMaterial3D,
+    Area3D, BoxShape3D, CapsuleShape3D, Engine, IRigidBody3D, PhysicsMaterial, RigidBody3D, StandardMaterial3D,
 };
 use godot::prelude::*;
 
 use crate::datos::catalogo;
-use crate::formas;
+use crate::{formas, modelos};
 
 #[derive(GodotClass)]
 #[class(base=RigidBody3D, no_init)]
@@ -294,6 +293,8 @@ impl Comida {
             return;
         }
         let mut nodo = godot::classes::Node3D::new_alloc();
+        // REQ-MOD-12: altura de los aderezos según el producto (en el pancho modelado, más abajo).
+        let y0 = self.def.altura_aderezos.unwrap_or(0.037);
         for (k, id) in self.aderezos.iter().enumerate() {
             let color = catalogo().aderezo(id).map(|a| a.color).unwrap_or([1.0; 3]);
             // Zigzag: palitos finos alternando el ángulo, un poco más arriba cada aderezo.
@@ -301,7 +302,7 @@ impl Comida {
                 let mut p = formas::pieza(
                     carrito_core::forma::TipoPieza::Caja,
                     [0.03, 0.004, 0.005],
-                    [-0.0625 + i as f32 * 0.025, 0.037 + k as f32 * 0.003, 0.0],
+                    [-0.0625 + i as f32 * 0.025, y0 + k as f32 * 0.003, 0.0],
                     color,
                 );
                 p.rot = [0.0, if i % 2 == 0 { 35.0 } else { -35.0 }, 0.0];
@@ -427,21 +428,12 @@ impl IRigidBody3D for Comida {
         mat.set_bounce(0.15);
         yo.set_physics_material_override(&mat);
 
-        // Forma visual. Las piezas con tinte de cocción tienen su propio material.
-        for p in &def.forma {
-            let mi: Gd<MeshInstance3D> = formas::visual_pieza(p);
-            if p.tinte_coccion {
-                if let Some(m) = mi.get_material_override() {
-                    self.tintes.push(m.cast::<StandardMaterial3D>());
-                }
-            }
-            if let Some(lado) = p.tinte_lado.filter(|l| *l < 2) {
-                if let Some(m) = mi.get_material_override() {
-                    self.tintes_lado[lado].push(m.cast::<StandardMaterial3D>());
-                }
-            }
-            yo.add_child(&mi);
-        }
+        // Forma visual: el modelo (SPEC-025) o las piezas simples. Las piezas que se
+        // cocinan (entera o por lados) tienen su propio material. REQ-MOD-05
+        let (visual, tintes, tintes_lado) = modelos::visual_producto(&def);
+        yo.add_child(&visual);
+        self.tintes = tintes;
+        self.tintes_lado = tintes_lado;
 
         // Colisión.
         match def.colision {
