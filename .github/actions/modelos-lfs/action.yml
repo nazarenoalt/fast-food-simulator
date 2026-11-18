@@ -23,5 +23,5 @@ runs:
       run: |
         git lfs pull --include="godot/**"
         # Sin el .glb real (queda el puntero de texto) fallan los tests de modelos.
-        f=$(git lfs ls-files -n -I 'godot/**' | head -1)
+        f=$(git lfs ls-files -n -I 'godot/**' | sed -n 1p) # sed lee todo: head cortaría el caño (141)
         [ -z "$f" ] || [ "$(head -c 4 "$f")" = "glTF" ] || { echo "::error::$f no se bajó de LFS"; exit 1; }
