@@ -220,8 +220,7 @@ mod tests {
     #[test]
     fn req_coc_04_estados_y_quemado_definitivo() {
         let p = perfil_salchicha();
-        let mut e = EstadoCoccion::default();
-        e.avance = 3.0;
+        let mut e = EstadoCoccion { avance: 3.0, ..Default::default() };
         assert_eq!(e.punto(&p), Punto::Cocido);
         e.avance = 13.0;
         assert_eq!(e.punto(&p), Punto::Pasado);

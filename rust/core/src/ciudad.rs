@@ -230,9 +230,9 @@ mod tests {
         // Fila de enfrente: del otro lado de la calle, mirando a la plaza.
         let norte: Vec<_> = e.iter().filter(|b| b.rot_y == 0.0).collect();
         assert!(norte.len() >= 10);
+        const { assert!(Z_FACHADA_NORTE < plaza::Z_CALLE - plaza::ANCHO_CALLE / 2.0) };
         for b in &norte {
             assert!(b.z + b.fondo / 2.0 <= Z_FACHADA_NORTE + 0.01, "{b:?}");
-            assert!(Z_FACHADA_NORTE < plaza::Z_CALLE - plaza::ANCHO_CALLE / 2.0);
         }
         // Los otros tres lados.
         for rot in [180.0, -90.0, 90.0] {

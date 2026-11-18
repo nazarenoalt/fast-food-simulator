@@ -121,12 +121,12 @@ impl Peaton {
     /// REQ-CLI-05: texto fijo del globo (pedido) con color de paciencia.
     pub fn globo(&mut self, texto: &str, color: Color) {
         self.globo_fijo = texto.to_string();
-        if self.globo_temporal <= 0.0 {
-            if let Some(g) = &mut self.globo {
-                g.set_text(texto);
-                g.set_visible(!texto.is_empty());
-                g.set_modulate(color);
-            }
+        if self.globo_temporal <= 0.0
+            && let Some(g) = &mut self.globo
+        {
+            g.set_text(texto);
+            g.set_visible(!texto.is_empty());
+            g.set_modulate(color);
         }
     }
 
@@ -299,7 +299,7 @@ impl Peaton {
         // REQ-AMB-05: perro (se mueve por su cuenta, siguiendo al dueño).
         if self.con_perro {
             let mut perro = Node3D::new_alloc();
-            let pelaje = if self.id % 3 == 0 {
+            let pelaje = if self.id.is_multiple_of(3) {
                 [0.15, 0.12, 0.1]
             } else if self.id % 3 == 1 {
                 [0.65, 0.45, 0.25]

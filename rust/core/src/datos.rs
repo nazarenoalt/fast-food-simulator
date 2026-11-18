@@ -162,18 +162,15 @@ pub fn cargar_catalogo(
                 return Err(error("productos.ron", format!("\"{}\" admite un aderezo inexistente \"{a}\"", prod.id)));
             }
         }
-        if let Some(r) = &prod.requiere {
-            if !crate::carrito::Funcion::NOMBRES.contains(&r.as_str()) {
-                return Err(error(
-                    "productos.ron",
-                    format!("\"{}\" requiere una función desconocida \"{r}\"", prod.id),
-                ));
-            }
+        if let Some(r) = &prod.requiere
+            && !crate::carrito::Funcion::NOMBRES.contains(&r.as_str())
+        {
+            return Err(error("productos.ron", format!("\"{}\" requiere una función desconocida \"{r}\"", prod.id)));
         }
-        if let Some(a) = &prod.repone {
-            if !aderezos.iter().any(|x| &x.id == a) {
-                return Err(error("productos.ron", format!("\"{}\" repone un aderezo inexistente \"{a}\"", prod.id)));
-            }
+        if let Some(a) = &prod.repone
+            && !aderezos.iter().any(|x| &x.id == a)
+        {
+            return Err(error("productos.ron", format!("\"{}\" repone un aderezo inexistente \"{a}\"", prod.id)));
         }
     }
     let bloques: Vec<DefBloque> = parsear("bloques.ron", bloques)?;

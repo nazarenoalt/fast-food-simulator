@@ -17,7 +17,7 @@ pub fn esquivar(pos: [f32; 2], dir: [f32; 2], otros: &[[f32; 2]]) -> ([f32; 2], 
     for o in otros {
         let d = [pos[0] - o[0], pos[1] - o[1]];
         let dist = d[0].hypot(d[1]);
-        if dist < 1e-4 || dist > VISION {
+        if !(1e-4..=VISION).contains(&dist) {
             continue;
         }
         // Distancia personal: se alejan de quien está demasiado cerca.

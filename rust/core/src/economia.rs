@@ -90,7 +90,7 @@ pub fn plata(monto: f32) -> String {
     let digitos = entero.to_string();
     let mut con_puntos = String::new();
     for (i, c) in digitos.chars().enumerate() {
-        if i > 0 && (digitos.len() - i) % 3 == 0 {
+        if i > 0 && (digitos.len() - i).is_multiple_of(3) {
             con_puntos.push('.');
         }
         con_puntos.push(c);

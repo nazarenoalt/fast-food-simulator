@@ -14,7 +14,7 @@ specs primero ([SPEC-000](docs/specs/000-proceso.md)). Qué sigue: [ROADMAP](doc
 
 ## Comandos
 ```bash
-cd rust && cargo fmt --check && cargo clippy --all-targets && cargo test
+cd rust && cargo fmt --check && cargo clippy --all-targets -- -D warnings && cargo test
 GODOT=/ruta/godot tools/prueba_humo.sh   # humo en el motor
 GODOT=/ruta/godot tools/verificar.sh     # todo junto, antes de abrir o actualizar el PR
 ```
