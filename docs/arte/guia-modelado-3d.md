@@ -551,9 +551,10 @@ revisión. Si alguno falla, el script termina con error. El resto se revisa a oj
 2. ✔ `arte/biblioteca/referencias.blend` con la silueta humana, el mostrador y la luz de
    día y de atardecer del juego.
 3. Git LFS: postergado hasta que haya archivos pesados (ver 7.2).
-4. **Pendiente:** que el campo `forma` de los datos pueda apuntar a un `.glb` (ya previsto
-   en SPEC-006, notas de diseño). Hasta entonces el juego sigue dibujando las piezas
-   simples. Requiere una spec antes de tocar código.
+4. ✔ El juego carga los `.glb` (SPEC-014): productos, accesorios, bases y bloques tienen un
+   campo `modelo: "familia/id"` en sus `.ron`, y la plaza elige sus modelos en `plaza.rs`.
+   La forma simple queda de respaldo. Los modelos que todavía no usa el juego están marcados
+   en la "Fuera de alcance" de la spec.
 
 ## Historial
 

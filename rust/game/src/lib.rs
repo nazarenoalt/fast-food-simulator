@@ -17,6 +17,7 @@ mod hud;
 mod jugador; // SPEC-001/002
 mod lugar_deposito; // SPEC-004/011
 mod luz; // SPEC-006/007
+mod modelos; // SPEC-014
 mod negocio; // SPEC-010/011
 mod nocturno;
 mod palomas; // SPEC-013
@@ -36,6 +37,7 @@ unsafe impl ExtensionLibrary for CarritoExtension {
         // Soltar los materiales compartidos antes de que Godot cierre (si no, avisa pérdidas).
         if stage == godot::init::InitStage::MainLoop {
             nocturno::limpiar();
+            modelos::limpiar();
         }
     }
 }

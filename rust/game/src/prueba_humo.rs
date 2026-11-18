@@ -3,7 +3,7 @@
 
 use carrito_core::coccion::Punto;
 use carrito_core::plaza;
-use godot::classes::{INode, Node, Node3D, PackedScene};
+use godot::classes::{INode, MeshInstance3D, Node, Node3D, PackedScene, StandardMaterial3D};
 use godot::prelude::*;
 
 use crate::aderecera::Pomo;
@@ -44,6 +44,17 @@ pub struct PruebaHumo {
     lugar: Option<Gd<LugarDeposito>>,
     superpuestos: usize,
     muestras: usize,
+}
+
+/// Material (de la primera superficie) de la pieza `nombre` de un modelo. SPEC-014
+fn material_pieza(raiz: &Gd<Node>, nombre: &str) -> Option<Gd<StandardMaterial3D>> {
+    let n = raiz.find_child_ex(nombre).recursive(true).owned(false).done()?;
+    let mi = n.try_cast::<MeshInstance3D>().ok()?;
+    mi.get_active_material(0)?.try_cast::<StandardMaterial3D>().ok()
+}
+
+fn parecido(c: Color, esperado: [f32; 3]) -> bool {
+    (c.r - esperado[0]).abs() < 0.02 && (c.g - esperado[1]).abs() < 0.02 && (c.b - esperado[2]).abs() < 0.02
 }
 
 fn todos<T: GodotClass + Inherits<Node>>(raiz: &Gd<Node>) -> Vec<Gd<T>> {
@@ -211,6 +222,16 @@ impl INode for PruebaHumo {
                     panchos.len() == 1 && detalle.as_deref() == Some("salchicha cocida"),
                     &format!("CA-ARM-01 se armó un pancho ({} panchos, detalle {detalle:?})", panchos.len()),
                 );
+                // CA-MOD-02: el pancho es el modelo, con la salchicha del color de su cocción.
+                let cocida = crate::datos::catalogo().producto("salchicha").and_then(|p| p.coccion.clone()).zip(
+                    panchos.first().and_then(|p| p.bind().estado_coccion()),
+                );
+                let color_ok = match (panchos.first(), cocida) {
+                    (Some(p), Some((perfil, e))) => material_pieza(&p.clone().upcast(), "pieza_salchicha")
+                        .is_some_and(|m| parecido(m.get_albedo(), e.color(&perfil))),
+                    _ => false,
+                };
+                self.chequear(color_ok, "CA-MOD-02 el pancho modelado muestra la salchicha del color de su cocción");
 
                 // REQ-ARM-04: dos salchichas juntas no hacen nada.
                 let base = Vector3::new(-3.0, 0.3, plaza::Z_VEREDA);
@@ -236,6 +257,9 @@ impl INode for PruebaHumo {
                     luces.len() > 5 && prendidas == luces.len(),
                     &format!("CA-DIA-01 de noche todas las luces prendidas ({prendidas}/{})", luces.len()),
                 );
+                // CA-MOD-03: la lamparita del foco (modelo) brilla de noche.
+                let brillo = material_pieza(&mundo, "pieza_lampara").map(|m| m.get_emission_energy_multiplier());
+                self.chequear(brillo.is_some_and(|b| b > 0.0), &format!("CA-MOD-03 de noche la lamparita brilla ({brillo:?})"));
                 let mut dn = todos::<DiaNoche>(&mundo).pop().unwrap();
                 dn.bind_mut().set_minuto(12.0 * 60.0);
                 self.esperar(10);
@@ -248,6 +272,30 @@ impl INode for PruebaHumo {
                     .filter(|l| l.bind().encendida())
                     .count();
                 self.chequear(prendidas == 0, "REQ-DIA-06 de día las luces apagadas");
+                let brillo = material_pieza(&mundo, "pieza_lampara").map(|m| m.get_emission_energy_multiplier());
+                self.chequear(brillo == Some(0.0), &format!("CA-MOD-03 de día la lamparita está apagada ({brillo:?})"));
+                // CA-MOD-01: el carrito es el modelo, pintado del color de la config.
+                let color = crate::datos::catalogo().carrito_jugador.color.unwrap_or([0.0; 3]);
+                let carrito: Option<Gd<Node>> = todos::<Carrito>(&mundo).pop().map(|c| c.upcast());
+                let pintado = carrito
+                    .as_ref()
+                    .and_then(|c| material_pieza(c, "pieza_pintura"))
+                    .is_some_and(|m| parecido(m.get_albedo(), color));
+                self.chequear(pintado, "CA-MOD-01 el carrito es el modelo, pintado del color de carrito_jugador.ron");
+                // REQ-MOD-11: la plaza usa los modelos (bancos y las tres variantes de plátano).
+                let nombres: std::collections::BTreeSet<String> = todos::<Node3D>(&mundo)
+                    .iter()
+                    .map(|n| n.get_name().to_string())
+                    .filter(|n| n.starts_with("banco") || n.starts_with("arbol_platano") || n.starts_with("farol") || n.starts_with("fuente"))
+                    .collect();
+                let variantes = ["arbol_platano_a", "arbol_platano_b", "arbol_platano_c"]
+                    .iter()
+                    .filter(|v| nombres.iter().any(|n| n.starts_with(**v)))
+                    .count();
+                self.chequear(
+                    nombres.iter().any(|n| n.starts_with("banco")) && variantes == 3,
+                    &format!("REQ-MOD-11 la plaza usa los modelos ({variantes} variantes de plátano)"),
+                );
                 self.chequear(
                     todos::<Node3D>(&mundo).iter().all(|n| !n.is_in_group("errores_carrito")),
                     "REQ-CAR-08 sin errores en la config del carrito",

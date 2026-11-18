@@ -17,6 +17,7 @@ pub mod datos; // carga de archivos .ron
 pub mod deposito; // SPEC-004
 pub mod forma; // piezas visuales simples (compartido)
 pub mod hervidor; // SPEC-003 (fuente de calor)
+pub mod modelos; // SPEC-014
 pub mod plaza; // SPEC-008
 pub mod reloj; // SPEC-007
 

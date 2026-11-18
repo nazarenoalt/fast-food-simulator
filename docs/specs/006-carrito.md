@@ -49,9 +49,10 @@ agregar un archivo de datos.
 ## Fuera de alcance (próximas etapas)
 
 - Comprar y colocar accesorios desde el juego, carritos con interior caminable,
-  remolque, modelos 3D definitivos (hoy son piezas simples).
+  remolque. Los modelos 3D están en SPEC-014.
 
 ## Notas de diseño
 
 - Las formas de los accesorios son piezas simples (cajas, cilindros) hasta tener modelos de
-  Blender. El campo de forma podrá apuntar a un `.glb` más adelante sin cambiar el resto.
+  Blender. Desde SPEC-014, bases y accesorios pueden usar un modelo `.glb` (`modelo`), y la
+  forma simple queda de respaldo.

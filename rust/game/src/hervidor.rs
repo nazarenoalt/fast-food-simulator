@@ -2,11 +2,12 @@
 
 use carrito_core::forma::TipoPieza;
 use carrito_core::hervidor::{AguaHervidor, TEMP_MAX_AGUA};
-use godot::classes::{Area3D, BoxShape3D, INode3D, Node3D, StandardMaterial3D};
+use godot::classes::base_material_3d::Feature;
+use godot::classes::{Area3D, BoxShape3D, INode3D, Node3D, StandardMaterial3D, StaticBody3D};
 use godot::prelude::*;
 
 use crate::comida::Comida;
-use crate::formas;
+use crate::{formas, modelos};
 
 const ESPESOR: f32 = 0.012;
 const NIVEL_AGUA: f32 = 0.7;
@@ -21,6 +22,8 @@ pub struct Hervidor {
     zona_agua: Option<Gd<Area3D>>,
     piloto: Option<Gd<StandardMaterial3D>>,
     mat_agua: Option<Gd<StandardMaterial3D>>,
+    /// SPEC-014: modelo 3D (el dibujo; la colisión de la batea la arma el código).
+    modelo: Option<String>,
 }
 
 #[godot_api]
@@ -34,7 +37,7 @@ impl Hervidor {
 }
 
 impl Hervidor {
-    pub fn crear(interior: [f32; 3]) -> Gd<Self> {
+    pub fn crear(interior: [f32; 3], modelo: Option<String>) -> Gd<Self> {
         Gd::from_init_fn(|base| Self {
             base,
             interior,
@@ -42,7 +45,25 @@ impl Hervidor {
             zona_agua: None,
             piloto: None,
             mat_agua: None,
+            modelo,
         })
+    }
+
+    /// REQ-MOD-04/05: usa el modelo para el dibujo, con su `pieza_agua` y su `pieza_piloto`.
+    /// Devuelve false si no tiene modelo o no carga (entonces se dibujan las piezas simples).
+    fn dibujar_modelo(&mut self, yo: &mut Gd<Node3D>) -> bool {
+        let Some(m) = self.modelo.clone().and_then(|m| modelos::agregar(yo, &m)) else { return false };
+        if let Some(agua) = modelos::buscar(&m, carrito_core::modelos::PIEZA_AGUA) {
+            self.mat_agua = modelos::materiales_propios(&agua).into_iter().next().map(|(_, mat)| mat);
+        }
+        if let Some(piloto) = modelos::buscar(&m, carrito_core::modelos::PIEZA_PILOTO) {
+            if let Some((_, mut mat)) = modelos::materiales_propios(&piloto).into_iter().next() {
+                mat.set_feature(Feature::EMISSION, true);
+                mat.set_emission(Color::from_rgb(1.0, 0.1, 0.05));
+                self.piloto = Some(mat);
+            }
+        }
+        true
     }
 
     /// Solo para pruebas.
@@ -72,23 +93,42 @@ impl INode3D for Hervidor {
         let [w, h, d] = self.interior;
         let e = ESPESOR;
         let mut yo = self.to_gd().upcast::<Node3D>();
+        let con_modelo = self.dibujar_modelo(&mut yo);
 
-        // Cuba: piso + 4 paredes, con colisión (para que la comida quede adentro).
-        formas::caja_solida(&mut yo, [w + 2.0 * e, e, d + 2.0 * e], [0.0, e / 2.0, 0.0], ACERO, true);
+        // Cuba: piso + 4 paredes, con colisión (para que la comida quede adentro). Con modelo,
+        // solo la colisión (REQ-MOD-04).
         let alto = h + e;
         let y = alto / 2.0;
-        formas::caja_solida(&mut yo, [w + 2.0 * e, alto, e], [0.0, y, d / 2.0 + e / 2.0], ACERO, true);
-        formas::caja_solida(&mut yo, [w + 2.0 * e, alto, e], [0.0, y, -d / 2.0 - e / 2.0], ACERO, true);
-        formas::caja_solida(&mut yo, [e, alto, d], [w / 2.0 + e / 2.0, y, 0.0], ACERO, true);
-        formas::caja_solida(&mut yo, [e, alto, d], [-w / 2.0 - e / 2.0, y, 0.0], ACERO, true);
+        let cajas = [
+            ([w + 2.0 * e, e, d + 2.0 * e], [0.0, e / 2.0, 0.0]),
+            ([w + 2.0 * e, alto, e], [0.0, y, d / 2.0 + e / 2.0]),
+            ([w + 2.0 * e, alto, e], [0.0, y, -d / 2.0 - e / 2.0]),
+            ([e, alto, d], [w / 2.0 + e / 2.0, y, 0.0]),
+            ([e, alto, d], [-w / 2.0 - e / 2.0, y, 0.0]),
+        ];
+        if con_modelo {
+            let mut cuerpo = StaticBody3D::new_alloc();
+            for (m, p) in cajas {
+                let mut s = BoxShape3D::new_gd();
+                s.set_size(formas::v3(m));
+                cuerpo.add_child(&formas::nodo_colision(s.upcast(), Transform3D::new(Basis::IDENTITY, formas::v3(p))));
+            }
+            yo.add_child(&cuerpo);
+        } else {
+            for (m, p) in cajas {
+                formas::caja_solida(&mut yo, m, p, ACERO, true);
+            }
+        }
 
         // Agua (solo visual) y su volumen (zona que calienta). REQ-COC-08
         let alto_agua = h * NIVEL_AGUA;
-        let mat_agua = formas::material([0.45, 0.65, 0.8], 0.25, false, 0.0);
-        let mut agua = formas::instancia_malla(formas::malla(TipoPieza::Caja, [w, alto_agua, d]), mat_agua.clone());
-        agua.set_position(Vector3::new(0.0, e + alto_agua / 2.0, 0.0));
-        yo.add_child(&agua);
-        self.mat_agua = Some(mat_agua);
+        if !con_modelo || self.mat_agua.is_none() {
+            let mat_agua = formas::material([0.45, 0.65, 0.8], 0.25, false, 0.0);
+            let mut agua = formas::instancia_malla(formas::malla(TipoPieza::Caja, [w, alto_agua, d]), mat_agua.clone());
+            agua.set_position(Vector3::new(0.0, e + alto_agua / 2.0, 0.0));
+            yo.add_child(&agua);
+            self.mat_agua = Some(mat_agua);
+        }
 
         let mut zona = formas::zona_objetos();
         let mut s = BoxShape3D::new_gd();
@@ -100,6 +140,10 @@ impl INode3D for Hervidor {
         self.zona_agua = Some(zona);
 
         // Perilla y luz piloto del lado del vendedor (-Z).
+        if con_modelo && self.piloto.is_some() {
+            self.actualizar_piloto();
+            return;
+        }
         let mut perilla =
             formas::visual_pieza(&formas::pieza(TipoPieza::Cilindro, [0.018, 0.02, 0.0], [0.0; 3], [0.1, 0.1, 0.1]));
         perilla.set_rotation_degrees(Vector3::new(90.0, 0.0, 0.0));

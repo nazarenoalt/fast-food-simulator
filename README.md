@@ -6,10 +6,13 @@ física real, frente a una plaza. Hecho con **Godot 4.7** y **Rust** (godot-rust
 > Estado: **etapa 2**: además de cocinar y armar panchos, llegan clientes que hacen fila,
 > piden y pagan; hay caja, reputación, proveedor y aderezos. Alrededor, una ciudad con
 > gente, autos, palomas, nubes y cielo con sol y luna.
+> Desde [SPEC-014](docs/specs/014-modelos.md) el carrito, sus accesorios, la comida y la plaza
+> usan modelos 3D hechos con la [guía de modelado](docs/arte/guia-modelado-3d.md).
 > Ver [`docs/hoja-de-ruta.md`](docs/hoja-de-ruta.md).
 
 | | |
 |---|---|
+| ![Carrito con modelos 3D](docs/capturas/12_modelos_carrito.jpg) | ![Plaza con modelos 3D](docs/capturas/14_modelos_plaza.jpg) |
 | ![Clientes en la fila](docs/capturas/8_fila_clientes.png) | ![Plaza con gente](docs/capturas/9_plaza_viva.png) |
 | ![Atardecer](docs/capturas/10_atardecer.png) | ![Noche en la ciudad](docs/capturas/11_noche_ciudad.png) |
 | ![Depósito con comida visible](docs/capturas/2_deposito.png) | ![Hervidor y panchos](docs/capturas/3_cocinando.png) |

@@ -48,6 +48,9 @@ pub struct BaseCarrito {
     /// REQ-CAR-10: primer lugar de la fila de clientes; la fila sigue hacia +X.
     pub fila: [f32; 3],
     pub anclajes: Vec<Anclaje>,
+    /// REQ-MOD-01: modelo 3D ("familia/id" → godot/modelos/familia/id.glb).
+    #[serde(default)]
+    pub modelo: Option<String>,
 }
 
 impl BaseCarrito {
@@ -79,6 +82,15 @@ pub struct Accesorio {
     pub forma: Vec<Pieza>,
     #[serde(default)]
     pub funcion: Option<Funcion>,
+    /// REQ-MOD-01: modelo 3D que reemplaza a `forma`.
+    #[serde(default)]
+    pub modelo: Option<String>,
+    /// REQ-MOD-03: corrimiento del modelo respecto del anclaje.
+    #[serde(default)]
+    pub pos_modelo: [f32; 3],
+    /// REQ-MOD-06: colores por superficie de piezas del modelo: (pieza, [color de cada superficie]).
+    #[serde(default)]
+    pub superficies: Vec<(String, Vec<[f32; 3]>)>,
 }
 
 /// El carrito del jugador (`godot/data/carrito_jugador.ron`). REQ-CAR-07
