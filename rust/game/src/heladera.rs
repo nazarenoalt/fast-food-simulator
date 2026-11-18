@@ -1,6 +1,7 @@
 //! SPEC-016 · Heladera: mantiene frío lo que guarda; la puerta se abre y cierra con E.
 
 use carrito_core::heladera::Heladera as EstadoHeladera;
+use carrito_core::sonido::ids;
 use godot::classes::{Area3D, BoxShape3D, INode3D, Node3D};
 use godot::prelude::*;
 
@@ -32,6 +33,9 @@ impl Heladera {
     pub fn alternar(&mut self) {
         self.estado.alternar_puerta();
         self.actualizar_puerta();
+        // REQ-SON-08: la puerta al abrir y al cerrar.
+        let yo = self.to_gd().upcast::<Node3D>();
+        crate::sonido::sonar_en(&yo, ids::HELADERA_PUERTA, yo.get_global_position());
     }
 }
 
