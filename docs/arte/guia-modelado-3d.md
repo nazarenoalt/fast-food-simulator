@@ -103,6 +103,10 @@ Regla simple: **en la vista *Front* de Blender tenés que ver la cara que ve el 
 | Luces colgantes (foco) | En el punto de donde cuelga (arriba). |
 | Piezas que flotan respecto de su anclaje (telón, sombrilla, techos) | En el anclaje, aunque la pieza quede corrida (el telón empieza a 0,31 m; el paño de la sombrilla va corrido 0,62 m en X). |
 
+**Piezas con caras borradas a propósito** (lo apoyado en el piso, lo pegado a otra pieza, puntas de
+caño): el chequeo de normales de `comun.revisar()` puede dar negativo estando bien. Se reemplaza con
+`comun.chequeo_normales_cerrado()`, que cierra los huecos antes de medir.
+
 **Objetos que no son simétricos.** `comun.revisar()` mide el origen contra el centro de la caja
 envolvente. Si el objeto no es simétrico respecto de su origen (perilla de un solo lado, manija,
 árbol inclinado, nudo de la bolsa), ese chequeo falla aunque el origen esté bien. En ese caso
@@ -561,3 +565,4 @@ revisión. Si alguno falla, el script termina con error. El resto se revisa a oj
 | v1.6 | Las pizarras van en blanco (`pieza_pizarra`, con UV para que el juego escriba); solo se pinta el texto fijo (4.5). |
 | v1.7 | Colores de la etapa 4: `M_CarneCruda`, `M_Lechuga`, `M_Tomate`, `M_Chimichurri`, `M_PapelMadera`, `M_Vidrio`, `M_Carbon`, `M_Brasa`. |
 | v1.8 | Corrección de 3.2: `piezas.cilindro()` mide el radio en las aristas salvo con `radio_a_caras=True` (la v1.3 decía lo contrario). Nuevo `M_Terracota` (`#B4623E`) para macetas. |
+| v1.9 | `comun.py` suma lo que varios modelos repetían: `chequeo_normales_cerrado()` (2.4), `colision_cajas()` (6.1), `reemplazar_linea()` para chequeos propios y las vistas `vendedor` y `tres_cuartos_vendedor` en `encuadrar()`. |

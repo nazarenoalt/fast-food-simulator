@@ -351,7 +351,8 @@ def _camara():
 
 
 def encuadrar(objetos, vista, margen=1.25, de_cerca=False):
-    """Ubica la cámara. vista: frente | costado | arriba | tres_cuartos.
+    """Ubica la cámara. vista: frente | vendedor | costado | arriba | tres_cuartos |
+    tres_cuartos_vendedor.
 
     Las vistas planas usan todas la misma escala (para comparar proporciones), salvo
     con de_cerca=True, que llena el cuadro con lo que se ve desde esa vista.
@@ -369,13 +370,16 @@ def encuadrar(objetos, vista, margen=1.25, de_cerca=False):
         "costado": Vector((1, 0, 0)),
         "arriba": Vector((0, 0, 1)),
         "tres_cuartos": Vector((1, -1.3, 0.9)).normalized(),
+        "vendedor": Vector((0, 1, 0)),      # el lado del vendedor (−Z en Godot)
+        "tres_cuartos_vendedor": Vector((-1, 1.3, 0.9)).normalized(),
     }
     d = direcciones[vista]
     radio = tam.length / 2
-    if vista != "tres_cuartos":
+    if not vista.startswith("tres_cuartos"):
         # Misma escala en las tres vistas planas, para comparar proporciones.
         cam.data.type = "ORTHO"
-        visibles = {"frente": (tam.x, tam.z), "costado": (tam.y, tam.z), "arriba": (tam.x, tam.y)}[vista]
+        visibles = {"frente": (tam.x, tam.z), "vendedor": (tam.x, tam.z), "costado": (tam.y, tam.z),
+                    "arriba": (tam.x, tam.y)}[vista]
         cam.data.ortho_scale = (max(visibles[0], visibles[1] * aspecto) if de_cerca else max(tam)) * margen
         cam.location = centro + d * (radio * 4 + 1)
     else:
@@ -457,3 +461,73 @@ def componer_hoja(titulo, cuadros, revision, ruta, columnas=3):
     ruta.parent.mkdir(parents=True, exist_ok=True)
     hoja.save(ruta, quality=88, optimize=True)
     print(f"Hoja de revisión: {ruta.relative_to(RAIZ)}")
+
+
+# ── Ayudas compartidas (sumadas después de la etapa 1) ─────────────────
+
+def volumen_cerrado(obj):
+    """Volumen con signo de la malla, cerrando sus huecos con abanicos (> 0 si las normales
+    miran hacia afuera). Sirve para piezas con caras borradas a propósito (lo apoyado en el
+    piso, lo pegado a otra pieza, puntas de caño), donde el chequeo simple de revisar() puede
+    dar negativo estando bien. Viene de modelos/_accesorios5.py."""
+    bm = bmesh.new()
+    bm.from_mesh(obj.data)
+    vol = 0.0
+    for f in bm.faces:
+        v = [l.vert.co for l in f.loops]
+        for i in range(1, len(v) - 1):
+            vol += v[0].dot(v[i].cross(v[i + 1])) / 6
+    borde = [e for e in bm.edges if len(e.link_faces) == 1]
+    grupo = {}
+    for e in borde:
+        a, b = e.verts
+        ga, gb = grupo.get(a), grupo.get(b)
+        if ga is None and gb is None:
+            g = {a, b}
+        elif ga is None or gb is None or ga is gb:
+            g = ga or gb
+            g.update((a, b))
+        else:
+            ga.update(gb)
+            g = ga
+        for v in g:
+            grupo[v] = g
+    for e in borde:
+        f = e.link_faces[0]
+        bucle = next(l for l in f.loops if l.edge == e)
+        a, b = bucle.vert.co, bucle.link_loop_next.vert.co
+        g = grupo[bucle.vert]
+        c = sum((v.co for v in g), Vector()) / len(g)
+        vol += b.dot(a.cross(c)) / 6
+    bm.free()
+    return vol
+
+
+def reemplazar_linea(res, prefijo, ok, texto):
+    """Cambia en la revisión la línea que empieza con `prefijo` (para chequeos propios)."""
+    return [(ok, texto) if t.startswith(prefijo) else (o, t) for o, t in res]
+
+
+def chequeo_normales_cerrado(res, objetos):
+    """Reemplaza la línea "Normales" de revisar() por el chequeo con volumen_cerrado()."""
+    vols = [volumen_cerrado(o) for o in objetos]
+    return reemplazar_linea(res, "Normales", all(v > 0 for v in vols),
+                            "Normales hacia afuera (volumen cerrando los huecos: %s)"
+                            % ", ".join("%s %+.4f" % (o.name, v) for o, v in zip(objetos, vols)))
+
+
+def colision_cajas(nombre, cajas):
+    """Varias cajas en un solo objeto `<nombre>-colonly` (guía 6.1).
+    cajas = [(medidas, centro, rot)] en ejes de Godot. Viene de modelos/_plaza.py."""
+    import piezas
+    bm = bmesh.new()
+    for medidas, centro, rot in cajas:
+        piezas.caja(bm, medidas, centro, rot=rot)
+    malla = bpy.data.meshes.new(f"{nombre}-colonly")
+    bm.to_mesh(malla)
+    bm.free()
+    obj = bpy.data.objects.new(f"{nombre}-colonly", malla)
+    bpy.context.scene.collection.objects.link(obj)
+    obj.display_type = "WIRE"
+    obj.hide_render = True
+    return obj

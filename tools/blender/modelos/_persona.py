@@ -753,11 +753,11 @@ def aplicar_postura(arm, cuerpo, esq, P_param):
     if e <= 0:
         return esq
     pose = Pose(esq)
-    pose.adelante("Spine", 5 * e)
-    pose.adelante("Chest", 6 * e)
-    pose.adelante("UpperChest", 7 * e)
-    pose.adelante("Neck", 10 * e)
-    pose.adelante("Head", -16 * e)
+    pose.adelante("Spine", 4 * e)
+    pose.adelante("Chest", 5 * e)
+    pose.adelante("UpperChest", 6 * e)
+    pose.adelante("Neck", 7 * e)
+    pose.adelante("Head", -20 * e)      # la cara queda mirando al frente
     for ln, lado in LADOS:
         pose.adelante(f"{ln}Shoulder", 4 * e)
         pose.adelante(f"{ln}UpperArm", -10 * e)   # los brazos siguen colgando derechos
@@ -835,7 +835,7 @@ def pelo(estilo, material, nombre=None):
     # pelos: irregularidad del grosor (0–1).
     estilos = {
         "corto":  dict(arriba=0.012, borde=0.003, frente=0.98, lados=1.50, atras=1.84, patilla=0.25, pelos=0.30),
-        "rapado": dict(arriba=0.005, borde=0.002, frente=1.06, lados=1.52, atras=1.86, patilla=0.20, pelos=0.15),
+        "rapado": dict(arriba=0.009, borde=0.006, frente=1.06, lados=1.52, atras=1.86, patilla=0.20, pelos=0.15),
         "raya":   dict(arriba=0.022, borde=0.008, frente=0.86, lados=1.50, atras=1.84, patilla=0.15, pelos=0.25,
                        flequillo=0.016),
         "largo":  dict(arriba=0.015, borde=0.013, frente=0.92, lados=1.90, atras=2.0, patilla=0.0, pelos=0.15,
@@ -845,8 +845,8 @@ def pelo(estilo, material, nombre=None):
         "rodete": dict(arriba=0.010, borde=0.006, frente=0.98, lados=1.58, atras=1.86, patilla=0.10, pelos=0.15,
                        rodete=True),
         "rulos":  dict(arriba=0.036, borde=0.020, frente=0.92, lados=1.60, atras=1.86, patilla=0.0, pelos=0.55),
-        "pelado": dict(arriba=0.008, borde=0.007, frente=1.55, lados=1.62, atras=1.92, patilla=0.0, pelos=0.2,
-                       coronilla=1.05),
+        "pelado": dict(arriba=0.0015, borde=0.008, frente=1.45, lados=1.66, atras=2.12, patilla=0.0, pelos=0.2,
+                       coronilla=1.10),
     }
     E = estilos[estilo]
 
@@ -870,8 +870,11 @@ def pelo(estilo, material, nombre=None):
             a = 2 * math.pi * i / NA
             phi_max = limite(a)
             phi = phi_max * j / filas
-            if "coronilla" in E:     # pelado: corona de pelo solo abajo
-                phi = E["coronilla"] + (phi_max - E["coronilla"]) * (j - 1) / (filas - 1)
+            esconder = 0.0
+            if "coronilla" in E:     # pelado: corona de pelo solo a los costados y atrás
+                esconder = suave((front(a) - 0.62) / 0.16)   # adelante: queda adentro de la cabeza
+                tope = E["coronilla"] + 0.25 * esconder
+                phi = tope + (phi_max - tope) * (j - 1) / (filas - 1)
             d = V((math.sin(phi) * math.sin(a), -math.sin(phi) * math.cos(a), math.cos(phi)))
             p = _superficie(bvh, centro, d)
             tt = (j - 1) / (filas - 1)
@@ -879,6 +882,7 @@ def pelo(estilo, material, nombre=None):
             if E.get("flequillo") and front(a) > 0.72 and j >= filas - 2:
                 gro += E["flequillo"] * (1.0 if math.sin(a) > -0.3 else 0.35)
             gro *= 1 + E["pelos"] * (rnd.random() - 0.5)
+            gro = gro * (1 - esconder) - 0.006 * esconder
             fila.append(p + (p - centro).normalized() * gro)
         anillos.append(fila)
     # Borde: se mete hacia adentro de la cabeza (no se ve) y se cierra.
@@ -921,12 +925,11 @@ def _cortina(m, bvh, centro, E, material):
     """Pelo largo: una cortina de atrás que baja hasta los hombros (lofteo de arcos)."""
     filas = []
     largo = E["cortina"]
-    n = 9
-    for j, (dz, abre, gro) in enumerate(((0.0, 1.0, 0.016), (-0.05, 1.02, 0.018), (-0.10, 1.00, 0.017),
-                                          (-largo, 0.95, 0.014))):
+    n = 7
+    for j, (dz, abre, gro) in enumerate(((0.03, 0.93, 0.0), (-0.07, 1.0, 0.016), (-largo, 0.90, 0.010))):
         arco_ext, arco_int = [], []
         for i in range(n):
-            a = math.pi * (0.42 + 1.16 * i / (n - 1))      # de un costado al otro, por atrás
+            a = math.pi * (0.48 + 1.04 * i / (n - 1))      # de un costado al otro, por atrás
             d = V((math.sin(a), -math.cos(a), 0.0))
             z = 0.115 + dz
             r_x, r_y = 0.083 * abre, 0.104 * abre
@@ -1232,6 +1235,7 @@ def _keyframes(arm, esq, nombre, segundos, funcion, solo=None):
     act.use_fake_user = True
     ad.action = act
     cuadros = max(2, round(segundos * FPS))
+    assert abs(cuadros - segundos * FPS) < 1e-6, f"{nombre}: {segundos} s no da cuadros enteros (loop)"
     huesos = solo or NOMBRES
     previo = {}
     for f in range(cuadros + 1):
@@ -1426,7 +1430,10 @@ def chequeo_pies(R, cual="caminar"):
     for f in range(cuadros):
         t0, t1 = f / FPS, (f + 1) / FPS
         p0, p1 = fun(esq, t0), fun(esq, t1)
-        for ln in ("Left", "Right"):
+        for ln, off in (("Left", 0.0), ("Right", 0.5)):
+            u0, u1 = (t0 / ciclo.T - off) % 1.0, (t1 / ciclo.T - off) % 1.0
+            if not (u0 < ciclo.ap and u1 < ciclo.ap and u1 > u0):
+                continue   # solo cuadros de la fase de apoyo de ese pie
             P0, P1 = p0.matrices(), p1.matrices()
             b0 = P0[f"{ln}Toes"].translation
             b1 = P1[f"{ln}Toes"].translation
