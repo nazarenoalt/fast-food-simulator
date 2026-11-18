@@ -71,6 +71,10 @@ impl EstadisticasDia {
     pub fn gasto(&mut self, monto: f32) {
         self.gastos += monto;
     }
+    /// REQ-TIE-09: plata que entra sin ser una venta (vender algo usado).
+    pub fn ingreso(&mut self, monto: f32) {
+        self.ingresos += monto;
+    }
     pub fn resumen(&self, dia: u32) -> String {
         format!(
             "Resumen del día {dia}: {} ventas · ingresos {} · gastos {} · ganancia {} · {} clientes se fueron sin comprar",

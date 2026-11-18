@@ -21,6 +21,8 @@ pub enum Categoria {
     Luz,
     /// REQ-CAR-04: cerramiento para comer al costado del carro (porche de nylon).
     Porche,
+    /// REQ-TIE-13: cosas de piso para los clientes (mesa alta, banqueta, maceta).
+    Mobiliario,
 }
 
 /// REQ-CAR-03

@@ -11,6 +11,7 @@
 | Clic derecho | Tirar lo que tenés en la mano |
 | E | Usar: prender el hervidor, la plancha o la parrilla, abrir y cerrar la heladera, dar vuelta una hamburguesa, un chorizo o un pan, sacar del depósito, poner aderezo (con la comida en la mano), recargar un pomo (con el repuesto en la mano), echar carbón en la parrilla (con la bolsa en la mano) |
 | Tab | Panel del proveedor (comprar mercadería) |
+| B | Modo armado: poner, mover, guardar y vender accesorios; con Tab adentro, color, bases e inventario ([SPEC-017](specs/017-tienda.md)) |
 | T | Tiempo ×30 (para ver el atardecer rápido) |
 | C | Traer un cliente al instante (para probar) |
 | M | Silenciar o reactivar todo el sonido |

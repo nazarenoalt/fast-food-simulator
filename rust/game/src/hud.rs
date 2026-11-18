@@ -124,7 +124,7 @@ impl ICanvasLayer for Hud {
         let mut ayuda = etiqueta(
             "WASD moverse · Shift correr · Espacio saltar\n\
              Clic agarrar/soltar · Clic derecho tirar · E usar\n\
-             Tab proveedor · T tiempo ×30 · C traer cliente (prueba) · Esc soltar el mouse",
+             Tab proveedor · B armar el carrito · T tiempo ×30 · C traer cliente (prueba) · Esc soltar el mouse",
             15,
         );
         ayuda.set_position(Vector2::new(16.0, 12.0));

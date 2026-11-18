@@ -1,6 +1,8 @@
 //! SPEC-006 · Construye el carrito del jugador a partir de los datos.
 
-use carrito_core::carrito::{BaseCarrito, CarritoArmado, Funcion, armar};
+use std::collections::BTreeMap;
+
+use carrito_core::carrito::{Accesorio, BaseCarrito, CarritoArmado, Colocado, Funcion, armar};
 use carrito_core::clientes::SEPARACION_FILA;
 use carrito_core::forma::TipoPieza;
 use godot::classes::base_material_3d::BillboardMode;
@@ -33,6 +35,11 @@ pub struct Carrito {
     bandeja: Option<Gd<Area3D>>,
     /// Funciones de los accesorios colocados (REQ-CLI-04: qué se puede cocinar).
     funciones: Vec<&'static str>,
+    /// Lo que se dibuja de la base (cuerpo, bandeja y pallet): se rehace al cambiar de base.
+    raiz_base: Option<Gd<Node3D>>,
+    /// anclaje → accesorio puesto y su nodo (REQ-TIE-02..05: se cambian de a uno).
+    puestos: BTreeMap<String, (Accesorio, Gd<Node3D>)>,
+    color: [f32; 3],
 }
 
 impl Carrito {
@@ -92,7 +99,7 @@ impl Carrito {
 
     /// REQ-CLI-07: bandeja roja sobre el mostrador con su zona de entrega.
     fn construir_bandeja(&mut self, b: &BaseCarrito) {
-        let mut yo = self.to_gd().upcast::<Node3D>();
+        let mut yo = self.raiz_base.clone().expect("base construida");
         let pos = formas::v3(b.entrega);
         let mut bandeja = Node3D::new_alloc();
         bandeja.set_name("BandejaEntrega");
@@ -141,7 +148,14 @@ impl Carrito {
 
     fn construir_base(&mut self, armado: &CarritoArmado) {
         let b = &armado.base;
-        let mut yo = self.to_gd().upcast::<Node3D>();
+        if let Some(mut vieja) = self.raiz_base.take() {
+            vieja.queue_free();
+        }
+        let mut yo = Node3D::new_alloc();
+        yo.set_name("Base");
+        self.base_mut().add_child(&yo);
+        self.raiz_base = Some(yo.clone());
+        self.color = armado.color;
         // REQ-MOD-01: el modelo de la base, con su colisión (-colonly, REQ-MOD-04) y el
         // cuerpo pintado del color elegido (REQ-MOD-05, REQ-CAR-09).
         if let Some(mut m) = b.modelo.as_deref().and_then(|m| modelos::agregar(&mut yo, m)) {
@@ -208,8 +222,17 @@ impl Carrito {
     }
 
     fn construir_accesorios(&mut self, armado: &CarritoArmado) {
-        let mut yo = self.to_gd().upcast::<Node3D>();
         for c in &armado.colocados {
+            self.construir_accesorio(c);
+        }
+        self.actualizar_funciones();
+    }
+
+    /// Un accesorio en su anclaje, con su función. REQ-CAR-03, REQ-CAR-05
+    fn construir_accesorio(&mut self, c: &Colocado) {
+        let mut yo = self.to_gd().upcast::<Node3D>();
+        let color = self.color;
+        {
             // REQ-CAR-03: el accesorio se ubica en la posición y giro del anclaje.
             let mut nodo = Node3D::new_alloc();
             nodo.set_name(&format!("{}_{}", c.anclaje.id, c.accesorio.id));
@@ -225,6 +248,8 @@ impl Carrito {
                 match modelo {
                     Some(mut m) => {
                         m.set_position(formas::v3(c.accesorio.pos_modelo));
+                        // REQ-TIE-08: las partes pintadas del accesorio siguen el color del carrito.
+                        modelos::pintar_material(&m, carrito_core::modelos::MATERIAL_PINTURA, color);
                         // REQ-MOD-06: colores por superficie (ej. la sombrilla rayada).
                         for (pieza, colores) in &c.accesorio.superficies {
                             if let Some(p) = modelos::buscar(&m, pieza) {
@@ -276,7 +301,121 @@ impl Carrito {
                 }
                 None => {}
             }
+            self.puestos.insert(c.anclaje.id.clone(), (c.accesorio.clone(), nodo));
         }
+    }
+
+    /// REQ-CLI-04 / REQ-TIE-06: lo que se puede cocinar sale de lo que está puesto ahora.
+    fn actualizar_funciones(&mut self) {
+        self.funciones = self.puestos.values().filter_map(|(a, _)| a.funcion.as_ref()).map(|f| f.nombre()).collect();
+    }
+
+    fn anclaje_def(&self, id: &str) -> Option<carrito_core::carrito::Anclaje> {
+        self.base_def.as_ref()?.anclaje(id).cloned()
+    }
+
+    fn ubicar(nodo: &mut Gd<Node3D>, a: &carrito_core::carrito::Anclaje) {
+        nodo.set_position(formas::v3(a.pos));
+        nodo.set_rotation_degrees(Vector3::new(0.0, a.rot_y, 0.0));
+    }
+
+    // ── Modo armado (SPEC-017) ─────────────────────────────────────
+
+    /// La base actual.
+    pub fn base_actual(&self) -> Option<&BaseCarrito> {
+        self.base_def.as_ref()
+    }
+
+    /// anclaje → id del accesorio puesto.
+    pub fn accesorios_puestos(&self) -> BTreeMap<String, String> {
+        self.puestos.iter().map(|(k, (a, _))| (k.clone(), a.id.clone())).collect()
+    }
+
+    pub fn color(&self) -> [f32; 3] {
+        self.color
+    }
+
+    /// Anclajes de la base con su posición en el mundo. REQ-TIE-01
+    pub fn anclajes_globales(&self) -> Vec<(String, Vector3)> {
+        let t = self.base().get_global_transform();
+        let Some(b) = &self.base_def else { return Vec::new() };
+        b.anclajes.iter().map(|a| (a.id.clone(), t * formas::v3(a.pos))).collect()
+    }
+
+    /// REQ-TIE-05: el depósito de ese anclaje tiene algún bloque.
+    pub fn deposito_con_bloques(&self, anclaje: &str) -> bool {
+        let Some((_, nodo)) = self.puestos.get(anclaje) else { return false };
+        nodo.get_children()
+            .iter_shared()
+            .filter_map(|n| n.try_cast::<LugarDeposito>().ok())
+            .any(|l| l.get_child_count() > 0)
+    }
+
+    /// Anclajes con un depósito que tiene bloques. REQ-TIE-10
+    pub fn anclajes_con_bloques(&self) -> Vec<String> {
+        self.puestos.keys().filter(|a| self.deposito_con_bloques(a)).cloned().collect()
+    }
+
+    /// REQ-TIE-02, REQ-TIE-03: pone un accesorio nuevo (si había otro, lo saca).
+    pub fn poner(&mut self, anclaje: &str, accesorio: &Accesorio) {
+        self.quitar(anclaje);
+        let Some(a) = self.anclaje_def(anclaje) else { return };
+        self.construir_accesorio(&Colocado { anclaje: a, accesorio: accesorio.clone(), stock: Vec::new() });
+        self.actualizar_funciones();
+    }
+
+    /// REQ-TIE-05: saca el accesorio del anclaje (queda guardado en el inventario).
+    pub fn quitar(&mut self, anclaje: &str) {
+        if let Some((_, mut nodo)) = self.puestos.remove(anclaje) {
+            nodo.queue_free();
+        }
+        self.actualizar_funciones();
+    }
+
+    /// REQ-TIE-04: mueve el mismo nodo (con todo su estado); si el destino está ocupado, intercambia.
+    pub fn mover(&mut self, desde: &str, hasta: &str) {
+        let (Some(a_desde), Some(a_hasta)) = (self.anclaje_def(desde), self.anclaje_def(hasta)) else { return };
+        let Some(mut uno) = self.puestos.remove(desde) else { return };
+        if let Some(mut otro) = self.puestos.remove(hasta) {
+            Self::ubicar(&mut otro.1, &a_desde);
+            otro.1.set_name(&format!("{}_{}", desde, otro.0.id));
+            self.puestos.insert(desde.to_string(), otro);
+        }
+        Self::ubicar(&mut uno.1, &a_hasta);
+        uno.1.set_name(&format!("{}_{}", hasta, uno.0.id));
+        self.puestos.insert(hasta.to_string(), uno);
+    }
+
+    /// REQ-TIE-08: pinta la base y las partes pintadas de los accesorios.
+    pub fn pintar(&mut self, color: [f32; 3]) {
+        self.color = color;
+        if let Some(r) = &self.raiz_base {
+            modelos::pintar_material(r, carrito_core::modelos::MATERIAL_PINTURA, color);
+        }
+        for (_, nodo) in self.puestos.values() {
+            modelos::pintar_material(nodo, carrito_core::modelos::MATERIAL_PINTURA, color);
+        }
+    }
+
+    /// REQ-TIE-10: rehace la base; los accesorios de `pasan` van a su anclaje en la base nueva y
+    /// el resto se saca (el inventario ya los guardó).
+    pub fn cambiar_base(&mut self, armado: &CarritoArmado, pasan: &[String]) {
+        self.construir_base(armado);
+        self.base_def = Some(armado.base.clone());
+        self.construir_bandeja(&armado.base);
+        let viejos: Vec<String> = self.puestos.keys().cloned().collect();
+        for anc in viejos {
+            match (pasan.contains(&anc), armado.base.anclaje(&anc).cloned()) {
+                (true, Some(a)) => {
+                    if let Some((_, nodo)) = self.puestos.get_mut(&anc) {
+                        Self::ubicar(nodo, &a);
+                    }
+                }
+                _ => self.quitar(&anc),
+            }
+        }
+        self.pintar(armado.color);
+        self.actualizar_funciones();
     }
 
     /// REQ-CAR-08: muestra el error arriba del carrito, en rojo, además de la consola.
@@ -309,10 +448,8 @@ impl INode3D for Carrito {
             Ok(armado) => {
                 self.construir_base(&armado);
                 self.construir_bandeja(&armado.base);
-                self.construir_accesorios(&armado);
-                self.funciones =
-                    armado.colocados.iter().filter_map(|c| c.accesorio.funcion.as_ref()).map(|f| f.nombre()).collect();
                 self.base_def = Some(armado.base.clone());
+                self.construir_accesorios(&armado);
             }
             Err(e) => {
                 // Se dibuja al menos la base (si existe) para que se vea dónde está el problema.

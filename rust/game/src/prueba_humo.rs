@@ -7,6 +7,7 @@ use godot::classes::{INode, MeshInstance3D, Node, Node3D, PackedScene, StandardM
 use godot::prelude::*;
 
 use crate::aderecera::Pomo;
+use crate::armado::ModoArmado;
 use crate::bloque_stock::BloqueStock;
 use crate::carrito::Carrito;
 use crate::comida::Comida;
@@ -121,6 +122,85 @@ impl PruebaHumo {
         self.mundo().add_child(&c);
         c.set_global_position(pos);
         c
+    }
+
+    /// SPEC-017: modo armado sobre el carrito del jugador (CA-TIE-01..04, REQ-TIE-05/08/10).
+    fn chequear_armado(&mut self) {
+        use carrito_core::tienda::{Origen, PALETA};
+        let mundo = self.mundo();
+        let Some(mut m) = todos::<ModoArmado>(&mundo).pop() else {
+            self.chequear(false, "REQ-TIE-01 hay modo armado");
+            return;
+        };
+        let carrito = todos::<Carrito>(&mundo).into_iter().next().expect("carrito");
+        let mut neg = todos::<Negocio>(&mundo).into_iter().next().expect("negocio");
+        let puestos = || carrito.bind().accesorios_puestos();
+        let saldo = |n: &Gd<Negocio>| n.bind().saldo();
+        neg.bind_mut().set_saldo(1_000_000.0);
+
+        m.bind_mut().elegir("techo", "techo_plano_mediano", Origen::Tienda);
+        self.chequear(
+            puestos().get("techo").map(String::as_str) == Some("techo_plano_mediano")
+                && (saldo(&neg) - (1_000_000.0 - 45_000.0)).abs() < 0.5,
+            "CA-TIE-01 compro un techo plano y la caja baja su precio",
+        );
+
+        let mut plancha = todos::<Plancha>(&mundo).into_iter().next().expect("plancha");
+        plancha.bind_mut().set_temperatura(200.0);
+        let id = plancha.instance_id();
+        m.bind_mut().mover("mostrador_centro", "mostrador_izq");
+        let p = puestos();
+        self.chequear(
+            p.get("mostrador_izq").map(String::as_str) == Some("plancha_chica")
+                && p.get("mostrador_centro").map(String::as_str) == Some("hervidor_chico")
+                && plancha.is_instance_valid()
+                && plancha.instance_id() == id
+                && plancha.bind().temperatura() >= 190.0,
+            "CA-TIE-02 muevo la plancha (se intercambia con el hervidor) y sigue caliente",
+        );
+
+        let antes = saldo(&neg);
+        m.bind_mut().guardar("sombra");
+        m.bind_mut().vender_accesorio("sombrilla_roja");
+        self.chequear(
+            !puestos().contains_key("sombra") && (saldo(&neg) - antes - 9_000.0).abs() < 0.5,
+            "CA-TIE-03 guardo la sombrilla y la vendo a la mitad",
+        );
+
+        let con_bloques = carrito.bind().deposito_con_bloques("lateral");
+        m.bind_mut().guardar("lateral");
+        self.chequear(
+            puestos().contains_key("lateral") == con_bloques,
+            "REQ-TIE-05 un depósito con mercadería no se guarda",
+        );
+
+        m.bind_mut().guardar("mostrador_izq");
+        self.chequear(
+            !carrito.bind().menu().iter().any(|i| i.producto == "hamburguesa"),
+            "CA-TIE-04 sin plancha no se piden hamburguesas",
+        );
+
+        m.bind_mut().pintar(PALETA[3].1);
+        self.chequear(carrito.bind().color() == PALETA[3].1, "REQ-TIE-08 pinto el carrito de verde");
+
+        if con_bloques {
+            m.bind_mut().guardar("lateral"); // no se puede: el estante se queda
+        }
+        m.bind_mut().cambiar_base("carro_grande");
+        let base = carrito.bind().base_actual().map(|b| b.id.clone());
+        self.chequear(
+            base.as_deref() == Some("carro_grande")
+                && puestos().get("mostrador_centro").map(String::as_str) == Some("hervidor_chico")
+                && !puestos().contains_key("techo"),
+            "REQ-TIE-10 paso al carro grande: el hervidor pasa y el techo mediano se guarda",
+        );
+        m.bind_mut().cambiar_base("barra_mediana");
+        self.chequear(
+            carrito.bind().base_actual().map(|b| b.id.as_str()) == Some("barra_mediana")
+                && (saldo(&neg) - (antes + 9_000.0 - 950_000.0)).abs() < 0.5,
+            "REQ-TIE-10 vuelvo a la barra mediana guardada, gratis",
+        );
+        m.bind_mut().cerrar_panel();
     }
 
     fn terminar(&mut self) {
@@ -881,6 +961,7 @@ impl INode for PruebaHumo {
                 self.esperar(30);
             }
             31 => {
+                self.chequear_armado(); // SPEC-017
                 self.terminar();
             }
             _ => {}

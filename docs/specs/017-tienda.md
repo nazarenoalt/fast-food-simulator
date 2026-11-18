@@ -1,6 +1,6 @@
 # SPEC-017 · Tienda y modo armado
 
-Estado: **Aprobada (etapa 4)**
+Estado: **Implementada (etapa 4, primera parte)**
 
 ## Objetivo
 
@@ -44,9 +44,11 @@ venderlos y cambiar el color, sin tocar archivos. Usa los anclajes de SPEC-006.
 - **REQ-TIE-11** Un accesorio puede limitar en qué bases entra (`bases`, lista de ids; si
   falta, entra en todas). Así cada tamaño de techo o toldo va solo en la base de su ancho.
 - **REQ-TIE-12** Se suman como accesorios los modelos ya hechos (SPEC-025): techos plano, a
-  dos aguas y curvo, marquesina, toldos rayado, enrollable y de frente (en tres tamaños),
-  guirnalda de luces, telones de hamburguesas y choripán, cerco de metal, cartel luminoso,
+  dos aguas y curvo y marquesina (en tres tamaños, uno por barra o carro), telones de hamburguesas y choripán, cerco de metal, cartel luminoso,
   pizarra grande, maceta, mesa alta y banqueta.
+- **REQ-TIE-13** Categoría nueva **Mobiliario** (REQ-CAR-04): cosas de piso para los clientes
+  (mesa alta, banqueta, maceta, pizarra grande). Solo la aceptan los anclajes de piso al
+  costado o adelante del carrito (`lateral`, `lateral_izq`, `cerco`).
 
 ## Criterios de aceptación
 
@@ -59,9 +61,9 @@ venderlos y cambiar el color, sin tocar archivos. Usa los anclajes de SPEC-006.
 
 ## Fuera de alcance
 
-- Guardar la partida (lo comprado se pierde al cerrar: SPEC-022, etapa 7b), el food truck,
-  el tráiler y las alacenas bajo mesada (segunda parte de la etapa 4), precios definitivos
-  (etapa 6b).
+- Guardar la partida (lo comprado se pierde al cerrar: SPEC-022, etapa 7b). Segunda parte
+  de la etapa 4: food truck, tráiler, alacenas bajo mesada, toldos (piden un anclaje propio) y
+  guirnaldas (piden un techo puesto). Precios definitivos (etapa 6b).
 
 ## Notas de diseño
 

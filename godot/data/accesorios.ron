@@ -214,4 +214,158 @@
             (tipo: Caja, medidas: (0.1, 0.02, 0.07), pos: (0, 0.105, 0), color: (0.98, 0.98, 0.98)),
         ],
     ),
+    // ── Techos (REQ-TIE-12): uno por tamaño de base (REQ-TIE-11). Precios provisorios ──
+    (
+        id: "techo_plano_chico",
+        modelo: Some("accesorios/techo_plano_chico"), // SPEC-025
+        nombre: "Techo plano (chico)",
+        categoria: Carpa,
+        precio: 35000,
+        bases: Some(["barra_chica"]), // REQ-TIE-11
+    ),
+    (
+        id: "techo_plano_mediano",
+        modelo: Some("accesorios/techo_plano_mediano"), // SPEC-025
+        nombre: "Techo plano (mediano)",
+        categoria: Carpa,
+        precio: 45000,
+        bases: Some(["barra_mediana"]), // REQ-TIE-11
+    ),
+    (
+        id: "techo_plano_grande",
+        modelo: Some("accesorios/techo_plano_grande"), // SPEC-025
+        nombre: "Techo plano (grande)",
+        categoria: Carpa,
+        precio: 60000,
+        bases: Some(["carro_grande"]), // REQ-TIE-11
+    ),
+    (
+        id: "techo_dos_aguas_chico",
+        modelo: Some("accesorios/techo_dos_aguas_chico"), // SPEC-025
+        nombre: "Techo a dos aguas (chico)",
+        categoria: Carpa,
+        precio: 40000,
+        bases: Some(["barra_chica"]), // REQ-TIE-11
+    ),
+    (
+        id: "techo_dos_aguas_mediano",
+        modelo: Some("accesorios/techo_dos_aguas_mediano"), // SPEC-025
+        nombre: "Techo a dos aguas (mediano)",
+        categoria: Carpa,
+        precio: 50000,
+        bases: Some(["barra_mediana"]), // REQ-TIE-11
+    ),
+    (
+        id: "techo_dos_aguas_grande",
+        modelo: Some("accesorios/techo_dos_aguas_grande"), // SPEC-025
+        nombre: "Techo a dos aguas (grande)",
+        categoria: Carpa,
+        precio: 65000,
+        bases: Some(["carro_grande"]), // REQ-TIE-11
+    ),
+    (
+        id: "techo_curvo_chico",
+        modelo: Some("accesorios/techo_curvo_chico"), // SPEC-025
+        nombre: "Techo curvo (chico)",
+        categoria: Carpa,
+        precio: 40000,
+        bases: Some(["barra_chica"]), // REQ-TIE-11
+    ),
+    (
+        id: "techo_curvo_mediano",
+        modelo: Some("accesorios/techo_curvo_mediano"), // SPEC-025
+        nombre: "Techo curvo (mediano)",
+        categoria: Carpa,
+        precio: 50000,
+        bases: Some(["barra_mediana"]), // REQ-TIE-11
+    ),
+    (
+        id: "techo_curvo_grande",
+        modelo: Some("accesorios/techo_curvo_grande"), // SPEC-025
+        nombre: "Techo curvo (grande)",
+        categoria: Carpa,
+        precio: 65000,
+        bases: Some(["carro_grande"]), // REQ-TIE-11
+    ),
+    (
+        id: "marquesina_chico",
+        modelo: Some("accesorios/marquesina_chico"), // SPEC-025
+        nombre: "Marquesina con cartel (chico)",
+        categoria: Carpa,
+        precio: 55000,
+        bases: Some(["barra_chica"]), // REQ-TIE-11
+    ),
+    (
+        id: "marquesina_mediano",
+        modelo: Some("accesorios/marquesina_mediano"), // SPEC-025
+        nombre: "Marquesina con cartel (mediano)",
+        categoria: Carpa,
+        precio: 70000,
+        bases: Some(["barra_mediana"]), // REQ-TIE-11
+    ),
+    (
+        id: "marquesina_grande",
+        modelo: Some("accesorios/marquesina_grande"), // SPEC-025
+        nombre: "Marquesina con cartel (grande)",
+        categoria: Carpa,
+        precio: 90000,
+        bases: Some(["carro_grande"]), // REQ-TIE-11
+    ),
+    // ── Más decoración y mobiliario (REQ-TIE-12, REQ-TIE-13). Precios provisorios ──
+    (
+        id: "telon_hamburguesas",
+        modelo: Some("accesorios/telon_hamburguesas"), // SPEC-025
+        nombre: "Telón \"Hamburguesas\"",
+        categoria: Telon,
+        precio: 9000,
+    ),
+    (
+        id: "telon_choripan",
+        modelo: Some("accesorios/telon_choripan"), // SPEC-025
+        nombre: "Telón \"Choripán\"",
+        categoria: Telon,
+        precio: 9000,
+    ),
+    (
+        id: "cerco_metal",
+        modelo: Some("accesorios/cerco_metal"), // SPEC-025
+        nombre: "Cerco de metal",
+        categoria: Cerco,
+        precio: 25000,
+    ),
+    (
+        id: "cartel_luminoso",
+        modelo: Some("accesorios/cartel_luminoso"), // SPEC-025
+        nombre: "Cartel luminoso",
+        categoria: Decoracion,
+        precio: 15000,
+    ),
+    (
+        id: "pizarra_grande",
+        modelo: Some("accesorios/pizarra_grande"), // SPEC-025
+        nombre: "Pizarra de menú grande",
+        categoria: Mobiliario,
+        precio: 12000,
+    ),
+    (
+        id: "maceta",
+        modelo: Some("accesorios/maceta"), // SPEC-025
+        nombre: "Maceta con planta",
+        categoria: Mobiliario,
+        precio: 6000,
+    ),
+    (
+        id: "mesa_alta",
+        modelo: Some("accesorios/mesa_alta"), // SPEC-025
+        nombre: "Mesa alta",
+        categoria: Mobiliario,
+        precio: 20000,
+    ),
+    (
+        id: "banqueta",
+        modelo: Some("accesorios/banqueta"), // SPEC-025
+        nombre: "Banqueta alta",
+        categoria: Mobiliario,
+        precio: 8000,
+    ),
 ]

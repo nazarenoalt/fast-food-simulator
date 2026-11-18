@@ -5,6 +5,7 @@ use std::collections::BTreeMap;
 use std::fmt;
 
 use crate::carrito::{Accesorio, Anclaje, BaseCarrito, ConfigCarrito};
+use crate::datos::Catalogo;
 use crate::economia::{Caja, plata};
 
 /// REQ-TIE-08: paleta fija y gratis.
@@ -48,9 +49,14 @@ pub struct Opcion {
 pub enum ErrorArmado {
     Inexistente(String),
     AnclajeInexistente(String),
-    NoEntra { accesorio: String, anclaje: String },
+    NoEntra {
+        accesorio: String,
+        anclaje: String,
+    },
     Vacio(String),
-    SinSaldo { falta: f32 },
+    SinSaldo {
+        falta: f32,
+    },
     NoGuardado(String),
     /// REQ-TIE-05 / REQ-TIE-10: depósito con bloques.
     ConBloques(String),
@@ -142,7 +148,8 @@ impl Armado {
     }
 
     /// REQ-TIE-02: lo que entra en un anclaje; primero lo guardado (sin repetir), después la tienda.
-    pub fn opciones(&self, anclaje: &str, bases: &[BaseCarrito], accesorios: &[Accesorio]) -> Vec<Opcion> {
+    pub fn opciones(&self, anclaje: &str, cat: &Catalogo) -> Vec<Opcion> {
+        let (bases, accesorios) = (&cat.bases[..], &cat.accesorios[..]);
         let Ok(base) = self.base_def(bases) else { return Vec::new() };
         let Some(anc) = base.anclaje(anclaje) else { return Vec::new() };
         let mut v: Vec<Opcion> = Vec::new();
@@ -169,9 +176,9 @@ impl Armado {
         origen: Origen,
         con_bloques: bool,
         caja: &mut Caja,
-        bases: &[BaseCarrito],
-        accesorios: &[Accesorio],
+        cat: &Catalogo,
     ) -> Result<f32, ErrorArmado> {
+        let (bases, accesorios) = (&cat.bases[..], &cat.accesorios[..]);
         let base = self.base_def(bases)?;
         let anc = base.anclaje(anclaje).ok_or_else(|| ErrorArmado::AnclajeInexistente(anclaje.to_string()))?;
         let acc = Self::acc(acc_id, accesorios)?;
@@ -216,13 +223,8 @@ impl Armado {
     }
 
     /// REQ-TIE-04: mueve al anclaje de destino; si está ocupado y los dos se aceptan, intercambia.
-    pub fn mover(
-        &mut self,
-        desde: &str,
-        hasta: &str,
-        bases: &[BaseCarrito],
-        accesorios: &[Accesorio],
-    ) -> Result<Movimiento, ErrorArmado> {
+    pub fn mover(&mut self, desde: &str, hasta: &str, cat: &Catalogo) -> Result<Movimiento, ErrorArmado> {
+        let (bases, accesorios) = (&cat.bases[..], &cat.accesorios[..]);
         let base = self.base_def(bases)?;
         let a_id = self.accesorios.get(desde).cloned().ok_or_else(|| ErrorArmado::Vacio(desde.to_string()))?;
         let anc_desde = base.anclaje(desde).ok_or_else(|| ErrorArmado::AnclajeInexistente(desde.to_string()))?;
@@ -250,8 +252,8 @@ impl Armado {
     }
 
     /// REQ-TIE-09: vende un accesorio guardado. Devuelve lo cobrado.
-    pub fn vender_accesorio(&mut self, id: &str, caja: &mut Caja, accesorios: &[Accesorio]) -> Result<f32, ErrorArmado> {
-        let precio = Self::acc(id, accesorios)?.precio;
+    pub fn vender_accesorio(&mut self, id: &str, caja: &mut Caja, cat: &Catalogo) -> Result<f32, ErrorArmado> {
+        let precio = Self::acc(id, &cat.accesorios)?.precio;
         if !sacar(&mut self.inventario.accesorios, id) {
             return Err(ErrorArmado::NoGuardado(id.to_string()));
         }
@@ -261,8 +263,9 @@ impl Armado {
     }
 
     /// REQ-TIE-09: vende una base guardada. Devuelve lo cobrado.
-    pub fn vender_base(&mut self, id: &str, caja: &mut Caja, bases: &[BaseCarrito]) -> Result<f32, ErrorArmado> {
-        let precio = bases.iter().find(|b| b.id == id).ok_or_else(|| ErrorArmado::Inexistente(id.to_string()))?.precio;
+    pub fn vender_base(&mut self, id: &str, caja: &mut Caja, cat: &Catalogo) -> Result<f32, ErrorArmado> {
+        let precio =
+            cat.bases.iter().find(|b| b.id == id).ok_or_else(|| ErrorArmado::Inexistente(id.to_string()))?.precio;
         if !sacar(&mut self.inventario.bases, id) {
             return Err(ErrorArmado::NoGuardado(id.to_string()));
         }
@@ -277,14 +280,15 @@ impl Armado {
         &mut self,
         nueva: &str,
         caja: &mut Caja,
-        bases: &[BaseCarrito],
-        accesorios: &[Accesorio],
+        cat: &Catalogo,
         con_bloques: &[String],
     ) -> Result<CambioBase, ErrorArmado> {
+        let (bases, accesorios) = (&cat.bases[..], &cat.accesorios[..]);
         if nueva == self.base {
             return Err(ErrorArmado::MismaBase);
         }
-        let destino = bases.iter().find(|b| b.id == nueva).ok_or_else(|| ErrorArmado::Inexistente(nueva.to_string()))?;
+        let destino =
+            bases.iter().find(|b| b.id == nueva).ok_or_else(|| ErrorArmado::Inexistente(nueva.to_string()))?;
         let mut pasan = Vec::new();
         let mut guardados = Vec::new();
         for (anc_id, acc_id) in &self.accesorios {
@@ -335,7 +339,7 @@ mod tests {
     fn req_tie_02_opciones_guardado_primero_y_solo_lo_que_entra() {
         let (mut a, c) = armado();
         a.inventario.accesorios = vec!["sombrilla_rayada".into(), "sombrilla_rayada".into(), "plancha_chica".into()];
-        let ops = a.opciones("sombra", &c.bases, &c.accesorios);
+        let ops = a.opciones("sombra", &c);
         assert_eq!(ops[0], Opcion { accesorio: "sombrilla_rayada".into(), origen: Origen::Guardado, precio: 0.0 });
         assert_eq!(ops.iter().filter(|o| o.origen == Origen::Guardado).count(), 1, "sin repetir ni la plancha");
         let base = c.bases.iter().find(|b| b.id == a.base).unwrap();
@@ -353,14 +357,14 @@ mod tests {
         a.accesorios.remove("sombra");
         let precio = c.accesorios.iter().find(|x| x.id == "sombrilla_roja").unwrap().precio;
         let mut k = caja(precio - 1.0);
-        let e = a.poner("sombra", "sombrilla_roja", Origen::Tienda, false, &mut k, &c.bases, &c.accesorios);
+        let e = a.poner("sombra", "sombrilla_roja", Origen::Tienda, false, &mut k, &c);
         assert!(matches!(e, Err(ErrorArmado::SinSaldo { .. })));
         assert!(!a.accesorios.contains_key("sombra"));
         let mut k = caja(precio);
-        let g = a.poner("sombra", "sombrilla_roja", Origen::Tienda, false, &mut k, &c.bases, &c.accesorios).unwrap();
+        let g = a.poner("sombra", "sombrilla_roja", Origen::Tienda, false, &mut k, &c).unwrap();
         assert_eq!((g, k.saldo), (precio, 0.0));
         // Una plancha no va en el anclaje de la sombrilla.
-        let e = a.poner("sombra", "plancha_chica", Origen::Tienda, false, &mut caja(1e9), &c.bases, &c.accesorios);
+        let e = a.poner("sombra", "plancha_chica", Origen::Tienda, false, &mut caja(1e9), &c);
         assert!(matches!(e, Err(ErrorArmado::NoEntra { .. })));
     }
 
@@ -369,11 +373,11 @@ mod tests {
         let (mut a, c) = armado();
         a.inventario.accesorios.push("sombrilla_rayada".into());
         let mut k = caja(0.0);
-        let g = a.poner("sombra", "sombrilla_rayada", Origen::Guardado, false, &mut k, &c.bases, &c.accesorios).unwrap();
+        let g = a.poner("sombra", "sombrilla_rayada", Origen::Guardado, false, &mut k, &c).unwrap();
         assert_eq!(g, 0.0);
         assert_eq!(a.accesorios["sombra"], "sombrilla_rayada");
         assert_eq!(a.inventario.accesorios, vec!["sombrilla_roja".to_string()]);
-        let e = a.poner("sombra", "sombrilla_rayada", Origen::Guardado, false, &mut k, &c.bases, &c.accesorios);
+        let e = a.poner("sombra", "sombrilla_rayada", Origen::Guardado, false, &mut k, &c);
         assert!(matches!(e, Err(ErrorArmado::NoGuardado(_))));
     }
 
@@ -381,16 +385,16 @@ mod tests {
     fn req_tie_04_mover_y_dar_intercambiar() {
         let (mut a, c) = armado();
         // Plancha del centro a la izquierda (donde está el hervidor): se intercambian.
-        assert_eq!(a.mover("mostrador_centro", "mostrador_izq", &c.bases, &c.accesorios), Ok(Movimiento::Intercambio));
+        assert_eq!(a.mover("mostrador_centro", "mostrador_izq", &c), Ok(Movimiento::Intercambio));
         assert_eq!(a.accesorios["mostrador_izq"], "plancha_chica");
         assert_eq!(a.accesorios["mostrador_centro"], "hervidor_chico");
         // A un lugar libre.
         a.accesorios.remove("luz_2");
-        assert_eq!(a.mover("luz_1", "luz_2", &c.bases, &c.accesorios), Ok(Movimiento::Simple));
+        assert_eq!(a.mover("luz_1", "luz_2", &c), Ok(Movimiento::Simple));
         assert!(!a.accesorios.contains_key("luz_1"));
         // La sombrilla no va en un mostrador.
         let antes = a.clone();
-        assert!(matches!(a.mover("sombra", "mostrador_der", &c.bases, &c.accesorios), Err(ErrorArmado::NoEntra { .. })));
+        assert!(matches!(a.mover("sombra", "mostrador_der", &c), Err(ErrorArmado::NoEntra { .. })));
         assert_eq!(a, antes);
     }
 
@@ -420,11 +424,11 @@ mod tests {
         a.guardar("sombra", false).unwrap();
         let precio = c.accesorios.iter().find(|x| x.id == "sombrilla_roja").unwrap().precio;
         let mut k = caja(0.0);
-        assert_eq!(a.vender_accesorio("sombrilla_roja", &mut k, &c.accesorios), Ok(precio / 2.0));
+        assert_eq!(a.vender_accesorio("sombrilla_roja", &mut k, &c), Ok(precio / 2.0));
         assert_eq!(k.saldo, precio / 2.0);
-        assert!(matches!(a.vender_accesorio("sombrilla_roja", &mut k, &c.accesorios), Err(ErrorArmado::NoGuardado(_))));
+        assert!(matches!(a.vender_accesorio("sombrilla_roja", &mut k, &c), Err(ErrorArmado::NoGuardado(_))));
         // Lo puesto no se vende.
-        assert!(a.vender_accesorio("plancha_chica", &mut k, &c.accesorios).is_err());
+        assert!(a.vender_accesorio("plancha_chica", &mut k, &c).is_err());
     }
 
     #[test]
@@ -433,24 +437,66 @@ mod tests {
         assert_eq!(a.base, "barra_mediana");
         let grande = c.bases.iter().find(|b| b.id == "carro_grande").unwrap().precio;
         let mut k = caja(grande);
-        let r = a.cambiar_base("carro_grande", &mut k, &c.bases, &c.accesorios, &[]).unwrap();
+        let r = a.cambiar_base("carro_grande", &mut k, &c, &[]).unwrap();
         assert_eq!((r.pagado, k.saldo), (grande, 0.0));
         assert!(r.guardados.is_empty(), "el carro grande tiene todos los anclajes de la mediana");
         assert_eq!(a.inventario.bases, vec!["barra_mediana".to_string()]);
         // Volver a la guardada es gratis; al kiosco no pasan la sombrilla ni la parrilla.
-        let r = a.cambiar_base("barra_mediana", &mut k, &c.bases, &c.accesorios, &[]).unwrap();
+        let r = a.cambiar_base("barra_mediana", &mut k, &c, &[]).unwrap();
         assert_eq!(r.pagado, 0.0);
         assert_eq!(a.inventario.bases, vec!["carro_grande".to_string()]);
         let kiosco = c.bases.iter().find(|b| b.id == "carro_kiosco").unwrap().precio;
         let antes = a.clone();
-        let e = a.cambiar_base("carro_kiosco", &mut caja(kiosco), &c.bases, &c.accesorios, &["lateral".to_string()]);
+        let e = a.cambiar_base("carro_kiosco", &mut caja(kiosco), &c, &["lateral".to_string()]);
         assert!(matches!(e, Err(ErrorArmado::ConBloques(_))), "el estante con mercadería no tiene lugar");
         assert_eq!(a, antes);
-        let r = a.cambiar_base("carro_kiosco", &mut caja(kiosco), &c.bases, &c.accesorios, &[]).unwrap();
+        let r = a.cambiar_base("carro_kiosco", &mut caja(kiosco), &c, &[]).unwrap();
         assert!(r.guardados.iter().any(|(_, acc)| acc == "sombrilla_roja"));
         assert!(r.pasan.contains(&"mostrador_centro".to_string()));
         assert!(a.inventario.accesorios.contains(&"sombrilla_roja".to_string()));
-        assert_eq!(a.cambiar_base("carro_kiosco", &mut k, &c.bases, &c.accesorios, &[]), Err(ErrorArmado::MismaBase));
+        assert_eq!(a.cambiar_base("carro_kiosco", &mut k, &c, &[]), Err(ErrorArmado::MismaBase));
+    }
+
+    #[test]
+    fn req_tie_12_accesorios_nuevos_con_modelo() {
+        let c = catalogo_real();
+        let ids = [
+            "telon_hamburguesas",
+            "telon_choripan",
+            "cerco_metal",
+            "cartel_luminoso",
+            "pizarra_grande",
+            "maceta",
+            "mesa_alta",
+            "banqueta",
+        ];
+        for id in ids {
+            let a = c.accesorios.iter().find(|a| a.id == id).unwrap_or_else(|| panic!("falta {id}"));
+            assert!(a.modelo.is_some(), "{id} sin modelo");
+        }
+        // Cada techo, en su tamaño: una sola base, y entra en su anclaje `techo`.
+        for t in ["techo_plano", "techo_dos_aguas", "techo_curvo", "marquesina"] {
+            for (tam, base) in [("chico", "barra_chica"), ("mediano", "barra_mediana"), ("grande", "carro_grande")] {
+                let a = c.accesorios.iter().find(|a| a.id == format!("{t}_{tam}")).unwrap();
+                assert_eq!(a.bases.as_deref(), Some(&[base.to_string()][..]));
+                let b = c.bases.iter().find(|b| b.id == base).unwrap();
+                assert!(entra(a, b, b.anclaje("techo").unwrap()), "{} en {base}", a.id);
+            }
+        }
+    }
+
+    #[test]
+    fn req_tie_13_mobiliario_solo_en_el_piso() {
+        let c = catalogo_real();
+        let mut alguno = false;
+        for b in &c.bases {
+            for a in b.anclajes.iter().filter(|a| a.categorias.contains(&crate::carrito::Categoria::Mobiliario)) {
+                alguno = true;
+                assert!(a.pos[1] < 0.05, "{}/{} no está en el piso", b.id, a.id);
+                assert!(["lateral", "lateral_izq", "cerco"].contains(&a.id.as_str()));
+            }
+        }
+        assert!(alguno);
     }
 
     #[test]

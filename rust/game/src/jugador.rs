@@ -9,6 +9,7 @@ use godot::global::{Key, MouseButton};
 use godot::prelude::*;
 
 use crate::aderecera::Pomo;
+use crate::armado;
 use crate::bloque_stock::BloqueStock;
 use crate::comida::Comida;
 use crate::formas;
@@ -78,6 +79,7 @@ fn registrar_acciones() {
         ("usar", Key::E),
         ("tiempo_rapido", Key::T),
         ("tienda", Key::TAB),
+        ("armado", Key::B), // REQ-TIE-01
         ("traer_cliente", Key::C),
     ] {
         if !mapa.has_action(accion) {
@@ -164,10 +166,14 @@ impl ICharacterBody3D for Jugador {
             }
             // REQ-JUG-07: clic captura el mouse (salvo con el panel del proveedor abierto).
             if !capturado {
-                if tienda::abierta() {
+                if tienda::abierta() || armado::menu_abierto() {
                     return;
                 }
                 input.set_mouse_mode(MouseMode::CAPTURED);
+                return;
+            }
+            // REQ-TIE-01: en el modo armado los clics son del modo armado.
+            if armado::activo() {
                 return;
             }
             match boton.get_button_index() {
@@ -186,6 +192,11 @@ impl ICharacterBody3D for Jugador {
     fn physics_process(&mut self, delta: f64) {
         let dt = delta as f32;
         self.mover(dt);
+        // REQ-TIE-01: en el modo armado no se usa nada y el cartel es del modo armado.
+        if armado::activo() {
+            self.actualizar_mano(dt);
+            return;
+        }
         if Input::singleton().is_action_just_pressed("usar") {
             self.usar();
         }

@@ -29,3 +29,5 @@ transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 0, 0.05, -23.85)
 [node name="Hud" type="Hud" parent="."]
 
 [node name="Tienda" type="Tienda" parent="."]
+
+[node name="ModoArmado" type="ModoArmado" parent="."]
