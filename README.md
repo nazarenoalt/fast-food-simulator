@@ -4,9 +4,13 @@ Simulador de carrito de comida rápida (panchos, hamburguesas, choripanes) en 3D
 física real, frente a una plaza. Hecho con **Godot 4.7** y **Rust** (godot-rust 0.5).
 
 > Estado y próximas tareas: [`docs/ROADMAP.md`](docs/ROADMAP.md).
+> Desde [SPEC-025](docs/specs/025-modelos.md) el carrito, sus accesorios, la comida y la plaza
+> usan modelos 3D hechos con la [guía de modelado](docs/arte/guia-modelado-3d.md).
 
 | | |
 |---|---|
+| ![Carro kiosco](docs/capturas/15_kiosco.jpg) | ![Adentro del kiosco](docs/capturas/16_kiosco_adentro.jpg) |
+| ![Carrito con modelos 3D](docs/capturas/12_modelos_carrito.jpg) | ![Plaza con modelos 3D](docs/capturas/14_modelos_plaza.jpg) |
 | ![Clientes en la fila](docs/capturas/8_fila_clientes.png) | ![Plaza con gente](docs/capturas/9_plaza_viva.png) |
 | ![Atardecer](docs/capturas/10_atardecer.png) | ![Noche en la ciudad](docs/capturas/11_noche_ciudad.png) |
 | ![Depósito con comida visible](docs/capturas/2_deposito.png) | ![Hervidor y panchos](docs/capturas/3_cocinando.png) |
@@ -76,6 +80,7 @@ Las reglas completas (y el mapa del repo) están en [`CLAUDE.md`](CLAUDE.md).
 
 - Física: **Jolt** (incluida en Godot). Las unidades guardadas en el depósito no tienen
   física hasta que se sacan, para que un depósito lleno no haga lento el juego.
-- Los modelos son piezas simples definidas en los datos; se van a reemplazar por modelos de
-  Blender (`.glb`), con Git LFS (ver [ROADMAP](docs/ROADMAP.md)).
+- Los modelos son `.glb` hechos en Blender siguiendo la [guía de modelado 3D](docs/arte/guia-modelado-3d.md)
+  y la [lista de modelos](docs/arte/lista-de-modelos.md); las formas simples de los datos son el respaldo
+  (ver [ROADMAP](docs/ROADMAP.md) para Git LFS).
 - Al exportar, agregá `data/*.ron` en "Filtros para exportar archivos que no son recursos".

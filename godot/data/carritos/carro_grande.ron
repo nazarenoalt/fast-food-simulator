@@ -1,5 +1,6 @@
 (
     id: "carro_grande",
+    modelo: Some("carritos/carro_grande"), // SPEC-025
     nombre: "Carro grande",
     ancho: 3.4, profundidad: 1.2, alto_mostrador: 1.0,
     color: (0.8, 0.8, 0.82),

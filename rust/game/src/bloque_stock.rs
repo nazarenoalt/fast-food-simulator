@@ -6,7 +6,7 @@ use godot::classes::{BoxShape3D, INode3D, Node3D, StaticBody3D};
 use godot::prelude::*;
 
 use crate::datos::catalogo;
-use crate::formas;
+use crate::{formas, modelos};
 
 #[derive(GodotClass)]
 #[class(base=Node3D, no_init)]
@@ -93,15 +93,18 @@ pub fn construir_visual(padre: &mut Gd<Node3D>, def: &DefBloque, restantes: u32)
     // REQ-DEP-02: cada unidad restante es un objeto 3D real en su lugar (sin física).
     for i in 0..restantes {
         let mut unidad = Node3D::new_alloc();
-        for p in &producto.forma {
-            unidad.add_child(&formas::visual_pieza(p));
-        }
+        unidad.add_child(&modelos::visual_producto(&producto).0); // SPEC-025
         unidad.set_position(formas::v3(def.posicion_unidad(i)));
         padre.add_child(&unidad);
         unidades.push(unidad);
     }
 
-    // REQ-DEP-06: el paquete.
+    // REQ-DEP-06: el paquete (REQ-MOD-01: su modelo, si tiene).
+    if let Some(m) = &def.modelo {
+        if modelos::agregar(padre, m).is_some() {
+            return unidades;
+        }
+    }
     let c = def.color_empaque;
     match def.empaque {
         Empaque::Bolsa => {

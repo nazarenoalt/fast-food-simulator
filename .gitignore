@@ -1,4 +1,8 @@
 rust/target/
 godot/.godot/
 *.import
+*.blend1
+__pycache__/
 build/
+# Imágenes que Godot saca de los .glb al importarlos (las de verdad están en texturas/)
+godot/modelos/*/*.png
