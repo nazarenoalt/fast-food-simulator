@@ -352,7 +352,7 @@ def paredes(bm):
     # Marco de la puerta (acero) por fuera.
     for x in (pa - 0.015, pb + 0.015):
         piezas.caja(bm, (0.03, pt - Y_CAJA, 0.02), (x, (Y_CAJA + pt) / 2, -ZH - 0.008), mat=ACERO, bisel=0.006)
-    piezas.caja(bm, (pb - pa + 0.06, 0.03, 0.02), ((pa + pb) / 2, pt + 0.015, -ZH - 0.008), mat=ACERO, bisel=0.006)
+    piezas.caja(bm, (pb - pa + 0.06, 0.03, 0.02), ((pa + pb) / 2, pt + 0.014, -ZH - 0.008), mat=ACERO, bisel=0.006)
 
 
 def piso_y_ruedas(bm):
@@ -409,7 +409,7 @@ def muebles(bm, tapas_mats):
     piezas.caja(bm, (2 * XI, Y_BAHIA - ARCO_Y - 0.012, ZI - Z_RUEDA_ADENTRO + 0.002),
                 (0, (Y_BAHIA + ARCO_Y + 0.012) / 2, (ZI + Z_RUEDA_ADENTRO - 0.002) / 2), mat=ACERO)
     # Fondo de las bahías y montantes.
-    piezas.caja(bm, (2 * XI, Y1 - Y_BAHIA + EPS, ZI - Z_FONDO), (0, (Y_BAHIA + Y1 + EPS) / 2, (ZI + Z_FONDO) / 2),
+    piezas.caja(bm, (2 * XI, Y1 - Y_BAHIA + 2 * EPS, ZI - Z_FONDO), (0, (Y_BAHIA + Y1) / 2, (ZI + Z_FONDO) / 2),
                 mat=ACERO)
     for ma, mb in base.macizos(-XI + EPS, XI - EPS, xs):
         piezas.caja(bm, (mb - ma, Y1 - Y_BAHIA + 2 * EPS, Z_FONDO - Z_BOCA + EPS),
@@ -456,14 +456,14 @@ def vitrina(bm):
                         mat=ACERO, bisel=0.008)
         piezas.caja(bm, (0.05, yv1 - yv0, 0.05), (sx * VX, (yv0 + yv1) / 2, zv), mat=ACERO, bisel=0.008)
     # Travesaños: arriba de punta a punta, abajo de cada vitrina, arriba de la ventana.
-    piezas.caja(bm, (2 * XA - 0.1, 0.04, 0.05), (0, yv1 - 0.02, zv), mat=ACERO, bisel=0.008)
+    piezas.caja(bm, (2 * XA - 0.1, 0.04, 0.05), (0, yv1 - 0.021, zv), mat=ACERO, bisel=0.008)
     piezas.caja(bm, (2 * VX - 0.05, 0.04, 0.05), (0, Y_VENTANA + 0.02, zv), mat=ACERO, bisel=0.008)
     for xa, xb in VITRINAS:
         piezas.caja(bm, (xb - xa, 0.03, 0.05), ((xa + xb) / 2, yv0 + 0.015, zv), mat=ACERO, bisel=0.006)
     for sx in (-1, 1):
         x = sx * (XA - 0.025)
         piezas.caja(bm, (0.05, 0.03, 2 * ZA - 0.1), (x, yv0 + 0.015, 0), mat=ACERO, bisel=0.006)
-        piezas.caja(bm, (0.05, 0.04, 2 * ZA - 0.1), (x, yv1 - 0.02, 0), mat=ACERO, bisel=0.008)
+        piezas.caja(bm, (0.05, 0.04, 2 * ZA - 0.1), (x, yv1 - 0.021, 0), mat=ACERO, bisel=0.008)
         piezas.caja(bm, (0.04, yv1 - yv0 - 0.07, 0.04), (x, (yv0 + 0.03 + yv1 - 0.04) / 2, 0), mat=ACERO,
                     bisel=0.006)
     # Vidrios (1 cm): vitrinas de adelante, paño fijo sobre la ventana, costados.
