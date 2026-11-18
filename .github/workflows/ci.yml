@@ -40,8 +40,7 @@ jobs:
       GODOT_VERSION: "4.7-stable"
     steps:
       - uses: actions/checkout@v4
-        with:
-          lfs: true # TASK-0003: los modelos .glb están en Git LFS
+      - uses: ./.github/actions/modelos-lfs # TASK-0003: solo los .glb del juego, con caché
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: rustfmt, clippy

@@ -1,0 +1,27 @@
+# TASK-0003: baja de Git LFS solo los modelos que usa el juego (godot/**, unos 7 MB) y los
+# guarda en la caché de Actions. Sin cambios en los modelos no se baja nada de LFS (la caché
+# no cuenta para el cupo mensual de LFS). Los .blend y las imágenes de docs/arte no se bajan.
+# Usar después de actions/checkout (sin `lfs: true`).
+name: Modelos del juego (LFS con caché)
+description: Baja los .glb de godot/ desde la caché o, si cambiaron, desde Git LFS.
+runs:
+  using: composite
+  steps:
+    - name: Huella de los modelos
+      id: huella
+      shell: bash
+      # Identificador y ruta de cada archivo LFS de godot/ (sin la marca de "ya bajado").
+      run: echo "valor=$(git lfs ls-files -l -I 'godot/**' | awk '{print $1, $3}' | sha256sum | cut -c1-16)" >> "$GITHUB_OUTPUT"
+    - name: Caché de LFS
+      uses: actions/cache@v4
+      with:
+        path: .git/lfs/objects
+        key: lfs-juego-${{ steps.huella.outputs.valor }}
+        restore-keys: lfs-juego-
+    - name: Bajar lo que falte
+      shell: bash
+      run: |
+        git lfs pull --include="godot/**"
+        # Sin el .glb real (queda el puntero de texto) fallan los tests de modelos.
+        f=$(git lfs ls-files -n -I 'godot/**' | head -1)
+        [ -z "$f" ] || [ "$(head -c 4 "$f")" = "glTF" ] || { echo "::error::$f no se bajó de LFS"; exit 1; }
