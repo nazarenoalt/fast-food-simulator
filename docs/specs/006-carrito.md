@@ -22,7 +22,8 @@ agregar un archivo de datos.
 
 ### Accesorios
 - **REQ-CAR-04** Categorías de accesorio: Decoración, Equipamiento, Cerco, Carpa, Telón,
-  Cocina, Depósito, Sombrilla, Luz y Porche (cerramiento para comer al costado del carro).
+  Cocina, Depósito, Sombrilla, Luz, Porche (cerramiento para comer al costado del carro) y
+  Cartel (colgante, SPEC-026).
 - **REQ-CAR-05** Un accesorio se define en `godot/data/accesorios.ron` con id, nombre,
   categoría, precio, forma visual (lista de piezas simples: caja, cilindro, esfera, cono,
   con medidas, posición y color) y opcionalmente una **función**: Hervidor, Depósito

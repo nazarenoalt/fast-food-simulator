@@ -43,8 +43,8 @@ Cada etapa abre con sus specs (SPEC-000) y cierra con docs al día. Formato en [
 | ID | Tarea | Spec | Estado |
 |---|---|---|---|
 | 0351 | Escribir spec 026 Papas fritas y la puerta en la 006 | 026, 006 | ✅ |
-| 0352 | Modelar papas (4 estados), cajita y bolsa de papas | 026 | ✅ |
-| 0353 | Modelar freidora (simple y doble), colador, pelapapas, cuchillo y cartel colgante | 026 | ✅ |
+| 0352 | Modelar papas (4 estados), cajita vacía y llena, y bolsas de arpillera de 2 y 5 kg | 026 | ✅ |
+| 0353 | Modelar freidora (simple y doble), colador, pelapapas, cuchillo y cartel de cerrado (anclaje `cartel` adelante) | 026, 006 | ✅ |
 | 0354 | Función Surtido y datos `.ron` con modelo | 026 | ✅ |
 | 0355 | Puerta que se abre y cierra en el carro grande (y el kiosco) | 006 | ✅ |
 | 0356 | Pelar y cortar papas con pelapapas y cuchillo | — | ⬜ |
@@ -60,6 +60,7 @@ Cada etapa abre con sus specs (SPEC-000) y cierra con docs al día. Formato en [
 | 0404 | Cambiar estilos y colores | 006 | ⬜ |
 | 0405 | Bases de carrito nuevas | 006 | ⬜ |
 | 0406 | Carro con interior caminable | 006 | ⬜ |
+| 0407 | Logo del carrito: elegir entre varios diseños y escribirle tu texto | 006 | ⬜ |
 
 ## Etapa 5 · Plaza con rutinas (`feat (mundo)`) · PR TASK-0500
 | ID | Tarea | Spec | Estado |

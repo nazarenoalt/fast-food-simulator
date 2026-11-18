@@ -128,7 +128,7 @@ impl PruebaHumo {
     }
 
     /// SPEC-026 y REQ-CAR-13: arma un segundo carrito (carro grande, plateado) con la freidora
-    /// doble, la tabla, el cartel y la bolsa de papas, y abre y cierra su puerta. Se llama en
+    /// doble, la tabla, el cartel adelante y las bolsas de papas, y abre y cierra su puerta. Se llama en
     /// varios cuadros; devuelve true al terminar.
     fn chequear_papas_y_puerta(&mut self) -> bool {
         let mundo = self.mundo();
@@ -140,7 +140,7 @@ impl PruebaHumo {
                 cfg.accesorios = [
                     ("mostrador_izq", "freidora_doble"),
                     ("mostrador_centro", "tabla_papas"),
-                    ("mostrador_der", "cartel_cerrado"),
+                    ("cartel", "cartel_cerrado"),
                     ("lateral", "estante_deposito"),
                 ]
                 .iter()
@@ -148,7 +148,12 @@ impl PruebaHumo {
                 .collect();
                 cfg.stock = [(
                     "lateral".to_string(),
-                    vec![Some("bolsa_papas".to_string()), Some("pack_cajitas".to_string()), None, None],
+                    vec![
+                        Some("bolsa_papas_5kg".to_string()),
+                        Some("bolsa_papas_2kg".to_string()),
+                        Some("pack_cajitas".to_string()),
+                        None,
+                    ],
                 )]
                 .into_iter()
                 .collect();
@@ -196,11 +201,28 @@ impl PruebaHumo {
                     sobre_tabla && agarrado && suelta("pelapapas").len() == 1,
                     "REQ-PAP-06 la tabla trae cuchillo y pelapapas, y el cuchillo se agarra",
                 );
-                let bolsa = todos::<BloqueStock>(&mundo).into_iter().find(|b| b.bind().producto() == "papa_cruda");
+                let mut bolsas: Vec<u32> = todos::<BloqueStock>(&mundo)
+                    .into_iter()
+                    .filter(|b| b.bind().producto() == "papa_cruda")
+                    .map(|b| b.bind().restantes())
+                    .collect();
+                bolsas.sort();
                 self.chequear(
-                    bolsa.is_some_and(|b| b.bind().restantes() == 12),
-                    "REQ-PAP-03 la bolsa de papas (12) entra en el estante",
+                    bolsas == [12, 24],
+                    &format!("REQ-PAP-03 las bolsas de 2 kg (12) y 5 kg (24) entran en el estante ({bolsas:?})"),
                 );
+                // REQ-PAP-07: el cartel cuelga adelante (lo ven los clientes), del canto de la mesada.
+                let cartel = nodo.find_child_ex("cartel_cartel_cerrado").recursive(true).owned(false).done();
+                let adelante = cartel.and_then(|n| n.try_cast::<Node3D>().ok()).map(|n| n.get_global_position() - base);
+                self.chequear(
+                    adelante.is_some_and(|p| p.z > 0.6 && p.x.abs() < 0.01 && (p.y - 0.988).abs() < 0.01),
+                    &format!("REQ-PAP-07 el cartel de cerrado cuelga adelante ({adelante:?})"),
+                );
+                // REQ-PAP-02: la cajita llena (lo que se entrega) tiene su modelo.
+                let llena = self.agregar_comida("papas_fritas_cajita", base + Vector3::new(0.0, 1.2, 0.1));
+                let con_modelo = crate::modelos::buscar(&llena.clone().upcast(), "papas_fritas_cajita").is_some();
+                llena.free();
+                self.chequear(con_modelo, "REQ-PAP-02 la cajita llena de papas fritas tiene su modelo");
                 let puerta = c.bind().puerta();
                 let cerrada = puerta.as_ref().is_some_and(|p| !p.bind().abierta() && p.bind().angulo() == 0.0);
                 self.chequear(cerrada, "REQ-CAR-11 la puerta del carro grande arranca cerrada");

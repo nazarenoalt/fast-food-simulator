@@ -26,5 +26,6 @@
         (id: "lateral_der", pos: (1.6, 0.0, 0.0), categorias: [Porche]),
         (id: "luz_1", pos: (-1.2, 2.15, 0.97), categorias: [Luz]),
         (id: "luz_2", pos: (1.2, 2.15, 0.97), categorias: [Luz]),
+        (id: "cartel", pos: (0.0, 1.038, 1.092), categorias: [Cartel]), // REQ-PAP-07: canto de la repisa de afuera
     ],
 )

@@ -18,9 +18,9 @@ boca. Afuera `M_RojoAcento` con una franja `M_Amarillo` alrededor (sin marcas ni
 y el canto `M_BlancoCrema`. Cartón doblado: sombreado duro (aristas a más de 30°), sin bisel.
 
 Objeto único `cajita_papas`, origen en el centro de la caja envolvente (guía 2.4). Sin
-colisión (la define el dato). La hoja la muestra también con papas fritas adentro.
+colisión (la define el dato). Es la cajita **vacía** (la del pack del depósito); la llena, la
+que se le da al cliente, es `papas_fritas_cajita` (REQ-PAP-02).
 """
-import math
 import sys
 from pathlib import Path
 
@@ -96,17 +96,28 @@ def anillo(bm, alturas, meter=0.0):
     return vs
 
 
-def construir(nombre=ID):
-    mats = comun.cargar_materiales("M_RojoAcento", "M_Amarillo", "M_BlancoCrema")
-    bm = bmesh.new()
+def materiales():
+    return comun.cargar_materiales("M_RojoAcento", "M_Amarillo", "M_BlancoCrema")
+
+
+def cuerpo(bm, piso_adentro=True):
+    """La cajita en el bmesh, centrada (y de −H/2 a H/2). Sin piso de adentro cuando lo tapan
+    las papas (papas_fritas_cajita)."""
     afuera = [anillo(bm, 0.0), anillo(bm, FRANJA[0]), anillo(bm, FRANJA[1]), anillo(bm, "boca")]
     adentro = [anillo(bm, "boca", PARED), anillo(bm, PARED, PARED)]
     # Pared de afuera (de abajo hacia arriba), canto, pared de adentro (de arriba hacia abajo).
     e2._unir(bm, afuera + adentro, [ROJO, AMARILLO, ROJO, CREMA, CREMA], False, False)
     piso_afuera = bm.faces.new(list(reversed(afuera[0])))
     piso_afuera.material_index = ROJO
-    piso_adentro = bm.faces.new(adentro[-1])
-    piso_adentro.material_index = CREMA
+    if piso_adentro:
+        piso = bm.faces.new(adentro[-1])
+        piso.material_index = CREMA
+
+
+def construir(nombre=ID):
+    mats = materiales()
+    bm = bmesh.new()
+    cuerpo(bm)
     pp.ajustar_caja(bm, MEDIDAS)
     return e2.objeto_en(nombre, bm, mats, (0, 0, 0), sombreado="duro")
 
@@ -115,24 +126,9 @@ def revisar(obj):
     return comun.revisar(obj, pp.PRESUPUESTO_CHICA, MEDIDAS, origen="centro")
 
 
-def escena_llena(obj):
-    """Foto extra: la cajita con dos porciones de papas fritas paradas adentro."""
-    import papas_fritas
-    objs = [obj]
-    base = obj.location.copy()
-    for i, (dx, dz, giro) in enumerate([(-0.013, 0.0, 80), (0.014, 0.0, 72)]):
-        f = papas_fritas.construir(f"ref_papas_fritas_{i}")
-        f.rotation_euler = (math.radians(90), math.radians(giro), 0.0)
-        f.location = base + g2b((dx, 0.045, dz))
-        objs.append(f)
-    bpy.context.view_layer.update()
-    return "Con dos porciones de papas fritas adentro (solo foto) · día", objs, objs, 2.2
-
-
 def main():
     pp.main_comida(ID, construir, revisar,
-                   "cajita_papas · 0,09 × 0,11 × 0,056 m · cajita de cartón para papas (comida)",
-                   escena=escena_llena)
+                   "cajita_papas · 0,09 × 0,11 × 0,056 m · cajita de cartón vacía (comida)")
 
 
 if __name__ == "__main__":

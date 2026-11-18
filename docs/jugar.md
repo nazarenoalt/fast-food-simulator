@@ -35,8 +35,9 @@ carrito; llevá el paquete a un lugar libre del estante y queda guardado.
 - **Tu carrito:** editá `godot/data/carrito_jugador.ron` (base, color, anclajes, stock inicial).
   Si algo no encaja, el juego muestra el error arriba del carrito.
 - **Papas fritas** ([SPEC-026](specs/026-papas.md)): ya están `freidora` y `freidora_doble`
-  (traen su colador), `tabla_papas` (cuchillo, pelapapas y una papa) y `cartel_cerrado` para los
-  anclajes de mostrador, y `bolsa_papas` y `pack_cajitas` en el proveedor. Freír viene después.
+  (traen su colador) y `tabla_papas` (cuchillo, pelapapas y una papa) para los anclajes de
+  mostrador, `cartel_cerrado` para el anclaje `cartel` (cuelga adelante, del canto del
+  mostrador), y las bolsas de papas de 2 y 5 kg y `pack_cajitas` en el proveedor. Freír viene después.
 
 ## Otros platos
 - **Hamburguesa:** E sobre la plancha para prenderla, apoyá una hamburguesa y dale vuelta con

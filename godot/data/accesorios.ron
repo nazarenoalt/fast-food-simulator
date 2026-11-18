@@ -194,16 +194,17 @@
             (tipo: Caja, medidas: (0.36, 0.44, 0.015), pos: (0, 0.22, -0.006), rot: (-12, 0, 0), color: (0.55, 0.35, 0.2)),
         ],
     ),
-    // Cartel de cerrado colgante (SPEC-026): el texto viene pintado en el modelo.
+    // Cartel de cerrado (REQ-PAP-07): cuelga en V de un clavo (el origen); el texto viene
+    // pintado en el modelo. Va en el anclaje `cartel` de cada base (categoría Cartel).
     (
         id: "cartel_cerrado",
         modelo: Some("accesorios/cartel_cerrado"),
         nombre: "Cartel de cerrado",
-        categoria: Decoracion,
+        categoria: Cartel,
         precio: 4000,
         forma: [
-            (tipo: Caja, medidas: (0.42, 0.014, 0.12), pos: (0, 0.007, 0), color: (0.35, 0.35, 0.38), metal: true),
-            (tipo: Caja, medidas: (0.32, 0.16, 0.014), pos: (0, 0.28, 0), color: (0.85, 0.12, 0.1)),
+            (tipo: Caja, medidas: (0.32, 0.16, 0.014), pos: (0, -0.18, 0), color: (0.85, 0.12, 0.1), colision: false),
+            (tipo: Cilindro, medidas: (0.004, 0.02, 0), pos: (0, -0.004, -0.002), rot: (90, 0, 0), color: (0.82, 0.83, 0.85), metal: true, colision: false),
         ],
     ),
     // ── Porche ──────────────────────────────────────────────

@@ -21,6 +21,8 @@ pub enum Categoria {
     Luz,
     /// REQ-CAR-04: cerramiento para comer al costado del carro (porche de nylon).
     Porche,
+    /// REQ-CAR-04 / REQ-PAP-07: cartel que cuelga adelante, del canto del mostrador.
+    Cartel,
 }
 
 /// REQ-CAR-03
@@ -349,7 +351,7 @@ mod tests {
     fn req_car_04_05_hay_accesorios_de_todas_las_categorias() {
         use Categoria::*;
         let cat = catalogo_real();
-        for c in [Decoracion, Equipamiento, Cerco, Carpa, Telon, Cocina, Deposito, Sombrilla, Luz, Porche] {
+        for c in [Decoracion, Equipamiento, Cerco, Carpa, Telon, Cocina, Deposito, Sombrilla, Luz, Porche, Cartel] {
             assert!(cat.accesorios.iter().any(|a| a.categoria == c), "falta un accesorio {c:?}");
         }
     }

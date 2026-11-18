@@ -85,23 +85,46 @@ mod tests {
     }
 
     #[test]
-    fn req_pap_02_03_cajita_pack_y_bolsa_de_papas() {
+    fn req_pap_02_cajita_vacia_para_el_pack_y_llena_para_el_cliente() {
         let cat = catalogo_real();
         let cajita = cat.producto("cajita_papas").expect("falta cajita_papas");
         assert_eq!(cajita.modelo.as_deref(), Some("comida/cajita_papas"));
         assert_eq!(cat.bloque("pack_cajitas").expect("falta pack_cajitas").producto, "cajita_papas");
-        let bolsa = cat.bloque("bolsa_papas").expect("falta bolsa_papas");
-        assert_eq!(bolsa.producto, "papa_cruda");
-        assert_eq!(bolsa.modelo.as_deref(), Some("stock/bolsa_papas"));
-        assert_eq!(bolsa.empaque, crate::deposito::Empaque::Bolsa);
-        assert!(bolsa.capacidad() >= 10 && bolsa.precio > 0.0);
-        // Entran en un lugar del estante (0,22 × 0,3 × 0,4), y una papa entra en su lugar de la grilla.
-        for b in [bolsa, cat.bloque("pack_cajitas").unwrap()] {
+        let llena = cat.producto("papas_fritas_cajita").expect("falta papas_fritas_cajita");
+        assert_eq!(llena.modelo.as_deref(), Some("comida/papas_fritas_cajita"));
+        // Rebosa: es más alta que la vacía (las papas asoman) y pesa la cajita más la porción.
+        let [vx, vy, _] = caja(&cajita.colision);
+        let [lx, ly, _] = caja(&llena.colision);
+        assert!(ly > vy + 0.02 && lx >= vx, "la llena asoma por arriba de la cajita");
+        let porcion = cat.producto("papas_fritas").unwrap().masa;
+        assert!((llena.masa - (cajita.masa + porcion)).abs() < 1e-6);
+        assert!(llena.coccion.is_none(), "no se cocina: se arma con papas ya fritas");
+    }
+
+    #[test]
+    fn req_pap_03_bolsas_de_2_y_5_kg_que_entran_en_el_estante() {
+        let cat = catalogo_real();
+        assert!(cat.bloque("bolsa_papas").is_none(), "la bolsa de papel se reemplazó por las de arpillera");
+        let papa = cat.producto("papa_cruda").unwrap();
+        let [px, py, pz] = caja(&papa.colision);
+        for (id, kg, unidades) in [("bolsa_papas_2kg", 2.0, 12), ("bolsa_papas_5kg", 5.0, 24)] {
+            let b = cat.bloque(id).unwrap_or_else(|| panic!("falta {id}"));
+            assert_eq!(b.producto, "papa_cruda");
+            assert_eq!(b.modelo.as_deref(), Some(format!("stock/{id}").as_str()));
+            assert_eq!(b.empaque, crate::deposito::Empaque::Bolsa);
+            assert_eq!(b.capacidad(), unidades, "{id}");
+            let peso = b.capacidad() as f32 * papa.masa;
+            assert!((peso - kg).abs() <= 0.5, "{id}: {peso} kg");
+            assert!(b.precio > 0.0);
+            // Una papa entra en su lugar de la grilla y la bolsa en un lugar del estante.
+            assert!(px <= b.separacion[0] && py <= b.separacion[1] && pz <= b.separacion[2], "{id}");
             let [x, y, z] = b.tamano();
-            assert!(x <= 0.22 && y <= 0.3 && z <= 0.4, "{} no entra en el estante: {x}×{y}×{z}", b.id);
+            assert!(x <= 0.22 && y <= 0.3 && z <= 0.4, "{id} no entra en el estante: {x}×{y}×{z}");
         }
-        let [px, py, pz] = caja(&cat.producto("papa_cruda").unwrap().colision);
-        assert!(px <= bolsa.separacion[0] && py <= bolsa.separacion[1] && pz <= bolsa.separacion[2]);
+        // 25 papas no entran: a lo ancho caben 2, y 25 es impar.
+        assert_eq!((0.22 / px) as u32, 2);
+        let [x, y, z] = cat.bloque("pack_cajitas").unwrap().tamano();
+        assert!(x <= 0.22 && y <= 0.3 && z <= 0.4);
     }
 
     #[test]
@@ -117,7 +140,7 @@ mod tests {
         assert!(
             ESTADOS
                 .iter()
-                .chain(["pelapapas", "cuchillo", "colador_freidora", "cajita_papas"].iter())
+                .chain(["pelapapas", "cuchillo", "colador_freidora", "cajita_papas", "papas_fritas_cajita"].iter())
                 .all(|id| !menu.contains(&id.to_string()))
         );
     }
@@ -174,23 +197,32 @@ mod tests {
     }
 
     #[test]
-    fn req_pap_07_cartel_de_cerrado_colgante() {
+    fn req_pap_07_cartel_de_cerrado_colgado_de_una_pared_o_de_la_puerta() {
         let cat = catalogo_real();
         let c = accesorio(&cat, "cartel_cerrado");
-        assert_eq!(c.categoria, Categoria::Decoracion);
+        assert_eq!(c.categoria, Categoria::Cartel);
         assert_eq!(c.modelo.as_deref(), Some("accesorios/cartel_cerrado"));
-        // El tablero cuelga: no apoya en el mostrador.
-        let tablero = c.forma.iter().max_by(|a, b| a.pos[1].total_cmp(&b.pos[1])).unwrap();
-        assert!(tablero.pos[1] - tablero.medidas[1] / 2.0 > 0.1);
-        // Entra en un anclaje de mostrador de cada base.
+        // Cuelga: el origen es el clavo y el tablero queda abajo; no choca.
+        let tablero = c.forma.iter().max_by(|a, b| a.medidas[0].total_cmp(&b.medidas[0])).unwrap();
+        assert!(tablero.pos[1] + tablero.medidas[1] / 2.0 < -0.05, "el tablero cuelga del clavo");
+        assert!(c.forma.iter().all(|p| !p.colision));
+        // Es el único Cartel: ninguna otra decoración cae en la pared.
+        assert_eq!(cat.accesorios.iter().filter(|a| a.categoria == Categoria::Cartel).count(), 1);
         for b in &cat.bases {
-            assert!(
-                b.anclajes
-                    .iter()
-                    .any(|a| a.id.starts_with("mostrador") && a.categorias.contains(&Categoria::Decoracion)),
-                "{}: sin lugar para el cartel",
-                b.id
-            );
+            let a =
+                b.anclajes.iter().find(|a| a.id == "cartel").unwrap_or_else(|| panic!("{}: sin anclaje cartel", b.id));
+            assert_eq!(a.categorias, vec![Categoria::Cartel], "{}", b.id);
+            assert_eq!(b.anclajes.iter().filter(|x| x.categorias.contains(&Categoria::Cartel)).count(), 1);
+            // Adelante, centrado y mirando al cliente (+Z), donde lo ven los de la fila.
+            assert!(a.pos[0].abs() < 1e-6 && a.rot_y.abs() < 1e-6, "{}", b.id);
+            assert!(a.pos[2] > b.profundidad / 2.0 && b.fila[2] > a.pos[2] + 0.3, "{}: adelante del carro", b.id);
+            // Del canto del mostrador: el clavo entra en la losa (0,04 m abajo del mostrador).
+            let clavo = a.pos[1] - 0.008;
+            assert!(clavo < b.alto_mostrador && clavo > b.alto_mostrador - 0.04, "{}: {clavo}", b.id);
+            // Delante del telón (si lo hay): el tablero (5 mm detrás del clavo) no lo atraviesa.
+            if let Some(f) = b.anclajes.iter().find(|x| x.id == "frente") {
+                assert!(a.pos[2] - 0.007 > f.pos[2] + 0.012 || f.pos[1] > a.pos[1], "{}: choca con el telón", b.id);
+            }
         }
     }
 
@@ -202,15 +234,16 @@ mod tests {
         c.accesorios = [
             ("mostrador_izq", "freidora_doble"),
             ("mostrador_centro", "tabla_papas"),
-            ("mostrador_der", "cartel_cerrado"),
+            ("cartel", "cartel_cerrado"),
             ("lateral", "estante_deposito"),
         ]
         .iter()
         .map(|(a, b)| (a.to_string(), b.to_string()))
         .collect();
-        c.stock = [("lateral".to_string(), vec![Some("bolsa_papas".to_string()), Some("pack_cajitas".to_string())])]
-            .into_iter()
-            .collect();
+        c.stock =
+            [("lateral".to_string(), vec![Some("bolsa_papas_5kg".to_string()), Some("pack_cajitas".to_string())])]
+                .into_iter()
+                .collect();
         let ids: Vec<String> = cat.bloques.iter().map(|b| b.id.clone()).collect();
         let armado = armar(&c, &cat.bases, &cat.accesorios, &ids).expect("la config con papas debería ser válida");
         assert_eq!(armado.colocados.len(), 4);
