@@ -45,6 +45,14 @@ nubes y un cielo con sol y luna.
 - **REQ-AMB-14** Las sombras del sol son parejas en toda la plaza: sin bordes curvos que
   aparecen o se corren al moverse, ni franjas de distinto desenfoque.
 
+### Rendimiento
+Se mide con la plaza a las 13:00 y a las 20:30, la fila llena y 10 s por momento
+(prueba de rendimiento: opción `--rendimiento` del juego o `tools/prueba_rendimiento.sh`).
+- **REQ-AMB-15** El juego descargado corre en promedio a 60 cuadros por segundo o más
+  en la PC del dueño del proyecto.
+- **REQ-AMB-16** Con el código optimizado, cada paso de física y lógica tarda en promedio
+  8 ms o menos y nunca más de 16,7 ms (lo que dura un paso a 60 por segundo).
+
 ## Criterios de aceptación
 
 - **CA-AMB-01** Parado detrás del mostrador veo edificios, autos pasando, nubes moviéndose y
@@ -53,6 +61,8 @@ nubes y un cielo con sol y luna.
 
 - **CA-AMB-03** Camino por la plaza a cualquier hora: las sombras de árboles y edificios
   se ven continuas, sin cortes redondos en el piso.
+- **CA-AMB-04** Abro el juego con `--rendimiento`: al terminar muestra los resultados de
+  los dos momentos y dice si cumple REQ-AMB-15 y REQ-AMB-16.
 
 ## Fuera de alcance
 

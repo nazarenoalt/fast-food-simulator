@@ -51,3 +51,10 @@ El juego suena con ambiente que cambia con la hora (pájaros de día, grillos de
 de la plaza) y con cada acción. Los archivos van en `godot/audio/` (`.ogg`) y se declaran en
 `godot/data/sonidos.ron`; lista y créditos en `godot/audio/CREDITOS.md`. Sin archivos, el
 juego funciona igual, en silencio.
+## Medir el rendimiento
+Abrí el juego con la opción `--rendimiento`: en Windows y Linux, desde una terminal en la
+carpeta del juego, escribí el nombre del ejecutable seguido de `--rendimiento`; en macOS,
+`open <nombre>.app --args --rendimiento`. Mide 10 s a las 13:00 y otros 10 a las 20:30 con la fila
+llena, muestra los resultados en pantalla, dice si cumple REQ-AMB-15 y REQ-AMB-16
+([SPEC-013](specs/013-ambientacion.md)) y los guarda en `rendimiento.txt` (la ruta aparece en
+pantalla). Desde el código: `GODOT=/ruta/godot tools/prueba_rendimiento.sh`.

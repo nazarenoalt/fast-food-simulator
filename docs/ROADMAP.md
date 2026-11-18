@@ -25,7 +25,7 @@ Cada etapa abre con sus specs (SPEC-000) y cierra con docs al día. Formato en [
 | 0252 | Ajustar sensibilidad, agarre y salto | 001, 002 | ⬜ |
 | 0253 | Ajustar tiempos de cocción y paciencia | 003, 009 | ⬜ |
 | 0254 | Ajustar precios y clientes por hora | 009, 010 | ⬜ |
-| 0255 | Rendimiento (FPS) con ciudad y fila llena | 013 | ⬜ |
+| 0255 | Rendimiento (FPS) con ciudad y fila llena: prueba `--rendimiento` hecha; falta medir en la PC del dueño | 013 | 🔄 |
 
 ## Etapa 3 · Plancha y parrilla (`feat (cocina)`) · PR TASK-0300
 | ID | Tarea | Spec | Estado |
