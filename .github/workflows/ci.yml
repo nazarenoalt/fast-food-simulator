@@ -51,9 +51,9 @@ jobs:
       - name: Formato
         working-directory: rust
         run: cargo fmt --check
-      - name: Lints (errores; las advertencias se limpian en TASK-0002)
+      - name: Lints (sin advertencias, TASK-0002)
         working-directory: rust
-        run: cargo clippy --all-targets
+        run: cargo clippy --all-targets -- -D warnings
       - name: Tests de reglas, trazabilidad y docs
         working-directory: rust
         run: cargo test

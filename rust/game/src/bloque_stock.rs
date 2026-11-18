@@ -100,10 +100,10 @@ pub fn construir_visual(padre: &mut Gd<Node3D>, def: &DefBloque, restantes: u32)
     }
 
     // REQ-DEP-06: el paquete (REQ-MOD-01: su modelo, si tiene).
-    if let Some(m) = &def.modelo {
-        if modelos::agregar(padre, m).is_some() {
-            return unidades;
-        }
+    if let Some(m) = &def.modelo
+        && modelos::agregar(padre, m).is_some()
+    {
+        return unidades;
     }
     let c = def.color_empaque;
     match def.empaque {

@@ -63,11 +63,6 @@ impl Parrilla {
         Ok(())
     }
 
-    /// Solo para pruebas.
-    pub fn set_temperatura(&mut self, t: f32) {
-        self.estado.temp = t;
-    }
-
     pub fn estado(&self) -> EstadoParrilla {
         self.estado
     }

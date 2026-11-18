@@ -60,11 +60,6 @@ impl Heladera {
         self.estado.abierta
     }
 
-    /// Solo para pruebas.
-    pub fn set_temperatura(&mut self, t: f32) {
-        self.estado.temp = t;
-    }
-
     /// Texto del cartel. REQ-HEL-01
     pub fn cartel(&self) -> String {
         let accion = if self.estado.abierta { "Cerrar" } else { "Abrir" };

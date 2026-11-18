@@ -14,7 +14,7 @@ specs primero ([SPEC-000](docs/specs/000-proceso.md)). Qué sigue: [ROADMAP](doc
 
 ## Comandos
 ```bash
-cd rust && cargo fmt --check && cargo clippy --all-targets && cargo test
+cd rust && cargo fmt --check && cargo clippy --all-targets -- -D warnings && cargo test
 GODOT=/ruta/godot tools/prueba_humo.sh   # humo en el motor
 ```
 Modelos `.glb`/`.blend` e imágenes de `docs/arte/` van en Git LFS (`git lfs install` antes de clonar).
