@@ -1,9 +1,11 @@
-# Verifica en cada PR y en main: formato, lints, reglas, trazabilidad, docs y prueba de humo.
+# En cada PR solo revisa las convenciones (rama, título, descripción). La verificación
+# completa (formato, lints, tests, trazabilidad, docs y prueba de humo) la corre en local el
+# dueño de la feature con tools/verificar.sh y pega el resultado en el PR (SPEC-000).
+# El trabajo "specs" queda para correrlo a mano desde la pestaña Actions si hace falta.
 name: CI
 on:
-  push:
-    branches: [main]
   pull_request:
+  workflow_dispatch:
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -32,16 +34,18 @@ jobs:
             || fallar "Título '$TITULO': usar 'tipo (modulo): descripción'."
           [ -z "$tarea" ] || grep -q "TASK-$tarea" <<<"$CUERPO" \
             || fallar "La descripción debe mencionar TASK-$tarea (ver plantilla)."
+          grep -q "VERIFICACIÓN: todo OK" <<<"$CUERPO" \
+            || fallar "Falta pegar en la descripción la última línea de tools/verificar.sh."
           exit $error
 
   specs:
+    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     env:
       GODOT_VERSION: "4.7-stable"
     steps:
       - uses: actions/checkout@v4
-        with:
-          lfs: true # TASK-0003: los modelos .glb están en Git LFS
+      - uses: ./.github/actions/modelos-lfs # TASK-0003: solo los .glb del juego, con caché
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: rustfmt, clippy

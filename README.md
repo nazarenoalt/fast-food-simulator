@@ -28,9 +28,9 @@ abrilo.
 - **macOS:** la primera vez, clic derecho sobre `Carrito.app` → *Abrir*.
 - **Linux:** `./Carrito.x86_64`.
 
-Cada cambio que se sube arma estos `.zip` automáticamente (acción **Builds**). Para
-publicar una versión nueva, cambiá el número del archivo `VERSION` (por ejemplo a `0.3.0`)
-y subilo a `main`: la acción crea la Release sola.
+Los `.zip` los arma la acción **Builds**, que se corre a mano (pestaña Actions → Builds →
+*Run workflow* sobre `main`). Para publicar una versión nueva, cambiá el número del archivo
+`VERSION` (por ejemplo a `0.3.0`), subilo a `main` y corré Builds: crea la Release.
 
 ## Cómo se trabaja: specs primero
 

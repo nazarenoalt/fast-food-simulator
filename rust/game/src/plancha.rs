@@ -1,6 +1,7 @@
 //! SPEC-014 · Plancha: superficie que se calienta y cocina lo que se apoya encima.
 
 use carrito_core::plancha::{Plancha as EstadoPlancha, TEMP_MAX};
+use carrito_core::sonido::ids;
 use godot::classes::{Area3D, BoxShape3D, INode3D, Node3D, StandardMaterial3D};
 use godot::prelude::*;
 
@@ -21,7 +22,12 @@ pub struct Plancha {
     zona: Option<Gd<Area3D>>,
     piloto: Option<Gd<StandardMaterial3D>>,
     mat_superficie: Option<Gd<StandardMaterial3D>>,
+    /// REQ-SON-08: ya suena el chisporroteo (para encender/apagar solo al cambiar).
+    chisporrotea: bool,
 }
+
+/// REQ-SON-08: por debajo de esta temperatura (°C) la carne no chisporrotea.
+const TEMP_CHISPOROTEO: f32 = 100.0;
 
 #[godot_api]
 impl Plancha {
@@ -30,6 +36,9 @@ impl Plancha {
     pub fn alternar(&mut self) {
         self.estado.alternar();
         self.actualizar_piloto();
+        // REQ-SON-08: el clic del interruptor.
+        let yo = self.to_gd().upcast::<Node3D>();
+        crate::sonido::sonar_en(&yo, ids::PLANCHA_INTERRUPTOR, yo.get_global_position());
     }
 }
 
@@ -42,6 +51,7 @@ impl Plancha {
             zona: None,
             piloto: None,
             mat_superficie: None,
+            chisporrotea: false,
         })
     }
 
@@ -131,12 +141,21 @@ impl INode3D for Plancha {
 
         // REQ-PLA-03: lo apoyado encima toma la temperatura de la plancha (por su lado de abajo).
         let temp = self.estado.temp;
+        let mut hay_carne = false;
         if let Some(zona) = &self.zona {
             for cuerpo in zona.get_overlapping_bodies().iter_shared() {
                 if let Ok(mut c) = cuerpo.try_cast::<Comida>() {
+                    hay_carne |= c.bind().por_lados();
                     c.bind_mut().exponer(temp);
                 }
             }
+        }
+
+        // REQ-SON-08: chisporroteo solo con carne encima y la plancha caliente.
+        let suena = self.estado.encendida && temp > TEMP_CHISPOROTEO && hay_carne;
+        if suena != self.chisporrotea {
+            self.chisporrotea = suena;
+            crate::sonido::bucle(&self.to_gd().upcast::<Node3D>(), ids::PLANCHA_CHISPOROTEO, suena);
         }
     }
 }

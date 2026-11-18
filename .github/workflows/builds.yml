@@ -1,13 +1,11 @@
-# Arma el juego listo para jugar (Windows, Linux y macOS).
-# - En cada push a main: deja los .zip como "artifacts" de la corrida.
+# Arma el juego listo para jugar (Windows, Linux y macOS). Solo corre a mano: pestaña
+# Actions → Builds → "Run workflow" sobre main (así no gasta minutos ni cupo de LFS solo).
+# - Deja los .zip como "artifacts" de la corrida.
 # - Si el número del archivo VERSION todavía no tiene Release, la publica (con etiqueta vX.Y.Z).
-#   Para sacar una versión nueva alcanza con cambiar VERSION.
+#   Para sacar una versión nueva: cambiar VERSION, mergear a main y correr Builds.
 name: Builds
 
 on:
-  push:
-    branches: [main]
-    tags: ["v*"]
   workflow_dispatch:
 
 permissions:
@@ -22,8 +20,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          lfs: true # TASK-0003: los modelos .glb están en Git LFS
+      - uses: ./.github/actions/modelos-lfs # TASK-0003: solo los .glb del juego, con caché
       - uses: dtolnay/rust-toolchain@stable
         with:
           targets: x86_64-pc-windows-gnu,aarch64-apple-darwin,x86_64-apple-darwin

@@ -18,6 +18,9 @@ Estado: **Aprobada**
 7. **Docs al día.** `rust/core/tests/docs.rs` falla si una spec no está en la tabla de áreas,
    si el ROADMAP tiene IDs repetidos o estados inválidos, si hay enlaces rotos o si algún
    documento pasa su presupuesto de tamaño (ver [CLAUDE.md](../../CLAUDE.md)).
+8. **Verificación local.** `tools/verificar.sh` corre todo lo anterior (formato, lints, tests
+   y prueba de humo). La corre el dueño de la feature antes de abrir o actualizar el PR y
+   pega su resultado en la descripción; la CI de GitHub solo revisa las convenciones.
 
 Ramas, PRs y commits: ver [CLAUDE.md](../../CLAUDE.md). El estado de cada etapa vive solo en el
 [ROADMAP](../ROADMAP.md).

@@ -16,8 +16,10 @@ specs primero ([SPEC-000](docs/specs/000-proceso.md)). Qué sigue: [ROADMAP](doc
 ```bash
 cd rust && cargo fmt --check && cargo clippy --all-targets && cargo test
 GODOT=/ruta/godot tools/prueba_humo.sh   # humo en el motor
+GODOT=/ruta/godot tools/verificar.sh     # todo junto, antes de abrir o actualizar el PR
 ```
 Modelos `.glb`/`.blend` e imágenes de `docs/arte/` van en Git LFS (`git lfs install` antes de clonar).
+Para jugar y testear alcanza con `git lfs pull --include="godot/**"` (~7 MB): no bajes `.blend` ni `docs/arte/`.
 `cargo test` incluye trazabilidad specs↔código y validación de docs (`rust/core/tests/`).
 
 ## Flujo de trabajo (obligatorio)
@@ -31,8 +33,10 @@ Modelos `.glb`/`.blend` e imágenes de `docs/arte/` van en Git LFS (`git lfs ins
    - Módulo: área de la spec en minúscula (`jugador interaccion coccion deposito armado carrito
      dia-noche mundo clientes economia proveedor aderezos ambientacion`) o `docs ci build tools datos`.
 5. **Antes de mergear:** actualizar en el mismo PR el ROADMAP (⬜→✅), las specs tocadas y
-   `docs/jugar.md` si cambian controles. La CI falla si algo queda desfasado.
-6. No duplicar estado ni listas en otros archivos: enlazar al ROADMAP/specs.
+   `docs/jugar.md` si cambian controles.
+6. **Verificación local:** la CI de GitHub solo revisa rama, título y descripción. El dueño
+   de la feature corre `tools/verificar.sh` al terminar y pega su última línea en el PR.
+7. No duplicar estado ni listas en otros archivos: enlazar al ROADMAP/specs.
 
 ## Presupuesto de contexto (lo vigila `rust/core/tests/docs.rs`)
 CLAUDE.md ≤ 5 KB · cada spec ≤ 4,5 KB · ROADMAP ≤ 9 KB. Si algo crece, partir la spec o resumir.
