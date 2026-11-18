@@ -22,8 +22,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          lfs: true # TASK-0003: los modelos .glb están en Git LFS
+      - uses: ./.github/actions/modelos-lfs # TASK-0003: solo los .glb del juego, con caché
       - uses: dtolnay/rust-toolchain@stable
         with:
           targets: x86_64-pc-windows-gnu,aarch64-apple-darwin,x86_64-apple-darwin
