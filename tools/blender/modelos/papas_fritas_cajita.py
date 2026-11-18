@@ -8,14 +8,16 @@ Genera:
 Uso:
     python tools/blender/modelos/papas_fritas_cajita.py [--sin-hoja]
 
-Forma: la misma cajita de `cajita_papas.py` (sin el piso de adentro, que no se ve) con 16
-bastones fritos **parados** que desbordan por arriba de la boca curva, en tres filas: los de
-atrás más altos y abiertos hacia atrás, los del medio, y los de adelante más cortos y volcados
-hacia el cliente por donde la boca baja, como sale servida. Cada bastón es el ochavado de las
-papas fritas (`_papas.seccion`, 8 lados, M_PapaFrita), recto pero algo torcido y con la punta
-un poco más fina; abajo quedan abiertos porque los tapa el **colchón** de papas (una tapa
-abombada de M_PapaFrita a la altura de la boca, que hace que entre los bastones se vea dorado y
-no el cartón de adentro). Sombreado suave en las papas, duro en el cartón.
+Forma: la misma cajita de `cajita_papas.py` llena de bastones fritos **parados y
+desordenados** que desbordan por arriba de la boca curva: cada uno sale de un punto al azar del
+fondo o de entre los otros, inclinado hasta 18° hacia cualquier lado (más hacia afuera), con su
+punta a una altura distinta y algo torcido, como sale servida. Fijos por semilla. Cada bastón
+se prueba contra el interior de la cajita (el cartón de 3 mm y la boca curva): si atraviesa
+una pared se sortea de nuevo, así ninguno sale por el costado. El ochavado de las papas fritas
+(`_papas.seccion`, 8 lados, M_PapaFrita), recto y con la punta un poco más fina; para que entren
+más en el tope de triángulos, uno de cada tres (los que quedan más metidos) es de 6 lados. Abajo
+quedan abiertos (adentro de la cajita no se ven). Sin relleno: entre los bastones se ve el
+cartón de adentro. Sombreado suave en las papas, duro en el cartón.
 
 Medidas: las de la caja envolvente (la colisión del dato). Origen en su centro (guía 2.4).
 Objeto único `papas_fritas_cajita`. Tope de comida armada (600 tris). Sin colisión.
@@ -42,22 +44,23 @@ ID = "papas_fritas_cajita"
 FRITA = 3                       # después de rojo, amarillo y crema de la cajita
 H = caj.H
 LADO = 0.0095                   # el de papas_fritas.py
-Y_ABAJO = 0.02 - H / 2          # donde empiezan los bastones (tapado por el colchón)
-# Filas: (z del pie, z en la boca, xs en la boca, alto de la punta sobre el borde de atrás). Cada
-# bastón va del pie (adentro, abajo) a su punto en la boca y sigue derecho: se abren en abanico
-# desde adentro sin atravesar las paredes (la boca mide ≈ 0,078 × 0,045 a esa altura).
-Y_BOCA = H / 2 - 0.02
-FILAS = [
-    (-0.008, -0.016, (-0.030, -0.018, -0.006, 0.006, 0.018, 0.030), 0.040),
-    (0.000, 0.000, (-0.024, -0.012, 0.000, 0.012, 0.024), 0.032),
-    (0.008, 0.016, (-0.024, -0.012, 0.000, 0.012, 0.024), 0.020),
-]
-SEMILLA = 7
+N_BASTONES = 18
+R_BASTON = 0.0056               # medio grosor del bastón inclinado (ochavado + inclinación)
+INCLINACION = (3.0, 18.0)       # grados
+SEMILLA = 11
 
 
-def baston_parado(bm, pie, punta, lado, giro, afinar=0.85):
-    """Bastón recto de `pie` a `punta` (Godot), sección ochavada que gira `giro` grados sobre
-    su eje. Abajo abierto (lo tapa el colchón), arriba con tapa."""
+def seccion(lado, esc, lados):
+    """Ochavado (8) de las papas fritas, o hexágono (6) del mismo grosor."""
+    if lados == 8:
+        return pp.seccion(lado, 0.0028, esc)
+    r = lado / 2 * 1.08 * esc
+    return [(r * math.cos(math.pi * k / 3), r * math.sin(math.pi * k / 3)) for k in range(6)]
+
+
+def baston_parado(bm, pie, punta, lado, giro, afinar=0.85, lados=8):
+    """Bastón recto de `pie` a `punta` (Godot, cajita con el piso en y = 0), sección que gira
+    `giro` grados sobre su eje. Abajo abierto (adentro no se ve), arriba con tapa."""
     pie, punta = Vector(pie), Vector(punta)
     eje = (punta - pie).normalized()
     ref = Vector((1, 0, 0)) if abs(eje.x) < 0.9 else Vector((0, 0, 1))
@@ -65,43 +68,69 @@ def baston_parado(bm, pie, punta, lado, giro, afinar=0.85):
     w = eje.cross(u).normalized()
     rot = Matrix.Rotation(math.radians(giro), 3, eje)
     u, w = rot @ u, rot @ w
+    baja = Vector((0, H / 2, 0))
     anillos = []
     for c, esc in ((pie, 1.0), (punta, afinar)):
-        anillos.append([bm.verts.new(g2b(c + u * a + w * b)) for a, b in pp.seccion(lado, 0.0028, esc)])
+        anillos.append([bm.verts.new(g2b(c - baja + u * a + w * b)) for a, b in seccion(lado, esc, lados)])
     caras = e2._unir(bm, anillos, FRITA, False, True)
     for f in caras:
         f.material_index = FRITA
     return caras
 
 
-def colchon(bm):
-    """Tapa abombada de papas a la altura de la boca (más alta atrás, más baja adelante, donde
-    la boca baja), sobre el contorno de adentro de la cajita."""
-    vs = []
-    for x, z in caj.contorno(H - 0.02, caj.PARED):
-        y = H - 0.022 - 0.01 * max(0.0, z) / caj.ARRIBA[1]
-        vs.append(bm.verts.new(g2b((x, y - H / 2, z))))
-    centro = bm.verts.new(g2b((0.0, H - 0.012 - H / 2, -0.003)))
-    caras = [bm.faces.new((centro, vs[k], vs[(k + 1) % len(vs)])) for k in range(len(vs))]
-    for f in caras:
-        f.material_index = FRITA
-    return caras
+def adentro(x, y, z, r=R_BASTON):
+    """¿Un bastón de radio r con su eje en (x, y, z) entra en el hueco de la cajita a esa
+    altura? (rectángulo redondeado de la pared de adentro; arriba de la boca no hay pared)."""
+    if y > caj.alto_boca(x, z) + 0.001:
+        return True
+    t = y / H
+    hx = caj.ABAJO[0] + (caj.ARRIBA[0] - caj.ABAJO[0]) * t - caj.PARED - r
+    hz = caj.ABAJO[1] + (caj.ARRIBA[1] - caj.ABAJO[1]) * t - caj.PARED - r
+    if abs(x) > hx or abs(z) > hz:
+        return False
+    esq = max(caj.RADIO - r, 0.0)
+    dx = max(abs(x) - (hx - esq), 0.0)
+    dz = max(abs(z) - (hz - esq), 0.0)
+    return dx * dx + dz * dz <= esq * esq + 1e-12
+
+
+def sortear_bastones(rnd):
+    """(pie, punta) de cada bastón: al azar, sin atravesar la cajita ni quedar encimados."""
+    bastones = []
+    while len(bastones) < N_BASTONES:
+        for _ in range(4000):
+            y0 = rnd.uniform(0.012, 0.05)
+            pie = Vector((rnd.uniform(-0.03, 0.03), y0, rnd.uniform(-0.02, 0.02)))
+            if not adentro(pie.x, pie.y, pie.z):
+                continue
+            incl = math.radians(rnd.uniform(*INCLINACION))
+            # Hacia afuera (desde el centro) con un margen grande al azar.
+            rumbo = math.atan2(pie.z, pie.x) + math.radians(rnd.uniform(-70, 70))
+            d = Vector((math.sin(incl) * math.cos(rumbo), math.cos(incl), math.sin(incl) * math.sin(rumbo)))
+            alto = H + rnd.uniform(0.012, 0.05)
+            punta = pie + d * ((alto - y0) / d.y)
+            if not all(adentro(*(pie + (punta - pie) * (k / 16)))
+                       for k in range(17)):
+                continue
+            if any((pie - p).length < 0.0085 or (punta - q).length < 0.011 for p, q in bastones):
+                continue
+            bastones.append((pie, punta))
+            break
+        else:
+            raise RuntimeError("no entran %d bastones en la cajita" % N_BASTONES)
+    return bastones
 
 
 def construir(nombre=ID):
     mats = caj.materiales() + comun.cargar_materiales("M_PapaFrita")
     rnd = random.Random(SEMILLA)
     bm = bmesh.new()
-    caj.cuerpo(bm, piso_adentro=False)
-    papas = colchon(bm)
-    for z_pie, z_boca, xs, alto in FILAS:
-        for x in xs:
-            pie = Vector((0.75 * x + rnd.uniform(-0.002, 0.002), Y_ABAJO, z_pie))
-            boca = Vector((x, Y_BOCA, z_boca + rnd.uniform(-0.0015, 0.0015)))
-            d = (boca - pie).normalized()
-            largo = (H / 2 + alto + rnd.uniform(-0.006, 0.006) - Y_ABAJO) / d.y
-            papas += baston_parado(bm, pie, pie + d * largo, LADO, rnd.uniform(-25, 25),
-                                   afinar=rnd.uniform(0.8, 0.95))
+    caj.cuerpo(bm, piso_adentro=True)
+    # Los más metidos (cerca del centro) van de 6 lados: casi no se ven y ahorran triángulos.
+    bastones = sorted(sortear_bastones(rnd), key=lambda b: Vector((b[1].x, 0, b[1].z)).length)
+    for i, (pie, punta) in enumerate(bastones):
+        lados = 6 if i < N_BASTONES // 3 else 8
+        baston_parado(bm, pie, punta, LADO, rnd.uniform(-25, 25), afinar=rnd.uniform(0.8, 0.95), lados=lados)
     bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
     # Centro de la caja envolvente en el origen (guía 2.4).
     mn = Vector([min(v.co[i] for v in bm.verts) for i in range(3)])
@@ -124,7 +153,8 @@ def revisar(obj):
     res = comun.chequeo_normales_cerrado(res, [obj])
     alto = medidas(obj)[1]
     res.append((alto > caj.H + 0.02, "Rebosa: %.3f m de alto, %.0f mm por arriba de la cajita (%.2f m); "
-                                    "16 bastones parados" % (alto, 1000 * (alto - caj.H), caj.H)))
+                                    "%d bastones parados y desordenados, ninguno atraviesa el cartón (sorteo contra el hueco "
+                                    "de la cajita)" % (alto, 1000 * (alto - caj.H), caj.H, N_BASTONES)))
     return res
 
 
