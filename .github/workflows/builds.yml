@@ -71,37 +71,37 @@ jobs:
         run: |
           mkdir -p build/windows build/linux build/macos
           ./godot-bin --headless --path godot --import || true
-          ./godot-bin --headless --path godot --export-release "Windows" ../build/windows/Carrito.exe
-          ./godot-bin --headless --path godot --export-release "Linux" ../build/linux/Carrito.x86_64
-          ./godot-bin --headless --path godot --export-release "macOS" ../build/macos/Carrito.zip
-          test -f build/windows/Carrito.exe && test -f build/linux/Carrito.x86_64 && test -f build/macos/Carrito.zip
+          ./godot-bin --headless --path godot --export-release "Windows" ../build/windows/FastFoodSimulator.exe
+          ./godot-bin --headless --path godot --export-release "Linux" ../build/linux/FastFoodSimulator.x86_64
+          ./godot-bin --headless --path godot --export-release "macOS" ../build/macos/FastFoodSimulator.zip
+          test -f build/windows/FastFoodSimulator.exe && test -f build/linux/FastFoodSimulator.x86_64 && test -f build/macos/FastFoodSimulator.zip
 
       - name: Probar el juego exportado (Linux, sin pantalla)
         run: |
           cd build/linux
-          ./Carrito.x86_64 --headless --quit-after 300 2>&1 | tee salida.txt
+          ./FastFoodSimulator.x86_64 --headless --quit-after 300 2>&1 | tee salida.txt
           ! grep -E "ERROR|Error en los datos" salida.txt
 
       - name: Empaquetar
         run: |
           mkdir -p dist
-          (cd build/windows && zip -q -r ../../dist/Carrito-windows.zip .)
-          (cd build/linux && rm -f salida.txt && chmod +x Carrito.x86_64 && zip -q -r ../../dist/Carrito-linux.zip .)
-          cp build/macos/Carrito.zip dist/Carrito-macos.zip
+          (cd build/windows && zip -q -r ../../dist/FastFoodSimulator-windows.zip .)
+          (cd build/linux && rm -f salida.txt && chmod +x FastFoodSimulator.x86_64 && zip -q -r ../../dist/FastFoodSimulator-linux.zip .)
+          cp build/macos/FastFoodSimulator.zip dist/FastFoodSimulator-macos.zip
           ls -la dist
 
       - uses: actions/upload-artifact@v4
         with:
-          name: Carrito-windows
-          path: dist/Carrito-windows.zip
+          name: FastFoodSimulator-windows
+          path: dist/FastFoodSimulator-windows.zip
       - uses: actions/upload-artifact@v4
         with:
-          name: Carrito-linux
-          path: dist/Carrito-linux.zip
+          name: FastFoodSimulator-linux
+          path: dist/FastFoodSimulator-linux.zip
       - uses: actions/upload-artifact@v4
         with:
-          name: Carrito-macos
-          path: dist/Carrito-macos.zip
+          name: FastFoodSimulator-macos
+          path: dist/FastFoodSimulator-macos.zip
 
       - name: ¿Hay que publicar esta versión?
         id: version
@@ -129,9 +129,9 @@ jobs:
             ## Cómo jugar
             Bajá el .zip de tu sistema, descomprimilo y abrí el juego.
 
-            - **Windows:** `Carrito.exe`. Si aparece "Windows protegió tu PC", tocá *Más información → Ejecutar de todas formas* (el juego no está firmado).
-            - **macOS:** abrí `Carrito.app` con clic derecho → *Abrir* la primera vez (no está firmado por Apple).
-            - **Linux:** `./Carrito.x86_64`.
+            - **Windows:** `FastFoodSimulator.exe`. Si aparece "Windows protegió tu PC", tocá *Más información → Ejecutar de todas formas* (el juego no está firmado).
+            - **macOS:** abrí `Fast Food Simulator.app` con clic derecho → *Abrir* la primera vez (no está firmado por Apple).
+            - **Linux:** `./FastFoodSimulator.x86_64`.
 
             Controles y cómo atender a un cliente: ver el README del repositorio.
 
@@ -142,13 +142,13 @@ jobs:
     steps:
       - uses: actions/download-artifact@v4
         with:
-          name: Carrito-windows
+          name: FastFoodSimulator-windows
       - name: Abrir el juego sin pantalla
         shell: bash
         run: |
-          unzip -q Carrito-windows.zip -d juego
+          unzip -q FastFoodSimulator-windows.zip -d juego
           cd juego
-          ./Carrito.exe --headless --quit-after 300 > salida.txt 2>&1 || true
+          ./FastFoodSimulator.exe --headless --quit-after 300 > salida.txt 2>&1 || true
           cat salida.txt
           grep -q "Initialize godot-rust" salida.txt
           ! grep -E "ERROR|Error en los datos" salida.txt
