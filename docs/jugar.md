@@ -13,6 +13,7 @@
 | Tab | Panel del proveedor (comprar mercadería) |
 | T | Tiempo ×30 (para ver el atardecer rápido) |
 | C | Traer un cliente al instante (para probar) |
+| M | Silenciar o reactivar todo el sonido |
 | Esc | Soltar el mouse |
 
 ## Atender a un cliente
@@ -33,3 +34,9 @@ carrito; llevá el paquete a un lugar libre del estante y queda guardado.
 - **Un accesorio:** agregalo en `godot/data/accesorios.ron` (categoría, forma, función).
 - **Tu carrito:** editá `godot/data/carrito_jugador.ron` (base, color, anclajes, stock inicial).
   Si algo no encaja, el juego muestra el error arriba del carrito.
+
+## Sonido
+El juego suena con ambiente que cambia con la hora (pájaros de día, grillos de noche, murmullo
+de la plaza) y con cada acción. Los archivos van en `godot/audio/` (`.ogg`) y se declaran en
+`godot/data/sonidos.ron`; lista y créditos en `godot/audio/CREDITOS.md`. Sin archivos, el
+juego funciona igual, en silencio.

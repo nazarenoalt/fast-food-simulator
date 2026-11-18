@@ -16,6 +16,8 @@ struct Auto {
     x: f32,
     v: f32,
     crucero: f32,
+    /// Ya pasó cerca del jugador (para sonar una sola vez por pasada). REQ-SON-08
+    cerca: bool,
 }
 
 #[derive(GodotClass)]
@@ -75,7 +77,7 @@ impl Autos {
             Transform3D::new(Basis::IDENTITY, Vector3::new(0.0, 0.75, 0.0)),
         ));
         nodo.add_child(&cuerpo);
-        Auto { nodo, ruedas, carril: a.carril, x: a.x, v: a.crucero, crucero: a.crucero }
+        Auto { nodo, ruedas, carril: a.carril, x: a.x, v: a.crucero, crucero: a.crucero, cerca: false }
     }
 
     pub fn posiciones(&self) -> Vec<f32> {
@@ -100,9 +102,11 @@ impl INode3D for Autos {
             .iter()
             .map(|p| (p.get_global_position().x, p.get_global_position().z))
             .collect();
+        let mut jugador = None;
         if let Some(j) = util::unico::<Node3D>(&yo, "jugador") {
             let p = j.get_global_position();
             obstaculos.push((p.x, p.z));
+            jugador = Some(p);
         }
         let autos: Vec<(usize, f32)> = self.autos.iter().map(|a| (a.carril, a.x)).collect();
         for (i, a) in self.autos.iter_mut().enumerate() {
@@ -127,6 +131,16 @@ impl INode3D for Autos {
             a.v += cambio;
             a.x = ciudad::envolver(a.x + a.v * sentido * dt);
             a.nodo.set_position(Vector3::new(a.x, 0.0, z));
+            // REQ-SON-08: un auto que pasa cerca suena una vez por pasada.
+            if let Some(j) = jugador {
+                let d = Vector2::new(a.x - j.x, z - j.z).length();
+                if d < 14.0 && !a.cerca && a.v > 3.0 {
+                    a.cerca = true;
+                    crate::sonido::sonar_en(&yo, carrito_core::sonido::ids::AUTO_PASA, Vector3::new(a.x, 1.0, z));
+                } else if d > 22.0 {
+                    a.cerca = false;
+                }
+            }
             for r in &mut a.ruedas {
                 r.rotate_z(-a.v * dt / 0.33);
             }

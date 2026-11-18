@@ -51,6 +51,10 @@ impl Tienda {
         if let Some(p) = &mut self.panel {
             p.set_visible(abrir);
         }
+        if abrir {
+            // REQ-SON-08
+            crate::sonido::sonar(&self.to_gd(), carrito_core::sonido::ids::TIENDA_ABRIR);
+        }
         // REQ-PRO-01: con el panel abierto el mouse queda libre.
         Input::singleton().set_mouse_mode(if abrir { MouseMode::VISIBLE } else { MouseMode::CAPTURED });
     }

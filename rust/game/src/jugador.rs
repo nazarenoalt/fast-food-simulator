@@ -15,7 +15,10 @@ use crate::formas;
 use crate::hervidor::Hervidor;
 use crate::hud::{self, Hud};
 use crate::paquete::Paquete;
+use crate::sonido;
 use crate::tienda;
+use carrito_core::deposito::Empaque;
+use carrito_core::sonido::ids;
 
 const VEL_CAMINAR: f32 = 3.5; // REQ-JUG-03
 const VEL_CORRER: f32 = 6.0; // REQ-JUG-03
@@ -30,6 +33,8 @@ const VEL_MAX_MANO: f32 = 8.0; // REQ-INT-04
 const DIST_TRABADO: f32 = 1.5; // REQ-INT-05
 const VEL_TIRO: f32 = 4.0; // REQ-INT-06
 const SENSIBILIDAD: f32 = 0.0025;
+/// Metros entre paso y paso. REQ-SON-08
+const LARGO_PASO: f32 = 1.6;
 
 /// Lo que está bajo la mira.
 pub enum Objetivo {
@@ -51,6 +56,8 @@ pub struct Jugador {
     segundos_en_mano: f32,
     pitch: f32,
     gravedad: f32,
+    /// Metros caminados desde el último paso que sonó. REQ-SON-08
+    paso_m: f32,
 }
 
 fn registrar_acciones() {
@@ -81,7 +88,7 @@ impl ICharacterBody3D for Jugador {
     fn init(base: Base<CharacterBody3D>) -> Self {
         // Arranca mirando un poco hacia abajo, para ver el mostrador.
         let pitch = -18f32.to_radians();
-        Self { base, camara: None, rayo: None, mano: None, segundos_en_mano: 0.0, pitch, gravedad: 9.8 }
+        Self { base, camara: None, rayo: None, mano: None, segundos_en_mano: 0.0, pitch, gravedad: 9.8, paso_m: 0.0 }
     }
 
     fn ready(&mut self) {
@@ -201,6 +208,18 @@ impl Jugador {
         self.base_mut().set_velocity(v);
         self.base_mut().move_and_slide();
 
+        // REQ-SON-08: un paso cada tanto caminado, solo apoyado en el piso.
+        let horizontal = Vector2::new(v.x, v.z).length();
+        if self.base().is_on_floor() && horizontal > 0.5 {
+            self.paso_m += horizontal * dt;
+            if self.paso_m >= LARGO_PASO {
+                self.paso_m = 0.0;
+                sonido::sonar(&self.to_gd(), ids::PASOS_JUGADOR);
+            }
+        } else if horizontal <= 0.5 {
+            self.paso_m = LARGO_PASO * 0.6;
+        }
+
         // REQ-JUG-06: empuja suavemente los objetos con física que toca.
         let n = self.base().get_slide_collision_count();
         for i in 0..n {
@@ -280,9 +299,18 @@ impl Jugador {
         }
         self.segundos_en_mano = 0.0;
         self.mano = Some(c);
+        // REQ-SON-08
+        sonido::sonar(&self.to_gd(), ids::AGARRAR);
     }
 
     pub fn soltar(&mut self) -> Option<Gd<RigidBody3D>> {
+        let c = self.soltar_en_silencio()?;
+        // REQ-SON-08
+        sonido::sonar(&self.to_gd(), ids::SOLTAR);
+        Some(c)
+    }
+
+    fn soltar_en_silencio(&mut self) -> Option<Gd<RigidBody3D>> {
         let mut c = self.mano.take()?;
         if !c.is_instance_valid() {
             return None;
@@ -298,8 +326,10 @@ impl Jugador {
     /// REQ-INT-06: tirar hacia adelante.
     fn tirar(&mut self) {
         let adelante = self.adelante();
-        if let Some(mut c) = self.soltar() {
+        if let Some(mut c) = self.soltar_en_silencio() {
             c.set_linear_velocity(adelante * VEL_TIRO);
+            // REQ-SON-08
+            sonido::sonar(&self.to_gd(), ids::TIRAR);
         }
     }
 
@@ -336,8 +366,12 @@ impl Jugador {
         match self.objetivo() {
             Some(Objetivo::Hervidor(mut h)) => h.bind_mut().alternar(),
             Some(Objetivo::Bloque(mut b)) => {
+                let empaque = b.bind().empaque();
                 let sacado = b.bind_mut().sacar();
                 if let Some((producto, pos)) = sacado {
+                    // REQ-SON-08: bolsa o caja de cartón según el empaque.
+                    let id = if empaque == Empaque::Bolsa { ids::SACAR_BOLSA } else { ids::SACAR_CAJA };
+                    sonido::sonar_en(&self.to_gd(), id, pos);
                     // REQ-DEP-05: aparece como objeto físico en la mano.
                     let mut c = Comida::crear(&producto);
                     c.set_position(pos);

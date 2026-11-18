@@ -87,6 +87,8 @@ impl Negocio {
             mundo.add_child(&p);
             p.set_global_position(pos);
         }
+        // REQ-SON-08: aviso sonoro de que llegó el pedido.
+        crate::sonido::sonar_en(&yo, carrito_core::sonido::ids::PAQUETE_LLEGA, pallet);
         hud::avisar(
             &yo,
             &format!(

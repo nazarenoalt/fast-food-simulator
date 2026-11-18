@@ -19,6 +19,7 @@ pub mod peatones; // SPEC-013
 pub mod plaza; // SPEC-008
 pub mod proveedor; // SPEC-011
 pub mod reloj; // SPEC-007
+pub mod sonido; // SPEC-024
 
 /// Temperatura ambiente en °C.
 pub const TEMP_AMBIENTE: f32 = 20.0;

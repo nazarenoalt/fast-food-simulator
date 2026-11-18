@@ -51,6 +51,7 @@ Estado: Borrador | Aprobada | Implementada
 | PRO | 011 Proveedor |
 | ADE | 012 Aderezos |
 | AMB | 013 Ambientación |
+| SON | 024 Sonido |
 
 ## Convenciones de código
 
