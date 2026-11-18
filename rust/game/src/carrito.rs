@@ -1,6 +1,6 @@
 //! SPEC-006 · Construye el carrito del jugador a partir de los datos.
 
-use carrito_core::carrito::{BaseCarrito, CarritoArmado, Funcion, armar};
+use carrito_core::carrito::{BaseCarrito, CarritoArmado, ConfigCarrito, Funcion, armar};
 use carrito_core::clientes::SEPARACION_FILA;
 use carrito_core::forma::TipoPieza;
 use godot::classes::base_material_3d::BillboardMode;
@@ -17,6 +17,7 @@ use crate::lugar_deposito::LugarDeposito;
 use crate::luz::LuzNocturna;
 use crate::parrilla::Parrilla;
 use crate::plancha::Plancha;
+use crate::puerta::PuertaCarrito;
 use crate::{formas, modelos};
 
 const ACERO: [f32; 3] = [0.82, 0.83, 0.85];
@@ -33,9 +34,22 @@ pub struct Carrito {
     bandeja: Option<Gd<Area3D>>,
     /// Funciones de los accesorios colocados (REQ-CLI-04: qué se puede cocinar).
     funciones: Vec<&'static str>,
+    /// Si está, se usa en lugar de la config del jugador (la prueba de humo arma así un
+    /// segundo carrito).
+    config_forzada: Option<ConfigCarrito>,
 }
 
 impl Carrito {
+    /// Un carrito con una config propia (no la del jugador). Se llama antes de agregarlo.
+    pub fn forzar_config(&mut self, config: ConfigCarrito) {
+        self.config_forzada = Some(config);
+    }
+
+    /// REQ-CAR-13: la puerta de la base, si tiene.
+    pub fn puerta(&self) -> Option<Gd<PuertaCarrito>> {
+        self.base().find_child_ex("Puerta").recursive(true).owned(false).done()?.try_cast::<PuertaCarrito>().ok()
+    }
+
     /// REQ-CAR-10: lugar `i` de la fila (global). La fila sigue hacia +X de la base.
     pub fn posicion_fila(&self, i: usize) -> Vector3 {
         let f = self.base_def.as_ref().map(|b| b.fila).unwrap_or([0.0, 0.0, 1.0]);
@@ -152,11 +166,10 @@ impl Carrito {
                 luz.set_position(p.get_position());
                 m.add_child(&luz);
             }
-            // REQ-CAR-11 / REQ-MOD-13: la puerta de las bases con interior arranca abierta.
-            if let (Some(grados), Some(mut puerta)) =
-                (b.puerta, modelos::buscar(&m, carrito_core::modelos::PIEZA_PUERTA))
-            {
-                puerta.rotate_y(grados.to_radians());
+            // REQ-CAR-11 / REQ-MOD-13 / REQ-CAR-13: la puerta del modelo arranca abierta o
+            // cerrada según la base, y E la abre o la cierra.
+            if let (Some(grados), Some(pieza)) = (b.puerta, modelos::buscar(&m, carrito_core::modelos::PIEZA_PUERTA)) {
+                PuertaCarrito::envolver(pieza, grados, b.puerta_abierta);
             }
             return;
         }
@@ -268,6 +281,16 @@ impl Carrito {
                 Some(Funcion::Aderezos { tipos, separacion }) => {
                     aderecera::construir(&mut nodo, tipos, *separacion);
                 }
+                Some(Funcion::Surtido { objetos }) => {
+                    // REQ-PAP-06: objetos sueltos apoyados en el accesorio (el colador en la
+                    // freidora, el cuchillo en la tabla); se agarran como cualquier comida.
+                    for o in objetos {
+                        let mut c = Comida::crear(&o.producto);
+                        c.set_position(formas::v3(o.pos));
+                        c.set_rotation_degrees(Vector3::new(0.0, o.rot_y, 0.0));
+                        nodo.add_child(&c);
+                    }
+                }
                 Some(Funcion::Luz { pos, color, energia, alcance }) => {
                     // REQ-CAR-06: se prende de noche (grupo luces_noche).
                     let mut luz = LuzNocturna::crear(*color, *energia, *alcance, 0.035, true);
@@ -300,7 +323,7 @@ impl INode3D for Carrito {
         self.base_mut().add_to_group(GRUPO);
         modelos::revisar_faltantes(); // REQ-MOD-02
         let cat = catalogo();
-        let mut config = cat.carrito_jugador.clone();
+        let mut config = self.config_forzada.take().unwrap_or_else(|| cat.carrito_jugador.clone());
         if !self.base_forzada.is_empty() {
             config.base = self.base_forzada.to_string();
         }

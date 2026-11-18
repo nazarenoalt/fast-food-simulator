@@ -147,6 +147,9 @@ ANCLAJES = [
     ("lateral_der", (XH, 0.0, 0.0), 0.0),
     ("luz_1", (-1.20, Y_TECHO, 0.97), 0.0),
     ("luz_2", (1.20, Y_TECHO, 0.97), 0.0),
+    # REQ-PAP-07: el cartel cuelga adelante, del canto de la repisa de afuera (z 1,08): el clavo
+    # entra a media altura de la losa y el origen queda arriba del clavo, 1,2 cm afuera.
+    ("cartel", (0.0, YM - ALTO_MESADA / 2 + 0.008, 1.08 + 0.012), 0.0),
 ]
 ENTREGA, FILA, ENTRADA = (0.0, YM, 0.97), (0.0, 0.0, 1.50), (1.17, 0.0, -1.35)
 LUZ_PUNTO = (0.0, Y_TECHO - 0.05, 0.97)

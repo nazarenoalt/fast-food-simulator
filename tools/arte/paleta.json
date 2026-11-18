@@ -30,7 +30,12 @@
         {"nombre": "M_Tomate", "hex": "#C83A2A", "metalico": 0.0, "rugosidad": 0.5},
         {"nombre": "M_Chimichurri", "hex": "#55702E", "metalico": 0.0, "rugosidad": 0.6},
         {"nombre": "M_PapelMadera", "hex": "#B98A57", "metalico": 0.0, "rugosidad": 0.9},
-        {"nombre": "M_Vidrio", "hex": "#8C9A9C", "metalico": 0.0, "rugosidad": 0.1, "alfa": 0.2}
+        {"nombre": "M_Vidrio", "hex": "#8C9A9C", "metalico": 0.0, "rugosidad": 0.1, "alfa": 0.2},
+        {"nombre": "M_PapaCascara", "hex": "#A8794A", "metalico": 0.0, "rugosidad": 0.85},
+        {"nombre": "M_PapaPulpa", "hex": "#E6C86A", "metalico": 0.0, "rugosidad": 0.6},
+        {"nombre": "M_PapaFrita", "hex": "#E3A73A", "metalico": 0.0, "rugosidad": 0.55},
+        {"nombre": "M_Aceite", "hex": "#C99A2E", "metalico": 0.0, "rugosidad": 0.1, "alfa": 0.7},
+        {"nombre": "M_Arpillera", "hex": "#A48A5E", "metalico": 0.0, "rugosidad": 1.0}
       ]
     },
     {

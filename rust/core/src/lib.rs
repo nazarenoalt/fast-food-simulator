@@ -18,11 +18,13 @@ pub mod heladera; // SPEC-016
 pub mod hervidor; // SPEC-003 (fuente de calor)
 pub mod lados; // SPEC-014 (cocción por lados)
 pub mod modelos; // SPEC-025
+pub mod papas; // SPEC-026
 pub mod parrilla; // SPEC-015 (carbón)
 pub mod peatones; // SPEC-013
 pub mod plancha; // SPEC-014 (fuente de calor)
 pub mod plaza; // SPEC-008
 pub mod proveedor; // SPEC-011
+pub mod puerta; // SPEC-006 (puerta de las bases)
 pub mod reloj; // SPEC-007
 pub mod sonido;
 pub mod tostado; // SPEC-015 (pan tostado) // SPEC-024

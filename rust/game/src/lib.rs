@@ -28,6 +28,7 @@ mod peaton; // SPEC-013
 mod plancha; // SPEC-014
 mod plaza; // SPEC-008
 mod prueba_humo;
+mod puerta; // SPEC-006 (puerta de las bases)
 mod sonido; // SPEC-024
 mod tienda; // SPEC-011
 mod transito; // SPEC-013

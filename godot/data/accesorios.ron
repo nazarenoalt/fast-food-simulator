@@ -51,6 +51,35 @@
             lugares: [(-0.13, 0.56, -0.02), (0.13, 0.56, -0.02), (-0.13, 0.04, -0.02), (0.13, 0.04, -0.02)],
         )),
     ),
+    // Freidoras (SPEC-026): angostas y profundas; traen su colador apoyado en la cuba
+    // (punto_colador del modelo). La cuba hueca sale del -colonly del modelo (REQ-MOD-04).
+    (
+        id: "freidora",
+        modelo: Some("cocina/freidora"),
+        nombre: "Freidora",
+        categoria: Cocina,
+        precio: 65000,
+        forma: [
+            (tipo: Caja, medidas: (0.26, 0.24, 0.36), pos: (0, 0.12, -0.055), color: (0.82, 0.83, 0.85), metal: true),
+            (tipo: Caja, medidas: (0.26, 0.33, 0.11), pos: (0, 0.165, 0.18), color: (0.82, 0.83, 0.85), metal: true),
+        ],
+        funcion: Some(Surtido(objetos: [(producto: "colador_freidora", pos: (0, 0.153, -0.055))])),
+    ),
+    (
+        id: "freidora_doble",
+        modelo: Some("cocina/freidora_doble"),
+        nombre: "Freidora doble",
+        categoria: Cocina,
+        precio: 115000,
+        forma: [
+            (tipo: Caja, medidas: (0.521, 0.24, 0.36), pos: (0, 0.12, -0.055), color: (0.82, 0.83, 0.85), metal: true),
+            (tipo: Caja, medidas: (0.521, 0.33, 0.11), pos: (0, 0.165, 0.18), color: (0.82, 0.83, 0.85), metal: true),
+        ],
+        funcion: Some(Surtido(objetos: [
+            (producto: "colador_freidora", pos: (-0.1305, 0.153, -0.055)),
+            (producto: "colador_freidora", pos: (0.1305, 0.153, -0.055)),
+        ])),
+    ),
     // ── Depósito ────────────────────────────────────────────
     (
         id: "estante_deposito",
@@ -165,6 +194,19 @@
             (tipo: Caja, medidas: (0.36, 0.44, 0.015), pos: (0, 0.22, -0.006), rot: (-12, 0, 0), color: (0.55, 0.35, 0.2)),
         ],
     ),
+    // Cartel de cerrado (REQ-PAP-07): cuelga en V de un clavo (el origen); el texto viene
+    // pintado en el modelo. Va en el anclaje `cartel` de cada base (categoría Cartel).
+    (
+        id: "cartel_cerrado",
+        modelo: Some("accesorios/cartel_cerrado"),
+        nombre: "Cartel de cerrado",
+        categoria: Cartel,
+        precio: 4000,
+        forma: [
+            (tipo: Caja, medidas: (0.32, 0.16, 0.014), pos: (0, -0.18, 0), color: (0.85, 0.12, 0.1), colision: false),
+            (tipo: Cilindro, medidas: (0.004, 0.02, 0), pos: (0, -0.004, -0.002), rot: (90, 0, 0), color: (0.82, 0.83, 0.85), metal: true, colision: false),
+        ],
+    ),
     // ── Porche ──────────────────────────────────────────────
     (
         id: "porche_nylon",
@@ -213,5 +255,21 @@
             (tipo: Caja, medidas: (0.12, 0.1, 0.08), pos: (0, 0.05, 0), color: (0.75, 0.75, 0.78), metal: true),
             (tipo: Caja, medidas: (0.1, 0.02, 0.07), pos: (0, 0.105, 0), color: (0.98, 0.98, 0.98)),
         ],
+    ),
+    // Tabla para las papas (SPEC-026): trae el cuchillo, el pelapapas y una papa.
+    (
+        id: "tabla_papas",
+        modelo: Some("cocina/tabla_papas"),
+        nombre: "Tabla con cuchillo y pelapapas",
+        categoria: Equipamiento,
+        precio: 9000,
+        forma: [
+            (tipo: Caja, medidas: (0.35, 0.02, 0.25), pos: (0, 0.01, 0), color: (0.7, 0.55, 0.38)),
+        ],
+        funcion: Some(Surtido(objetos: [
+            (producto: "cuchillo", pos: (0.0, 0.031, 0.065)),
+            (producto: "pelapapas", pos: (0.07, 0.029, -0.055), rot_y: -8),
+            (producto: "papa_cruda", pos: (-0.1, 0.051, -0.06)),
+        ])),
     ),
 ]

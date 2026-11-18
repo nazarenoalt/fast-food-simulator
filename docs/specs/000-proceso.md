@@ -59,6 +59,7 @@ Estado: Borrador | Aprobada | Implementada
 | HEL | 016 Heladera y cadena de frío |
 | SON | 024 Sonido |
 | MOD | 025 Modelos 3D |
+| PAP | 026 Papas fritas |
 
 ## Convenciones de código
 

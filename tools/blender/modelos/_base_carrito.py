@@ -39,6 +39,11 @@ Diseño (guía 5.2), igual que la base de piezas simples que arma hoy el juego
       negra y rejilla de ventilación en el costado). Además: 2 parantes de acero en el frente
       (afuera del telón) y uno en cada costado, 4 patas niveladoras con taco de goma, zócalo de
       10 cm, ruedas de 8 cm de ancho y manija más gruesa.
+    - Carro grande: el lugar de la garrafa se cierra con una puerta `pieza_puerta` (REQ-CAR-13)
+      pintada (M_PinturaCarrito: toma el color del carrito, rojo o plateado) con tirador negro.
+      Origen = la bisagra (arista de afuera del lado −X de la puerta); gira en Y:
+      positivo abre hacia afuera (hacia −Z, el lado del vendedor), como la del kiosco. Su colisión
+      `<id>_puerta-colonly` es hija de la puerta (así la sigue al abrir).
 
 Qué se mide (la caja envolvente no sirve: la manija sale solo de un lado y la mesada está
 corrida hacia el cliente):
@@ -50,7 +55,7 @@ corrida hacia el cliente):
 
 Objetos que se exportan (bajo un Empty raíz `<id>`):
     pieza_pintura, <id>_estructura (todo lo demás, en un solo objeto),
-    pieza_tapa_bahia_<n>, punto_bahia_<n>,
+    pieza_tapa_bahia_<n>, punto_bahia_<n>, pieza_puerta (carro grande),
     <id>-colonly (cuerpo + ruedas, con las bahías libres: varias cajas en un objeto, para que la
     alacena y los paquetes puedan entrar) y <id>_manija-colonly,
     punto_<anclaje> para cada anclaje del .ron (con su rot_y), punto_entrega y punto_fila.
@@ -385,6 +390,12 @@ def construir(id_base, grande=False, bahias=None):
                                 tapas=(False, True))
     estructura = piezas.terminar(f"{id_base}_estructura", be, mats)
 
+    # ── Puerta del lugar de la garrafa (carro grande, REQ-CAR-13) ──
+    puerta = col_puerta = None
+    if grande:
+        puerta, col_puerta = construir_puerta(id_base, x_sep + 0.015 - 0.01, w / 2 - esp + 0.01,
+                                              y0 + 0.004, y1 - 0.006, z_boca, pintura_m, mats[NEGRO])
+
     # ── Colisión y puntos ──
     # Cuerpo: varias cajas que dejan libres las bahías (la alacena trae su propia colisión).
     salida_z = p / 2 + 0.01 + ancho_rueda + 0.016  # hasta la taza de las ruedas
@@ -410,11 +421,58 @@ def construir(id_base, grande=False, bahias=None):
     puntos.append(piezas.punto("punto_entrega", d["entrega"]))
     puntos.append(piezas.punto("punto_fila", d["fila"]))
 
-    raiz = piezas.raiz(id_base, [pintura, estructura] + tapas + colisiones + puntos + puntos_bahia)
+    extras = [puerta] if puerta else []
+    raiz = piezas.raiz(id_base, [pintura, estructura] + tapas + extras + colisiones + puntos + puntos_bahia)
     return {"datos": d, "raiz": raiz, "pintura": pintura, "estructura": estructura,
             "tapas": tapas, "colisiones": colisiones, "puntos": puntos + puntos_bahia,
+            "puerta": puerta, "col_puerta": col_puerta,
             "puntos_anclaje": puntos, "puntos_bahia": puntos_bahia,
             "bahias": [(xc, y_piso, z_boca) for xc in xs_bahias], "y1": y1}
+
+
+ESP_PUERTA = 0.02
+GIRO_PUERTA = 105.0   # grados que se abre (carritos/carro_grande.ron: puerta)
+
+
+def construir_puerta(id_base, x0, x1, ya, yb, z_cara, pintura_m, negro_m):
+    """Puerta pintada sobre la cara del vendedor (z_cara), de x0 a x1 y de ya a yb, que tapa
+    el hueco con 1 cm de cada lado. Origen en la bisagra: (x0, ya, z_cara − espesor)."""
+    bm = bmesh.new()
+    zc = z_cara - ESP_PUERTA / 2
+    piezas.caja(bm, (x1 - x0, yb - ya, ESP_PUERTA), ((x0 + x1) / 2, (ya + yb) / 2, zc), mat=0,
+                bisel=0.006)
+    # Tirador vertical del lado libre (las bisagras no se modelan: el carro está al tope de
+    # triángulos de su presupuesto, y a 2 m no se distinguen).
+    piezas.cilindro(bm, 0.009, 0.16, (x1 - 0.05, (ya + yb) / 2 + 0.05, z_cara - ESP_PUERTA - 0.006),
+                    lados=8, mat=1)
+    bisagra = (x0, ya, z_cara - ESP_PUERTA)
+    puerta = objeto_en("pieza_puerta", bm, [pintura_m, negro_m], bisagra)
+    # Colisión hija de la puerta, con las cajas relativas a la bisagra (así la sigue al girar).
+    import _equipos as eq
+    centro = ((x0 + x1) / 2 - bisagra[0], (ya + yb) / 2 - bisagra[1], zc - bisagra[2])
+    col = eq.colision_cajas(f"{id_base}_puerta", [((x1 - x0, yb - ya, ESP_PUERTA), centro)])
+    col.parent = puerta
+    return puerta, col
+
+
+def chequeo_puerta(m):
+    """La puerta del carro grande: nombre, bisagra en su origen, gira en Y y tapa el hueco de la
+    garrafa; su colisión es hija de ella."""
+    pt = m["puerta"]
+    if pt is None:
+        return True, "Sin puerta (barras)"
+    vs = [Vector((v.x, v.z, -v.y)) for v in _verts_mundo(pt)]
+    x0, x1 = min(v.x for v in vs), max(v.x for v in vs)
+    o = pt.matrix_world.translation
+    og = Vector((o.x, o.z, -o.y))
+    bpy.context.view_layer.update()
+    cs = [Vector((v.x, v.z, -v.y)) for v in _verts_mundo(m["col_puerta"])]
+    alineada = abs((min(v.x for v in cs) + max(v.x for v in cs)) - (x0 + x1)) < 0.01 and \
+        abs(max(v.z for v in cs) - max(v.z for v in vs)) < 0.005
+    ok = (pt.name == "pieza_puerta" and abs(og.x - x0) < 0.01 and m["col_puerta"].parent is pt
+          and alineada and max(v.z for v in vs) <= -m["datos"]["profundidad"] / 2 + 1e-4)
+    return ok, ("pieza_puerta (garrafa) de %.2f m con la bisagra en el origen (%.3f; %.3f; %.3f), gira en Y "
+                "hasta %.0f°; colisión hija de la puerta" % (x1 - x0, og.x, og.y, og.z, GIRO_PUERTA))
 
 
 # ── Revisión ───────────────────────────────────────────────────────────
@@ -428,7 +486,7 @@ def revisar(m, tol=0.002):
     el origen se miden sobre el cuerpo pintado y la mesada, no sobre la caja envolvente."""
     d = m["datos"]
     w, p, a = d["ancho"], d["profundidad"], d["alto"]
-    visibles = [m["pintura"], m["estructura"]] + m["tapas"]
+    visibles = [m["pintura"], m["estructura"]] + m["tapas"] + ([m["puerta"]] if m["puerta"] else [])
     res = comun.revisar(visibles, PRESUPUESTO, (w, a, p), origen="base",
                         max_materiales=MAX_MATERIALES, tolerancia=tol)
     bpy.context.view_layer.update()
@@ -468,6 +526,8 @@ def revisar(m, tol=0.002):
     nuevos.append((puntos_ok, "Puntos: %d punto_<anclaje> + entrega + fila, en las posiciones "
                    "del .ron" % len(d["anclajes"])))
     nuevos.append(chequeo_bahias(m))
+    if m["puerta"] is not None:
+        nuevos.append(chequeo_puerta(m))
     return nuevos
 
 
@@ -588,8 +648,9 @@ def hoja_revision(m, revision, descripcion):
     persona = bpy.data.objects["ref_persona_1,75m"]
     # El vendedor, parado atrás del mostrador (lado −Z de Godot = +Y de Blender).
     persona.location = (0.25 * d["ancho"], d["profundidad"] / 2 + 0.3, 0)
-    piezas_v = [m["pintura"], m["estructura"]] + m["tapas"]
-    sin_tapas = [m["pintura"], m["estructura"]]
+    puerta = [m["puerta"]] if m["puerta"] else []
+    piezas_v = [m["pintura"], m["estructura"]] + m["tapas"] + puerta
+    sin_tapas = [m["pintura"], m["estructura"]] + puerta
     con_alacenas = list(sin_tapas)
     for variante, punto in zip(ALACENAS_FOTO[m["raiz"].name], m["puntos_bahia"]):
         al = _alacena.construir(variante)
@@ -608,11 +669,34 @@ def hoja_revision(m, revision, descripcion):
         ("Con alacenas en las bahías · día", con_alacenas, "vendedor", "dia"),
         ("Con alacenas, de atrás · día", con_alacenas, "atras", "dia"),
     ])
+    if m["puerta"] is not None:
+        cuadros += fotos_puerta(m, piezas_v)
     w, p, a = d["ancho"], d["profundidad"], d["alto"]
     comun.componer_hoja(
         f"{m['raiz'].name} · {w:.2f} × {a:.2f} × {p:.2f} m · {descripcion}".replace(".", ","),
         cuadros, revision, comun.RAIZ / f"docs/arte/revisiones/{m['raiz'].name}.jpg",
     )
+
+
+def fotos_puerta(m, piezas_v):
+    """Carro grande: la puerta de la garrafa abierta (como queda con E) y el carro en plateado
+    (el otro color del carrito; el juego lo pinta en M_PinturaCarrito, puerta incluida)."""
+    pt = m["puerta"]
+    pt.rotation_euler.z = math.radians(GIRO_PUERTA)   # rot_y de Godot = giro sobre Z de Blender
+    bpy.context.view_layer.update()
+    cuadros = sacar_fotos([
+        ("Puerta de la garrafa abierta (E) · día", piezas_v, "vendedor_derecha", "dia"),
+    ])
+    pt.rotation_euler.z = 0.0
+    pintura = bpy.data.materials["M_PinturaCarrito"]
+    bsdf = next(n for n in pintura.node_tree.nodes if n.type == "BSDF_PRINCIPLED")
+    rojo = tuple(bsdf.inputs["Base Color"].default_value)
+    bsdf.inputs["Base Color"].default_value = comun.hex_a_lineal("#C3C7CC")   # solo foto
+    bpy.context.view_layer.update()
+    cuadros += sacar_fotos([("En plateado (color del carrito, puerta incluida) · día", piezas_v,
+                             "vendedor_derecha", "dia")])
+    bsdf.inputs["Base Color"].default_value = rojo
+    return cuadros
 
 
 def main(id_base, descripcion, grande=False):
@@ -621,7 +705,8 @@ def main(id_base, descripcion, grande=False):
     revision = revisar(m)
     ok = comun.imprimir_revision(id_base, revision)
     comun.guardar_blend(comun.RAIZ / f"arte/fuentes/{FAMILIA}/{id_base}.blend")
-    comun.exportar_glb([m["raiz"], m["pintura"], m["estructura"]] + m["tapas"] + m["colisiones"] +
+    puerta = [m["puerta"], m["col_puerta"]] if m["puerta"] else []
+    comun.exportar_glb([m["raiz"], m["pintura"], m["estructura"]] + m["tapas"] + puerta + m["colisiones"] +
                        m["puntos"],
                        comun.RAIZ / f"godot/modelos/{FAMILIA}/{id_base}.glb")
     if "--sin-hoja" not in sys.argv:

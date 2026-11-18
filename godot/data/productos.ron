@@ -196,6 +196,92 @@
                 (tipo: Cilindro, medidas: (0.018, 0.025, 0), pos: (0, 0.085, 0), color: (0.2, 0.2, 0.2)),
             ],
         ),
+        // ── Papas fritas (SPEC-026): todavía no se venden ni se cocinan ──
+        (
+            id: "papa_cruda",
+            modelo: Some("comida/papa_cruda"),
+            nombre: "papa sin pelar",
+            masa: 0.2,
+            colision: Caja(medidas: (0.095, 0.058, 0.068)),
+            forma: [
+                (tipo: Esfera, medidas: (0.034, 0, 0), escala: (1.4, 0.85, 1.0), color: (0.66, 0.47, 0.29)),
+            ],
+        ),
+        (
+            id: "papa_pelada",
+            modelo: Some("comida/papa_pelada"),
+            nombre: "papa pelada",
+            masa: 0.17,
+            colision: Caja(medidas: (0.086, 0.052, 0.062)),
+            forma: [
+                (tipo: Esfera, medidas: (0.031, 0, 0), escala: (1.4, 0.85, 1.0), color: (0.9, 0.78, 0.42)),
+            ],
+        ),
+        (
+            id: "papa_cortada",
+            modelo: Some("comida/papa_cortada"),
+            nombre: "papas cortadas",
+            masa: 0.15,
+            colision: Caja(medidas: (0.084, 0.031, 0.045)),
+            forma: [
+                (tipo: Caja, medidas: (0.084, 0.031, 0.045), color: (0.9, 0.78, 0.42)),
+            ],
+        ),
+        (
+            id: "papas_fritas",
+            modelo: Some("comida/papas_fritas"),
+            nombre: "papas fritas",
+            masa: 0.12,
+            colision: Caja(medidas: (0.09, 0.034, 0.05)),
+            forma: [
+                (tipo: Caja, medidas: (0.09, 0.034, 0.05), color: (0.89, 0.65, 0.23)),
+            ],
+        ),
+        (
+            id: "cajita_papas",
+            modelo: Some("comida/cajita_papas"),
+            nombre: "cajita para papas",
+            masa: 0.02,
+            colision: Caja(medidas: (0.09, 0.11, 0.056)),
+            forma: [
+                (tipo: Caja, medidas: (0.08, 0.11, 0.046), color: (0.85, 0.12, 0.1)),
+            ],
+        ),
+        // ── Utensilios (SPEC-026): se agarran, no se venden ni se cocinan ──
+        (
+            id: "pelapapas",
+            modelo: Some("cocina/pelapapas"),
+            nombre: "pelapapas",
+            masa: 0.05,
+            colision: Caja(medidas: (0.18, 0.014, 0.034)),
+            forma: [
+                (tipo: Caja, medidas: (0.11, 0.014, 0.022), pos: (-0.035, 0, 0), color: (0.1, 0.1, 0.1)),
+                (tipo: Caja, medidas: (0.07, 0.004, 0.027), pos: (0.055, 0, 0), color: (0.82, 0.83, 0.85), metal: true),
+            ],
+        ),
+        (
+            id: "cuchillo",
+            modelo: Some("cocina/cuchillo"),
+            nombre: "cuchillo",
+            masa: 0.15,
+            colision: Caja(medidas: (0.27, 0.017, 0.034)),
+            forma: [
+                (tipo: Caja, medidas: (0.1, 0.016, 0.021), pos: (-0.085, 0, 0), color: (0.1, 0.1, 0.1)),
+                (tipo: Caja, medidas: (0.17, 0.003, 0.033), pos: (0.05, 0, 0), color: (0.82, 0.83, 0.85), metal: true),
+            ],
+        ),
+        (
+            id: "colador_freidora",
+            modelo: Some("cocina/colador_freidora"),
+            nombre: "colador de freidora",
+            masa: 0.35,
+            // Solo el canasto (el mango sobresale): así entra en la cuba de la freidora (REQ-PAP-05).
+            colision: Caja(medidas: (0.19, 0.095, 0.27)),
+            forma: [
+                (tipo: Caja, medidas: (0.19, 0.095, 0.27), color: (0.35, 0.35, 0.38), metal: true),
+                (tipo: Cilindro, medidas: (0.011, 0.1, 0), pos: (0, 0.11, -0.2), rot: (65, 0, 0), color: (0.1, 0.1, 0.1)),
+            ],
+        ),
     ],
     // REQ-ARM-01
     combinaciones: [

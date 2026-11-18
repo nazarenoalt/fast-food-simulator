@@ -54,6 +54,9 @@ pub struct PruebaHumo {
     superpuestos: usize,
     muestras: usize,
     reintentos: u32,
+    /// SPEC-026 / REQ-CAR-13: segundo carrito (carro grande) con lo de las papas.
+    carro_papas: Option<Gd<Carrito>>,
+    fase_papas: u32,
 }
 
 /// Material (de la primera superficie) de la pieza `nombre` de un modelo. SPEC-025
@@ -121,6 +124,129 @@ impl PruebaHumo {
         self.mundo().add_child(&c);
         c.set_global_position(pos);
         c
+    }
+
+    /// SPEC-026 y REQ-CAR-13: arma un segundo carrito (carro grande, plateado) con la freidora
+    /// doble, la tabla, el cartel adelante y las bolsas de papas, y abre y cierra su puerta. Se llama en
+    /// varios cuadros; devuelve true al terminar.
+    fn chequear_papas_y_puerta(&mut self) -> bool {
+        let mundo = self.mundo();
+        match self.fase_papas {
+            0 => {
+                let mut cfg = crate::datos::catalogo().carrito_jugador.clone();
+                cfg.base = "carro_grande".into();
+                cfg.color = Some([0.76, 0.78, 0.8]); // REQ-CAR-09: plateado
+                cfg.accesorios = [
+                    ("mostrador_izq", "freidora_doble"),
+                    ("mostrador_centro", "tabla_papas"),
+                    ("cartel", "cartel_cerrado"),
+                    ("lateral", "estante_deposito"),
+                ]
+                .iter()
+                .map(|(a, b)| (a.to_string(), b.to_string()))
+                .collect();
+                cfg.stock = [(
+                    "lateral".to_string(),
+                    vec![
+                        Some("bolsa_papas_5kg".to_string()),
+                        Some("bolsa_papas_2kg".to_string()),
+                        Some("pack_cajitas".to_string()),
+                        None,
+                    ],
+                )]
+                .into_iter()
+                .collect();
+                let mut c = Carrito::new_alloc();
+                c.bind_mut().forzar_config(cfg);
+                c.set_position(Vector3::new(0.0, 0.0, -30.0));
+                mundo.clone().add_child(&c);
+                self.carro_papas = Some(c);
+                self.esperar(120);
+            }
+            1 => {
+                let c = self.carro_papas.clone().unwrap();
+                let errores = self.base().get_tree().get_nodes_in_group("errores_carrito").len();
+                self.chequear(errores == 0, "CA-PAP-01 el carro grande con lo de las papas se arma sin errores");
+                let nodo = c.clone().upcast::<Node3D>();
+                let modelos = ["pieza_aceite_1", "tabla_papas_cuerpo", "cartel_cerrado_cuerpo"]
+                    .iter()
+                    .all(|n| crate::modelos::buscar(&nodo, n).is_some());
+                self.chequear(modelos, "REQ-PAP-05/07 freidora doble, tabla y cartel con su modelo");
+                let suelta = |p: &str| {
+                    todos::<Comida>(&mundo).into_iter().filter(|x| x.bind().producto() == p).collect::<Vec<_>>()
+                };
+                let base = c.get_global_position();
+                let coladores = suelta("colador_freidora");
+                let adentro = coladores.iter().all(|x| {
+                    let p = x.get_global_position() - base;
+                    (p.x + 1.1).abs() < 0.3 && p.y > 1.12 && p.y < 1.2 && (p.z - 0.045).abs() < 0.1
+                });
+                self.chequear(
+                    coladores.len() == 2 && adentro,
+                    &format!(
+                        "CA-PAP-01 los dos coladores quedan dentro de la freidora ({:?})",
+                        coladores.iter().map(|x| x.get_global_position() - base).collect::<Vec<_>>()
+                    ),
+                );
+                let cuchillo = suelta("cuchillo").pop();
+                let sobre_tabla = cuchillo.as_ref().is_some_and(|x| x.get_global_position().y - base.y > 1.02);
+                let mut agarrado = false;
+                if let (Some(k), Some(mut j)) = (cuchillo, todos::<Jugador>(&mundo).pop()) {
+                    j.bind_mut().agarrar(k.clone().upcast());
+                    agarrado = k.bind().sostenida;
+                    j.bind_mut().soltar();
+                }
+                self.chequear(
+                    sobre_tabla && agarrado && suelta("pelapapas").len() == 1,
+                    "REQ-PAP-06 la tabla trae cuchillo y pelapapas, y el cuchillo se agarra",
+                );
+                let mut bolsas: Vec<u32> = todos::<BloqueStock>(&mundo)
+                    .into_iter()
+                    .filter(|b| b.bind().producto() == "papa_cruda")
+                    .map(|b| b.bind().restantes())
+                    .collect();
+                bolsas.sort();
+                self.chequear(
+                    bolsas == [12, 24],
+                    &format!("REQ-PAP-03 las bolsas de 2 kg (12) y 5 kg (24) entran en el estante ({bolsas:?})"),
+                );
+                // REQ-PAP-07: el cartel cuelga adelante (lo ven los clientes), del canto de la mesada.
+                let cartel = nodo.find_child_ex("cartel_cartel_cerrado").recursive(true).owned(false).done();
+                let adelante = cartel.and_then(|n| n.try_cast::<Node3D>().ok()).map(|n| n.get_global_position() - base);
+                self.chequear(
+                    adelante.is_some_and(|p| p.z > 0.6 && p.x.abs() < 0.01 && (p.y - 0.988).abs() < 0.01),
+                    &format!("REQ-PAP-07 el cartel de cerrado cuelga adelante ({adelante:?})"),
+                );
+                let puerta = c.bind().puerta();
+                let cerrada = puerta.as_ref().is_some_and(|p| !p.bind().abierta() && p.bind().angulo() == 0.0);
+                self.chequear(cerrada, "REQ-CAR-11 la puerta del carro grande arranca cerrada");
+                if let Some(mut p) = puerta {
+                    p.bind_mut().alternar();
+                }
+                self.esperar(45);
+            }
+            2 => {
+                let mut p = self.carro_papas.clone().unwrap().bind().puerta().unwrap();
+                let a = p.bind().angulo();
+                let pieza = crate::modelos::buscar(&p.clone().upcast::<Node3D>(), "pieza_puerta")
+                    .map(|n| n.get_rotation_degrees().y)
+                    .unwrap_or(0.0);
+                self.chequear(
+                    p.bind().abierta() && (a - 105.0).abs() < 0.5 && (pieza - 105.0).abs() < 0.5,
+                    &format!("CA-CAR-04 con E la puerta se abre ({a:.0}°, pieza {pieza:.0}°)"),
+                );
+                p.bind_mut().alternar();
+                self.esperar(45);
+            }
+            _ => {
+                let p = self.carro_papas.clone().unwrap().bind().puerta().unwrap();
+                let a = p.bind().angulo();
+                self.chequear(!p.bind().abierta() && a == 0.0, &format!("CA-CAR-04 otra vez E: se cierra ({a:.0}°)"));
+                return true;
+            }
+        }
+        self.fase_papas += 1;
+        false
     }
 
     fn terminar(&mut self) {
@@ -881,7 +1007,11 @@ impl INode for PruebaHumo {
                 self.esperar(30);
             }
             31 => {
-                self.terminar();
+                if self.chequear_papas_y_puerta() {
+                    self.terminar();
+                } else {
+                    self.paso -= 1; // se repite este paso hasta terminar
+                }
             }
             _ => {}
         }
