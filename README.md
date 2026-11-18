@@ -1,4 +1,4 @@
-# Carrito
+# Fast Food Simulator
 
 Simulador de carrito de comida rápida (panchos, hamburguesas, choripanes) en 3D con
 física real, frente a una plaza. Hecho con **Godot 4.7** y **Rust** (godot-rust 0.5).
@@ -23,10 +23,10 @@ En [**Releases**](https://github.com/nazarenoalt/fast-food-simulator/releases/la
 el juego listo para Windows, macOS y Linux: bajá el `.zip` de tu sistema, descomprimilo y
 abrilo.
 
-- **Windows:** `Carrito.exe`. Si aparece "Windows protegió tu PC", tocá
+- **Windows:** `FastFoodSimulator.exe`. Si aparece "Windows protegió tu PC", tocá
   *Más información → Ejecutar de todas formas* (el juego no está firmado).
-- **macOS:** la primera vez, clic derecho sobre `Carrito.app` → *Abrir*.
-- **Linux:** `./Carrito.x86_64`.
+- **macOS:** la primera vez, clic derecho sobre `Fast Food Simulator.app` → *Abrir*.
+- **Linux:** `./FastFoodSimulator.x86_64`.
 
 Los `.zip` los arma la acción **Builds**, que se corre a mano (pestaña Actions → Builds →
 *Run workflow* sobre `main`). Para publicar una versión nueva, cambiá el número del archivo

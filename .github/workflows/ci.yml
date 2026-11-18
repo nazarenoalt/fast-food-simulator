@@ -5,6 +5,8 @@
 name: CI
 on:
   pull_request:
+    # "edited": vuelve a revisar cuando se pega la línea de verificación en la descripción.
+    types: [opened, edited, synchronize, reopened]
   workflow_dispatch:
 
 concurrency:
@@ -55,9 +57,9 @@ jobs:
       - name: Formato
         working-directory: rust
         run: cargo fmt --check
-      - name: Lints (errores; las advertencias se limpian en TASK-0002)
+      - name: Lints (sin advertencias, TASK-0002)
         working-directory: rust
-        run: cargo clippy --all-targets
+        run: cargo clippy --all-targets -- -D warnings
       - name: Tests de reglas, trazabilidad y docs
         working-directory: rust
         run: cargo test

@@ -133,17 +133,17 @@ impl INode3D for Palomas {
                     }
                     // REQ-AMB-10: si el jugador se acerca, sale volando.
                     let pos = p.nodo.get_global_position();
-                    if let Some(j) = jugador {
-                        if Vector2::new(j.x - pos.x, j.z - pos.z).length() < DISTANCIA_SUSTO {
-                            let lejos = Vector3::new(pos.x - j.x, 0.0, pos.z - j.z).normalized_or_zero();
-                            p.estado = Estado::Volando;
-                            // REQ-SON-08: aleteo al salir volando.
-                            crate::sonido::sonar_en(&yo, carrito_core::sonido::ids::PALOMA_ALETEO, pos);
-                            p.t = 0.0;
-                            p.desde = pos;
-                            p.hasta = pos + lejos * 14.0 + Vector3::new(0.0, 9.0, 0.0);
-                            p.nodo.set_rotation(Vector3::new(0.0, lejos.x.atan2(lejos.z), 0.0));
-                        }
+                    if let Some(j) = jugador
+                        && Vector2::new(j.x - pos.x, j.z - pos.z).length() < DISTANCIA_SUSTO
+                    {
+                        let lejos = Vector3::new(pos.x - j.x, 0.0, pos.z - j.z).normalized_or_zero();
+                        p.estado = Estado::Volando;
+                        // REQ-SON-08: aleteo al salir volando.
+                        crate::sonido::sonar_en(&yo, carrito_core::sonido::ids::PALOMA_ALETEO, pos);
+                        p.t = 0.0;
+                        p.desde = pos;
+                        p.hasta = pos + lejos * 14.0 + Vector3::new(0.0, 9.0, 0.0);
+                        p.nodo.set_rotation(Vector3::new(0.0, lejos.x.atan2(lejos.z), 0.0));
                     }
                 }
                 Estado::Volando => {

@@ -8,7 +8,7 @@ Cada etapa abre con sus specs (SPEC-000) y cierra con docs al día. Formato en [
 | ID | Tarea | Spec | Estado |
 |---|---|---|---|
 | 0001 | Proceso, CLAUDE.md, roadmap, CI de PRs y docs (`chore (docs)`) | 000 | 🔄 |
-| 0002 | Dejar `cargo clippy` sin advertencias (hoy ~13) | — | ⬜ |
+| 0002 | Dejar `cargo clippy` sin advertencias (la CI falla si aparece una) | — | ✅ |
 | 0003 | Git LFS para modelos `.glb`, fuentes `.blend` e imágenes de arte | — | ✅ |
 
 ## Hechas

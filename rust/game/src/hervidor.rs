@@ -61,12 +61,12 @@ impl Hervidor {
         if let Some(agua) = modelos::buscar(&m, carrito_core::modelos::PIEZA_AGUA) {
             self.mat_agua = modelos::materiales_propios(&agua).into_iter().next().map(|(_, mat)| mat);
         }
-        if let Some(piloto) = modelos::buscar(&m, carrito_core::modelos::PIEZA_PILOTO) {
-            if let Some((_, mut mat)) = modelos::materiales_propios(&piloto).into_iter().next() {
-                mat.set_feature(Feature::EMISSION, true);
-                mat.set_emission(Color::from_rgb(1.0, 0.1, 0.05));
-                self.piloto = Some(mat);
-            }
+        if let Some(piloto) = modelos::buscar(&m, carrito_core::modelos::PIEZA_PILOTO)
+            && let Some((_, mut mat)) = modelos::materiales_propios(&piloto).into_iter().next()
+        {
+            mat.set_feature(Feature::EMISSION, true);
+            mat.set_emission(Color::from_rgb(1.0, 0.1, 0.05));
+            self.piloto = Some(mat);
         }
         true
     }
