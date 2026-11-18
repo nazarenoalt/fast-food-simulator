@@ -210,6 +210,11 @@ def rueda(bm, x, zc, r, ancho, s):
                     radio_a_caras=True, radio_arriba=r * 0.5 if s > 0 else None)
 
 
+def sobre_rueda(P, xa, xb):
+    """¿El tramo [xa, xb] pasa sobre el pasarruedas de algún eje de la casilla?"""
+    return any(e["caja"] and xa < e["x"] + e["arco"] and xb > e["x"] - e["arco"] for e in P["ejes"])
+
+
 def mueble_frente(bm, P, tapas_mats):
     """Mesada de la ventana y su mueble con las bahías. Devuelve (tapas, puntos, bahías)."""
     x_in0, x_in1 = P["x0"] + PARED, P["x1"] - PARED
@@ -234,7 +239,9 @@ def mueble_frente(bm, P, tapas_mats):
     # Cuerpo del mueble (acero): montantes de alto completo, travesaño bajo las bahías y fondo.
     alto = y1 - yp + EPS
     for ma, mb in base.macizos(x_in0 + EPS, x_in1 - EPS, xs):
-        piezas.caja(bm, (mb - ma, alto, zw - z_boca), ((ma + mb) / 2, yp + alto / 2, (zw + z_boca) / 2),
+        # Sobre un pasarruedas el mueble termina antes (si no, se ve por el arco de la rueda).
+        z1 = P["z_pasarrueda"] - 0.03 - EPS if sobre_rueda(P, ma, mb) else zw
+        piezas.caja(bm, (mb - ma, alto, z1 - z_boca), ((ma + mb) / 2, yp + alto / 2, (z1 + z_boca) / 2),
                     mat=ACERO, bisel=0.006)
     for xc in xs:
         piezas.caja(bm, (BAHIA_W + 2 * EPS, y_bahia - yp, zw - z_boca - 0.004),
@@ -263,8 +270,13 @@ def mueble_atras(bm, P):
     y1 = ym - ALTO_MESADA
     base.losa(bm, (xb - xa, ALTO_MESADA, zb - zw + 0.03), ((xa + xb) / 2, ym - ALTO_MESADA / 2, (zw + zb + 0.03) / 2),
               radio=0.02, seg=2, mat=ACERO)
-    piezas.caja(bm, (xb - xa - 0.02, y1 - yp + EPS, zb - zw - EPS), ((xa + xb) / 2, yp + (y1 - yp) / 2, (zw + zb) / 2),
+    z0 = -P["z_pasarrueda"] + 0.03 + EPS if sobre_rueda(P, xa, xb) else zw
+    piezas.caja(bm, (xb - xa - 0.02, y1 - yp + EPS, zb - z0 - EPS), ((xa + xb) / 2, yp + (y1 - yp) / 2, (z0 + zb) / 2),
                 mat=ACERO, bisel=0.008)
+    if z0 != zw:   # tapas de las puntas hasta la pared (si no, se ve el hueco de atrás del mueble)
+        for x in (xa + 0.02, xb - 0.02):
+            piezas.caja(bm, (0.02, y1 - yp - 0.004, z0 - zw + 0.012), (x, yp + (y1 - yp) / 2, (z0 + zw + 0.012) / 2 - EPS),
+                        mat=ACERO)
     n = max(1, round((xb - xa) / 0.6))
     w = (xb - xa - 0.04) / n
     for k in range(n):
