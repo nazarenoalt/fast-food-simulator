@@ -24,7 +24,6 @@ mod paquete; // SPEC-011
 mod peaton; // SPEC-013
 mod plaza; // SPEC-008
 mod prueba_humo;
-mod puerta; // SPEC-006
 mod sonido; // SPEC-024
 mod tienda; // SPEC-011
 mod transito; // SPEC-013

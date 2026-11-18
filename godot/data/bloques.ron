@@ -51,25 +51,4 @@
         color_empaque: (0.78, 0.62, 0.42),
         precio: 2000,
     ),
-    // SPEC-025
-    (
-        id: "bolsa_papas",
-        nombre: "bolsa de papas",
-        producto: "papa_cruda_sin_pelar",
-        grilla: (2, 3, 2),
-        separacion: (0.11, 0.075, 0.085),
-        empaque: Bolsa,
-        color_empaque: (0.85, 0.75, 0.55),
-        precio: 2400,
-    ),
-    (
-        id: "pack_cajitas",
-        nombre: "pack de cajitas para papas",
-        producto: "cajita_papas",
-        grilla: (2, 3, 2),
-        separacion: (0.1, 0.03, 0.07),
-        empaque: Bandeja,
-        color_empaque: (0.78, 0.62, 0.42),
-        precio: 1500,
-    ),
 ]

@@ -2,30 +2,6 @@
 // "forma": piezas simples hasta tener modelos 3D. "funcion": lo que hace además de verse.
 [
     // ── Cocina ──────────────────────────────────────────────
-    // Freidora (SPEC-025): cuba de acero con aceite; trae su colador adentro.
-    (
-        id: "freidora",
-        nombre: "Freidora",
-        categoria: Cocina,
-        precio: 65000,
-        forma: [
-            // fondo y paredes de la cuba (con colisión: el colador queda adentro)
-            (tipo: Caja, medidas: (0.3, 0.012, 0.3), pos: (0, 0.006, 0), color: (0.78, 0.79, 0.8), metal: true),
-            (tipo: Caja, medidas: (0.3, 0.11, 0.012), pos: (0, 0.055, 0.144), color: (0.78, 0.79, 0.8), metal: true),
-            (tipo: Caja, medidas: (0.3, 0.11, 0.012), pos: (0, 0.055, -0.144), color: (0.78, 0.79, 0.8), metal: true),
-            (tipo: Caja, medidas: (0.012, 0.11, 0.276), pos: (0.144, 0.055, 0), color: (0.78, 0.79, 0.8), metal: true),
-            (tipo: Caja, medidas: (0.012, 0.11, 0.276), pos: (-0.144, 0.055, 0), color: (0.78, 0.79, 0.8), metal: true),
-            // aceite (solo se ve)
-            (tipo: Caja, medidas: (0.276, 0.07, 0.276), pos: (0, 0.047, 0), color: (0.9, 0.65, 0.1), alfa: 0.8, colision: false),
-            // tablero de control del lado del vendedor
-            (tipo: Caja, medidas: (0.3, 0.08, 0.06), pos: (0, 0.04, -0.18), color: (0.25, 0.25, 0.28)),
-            (tipo: Cilindro, medidas: (0.018, 0.02, 0), pos: (-0.07, 0.04, -0.212), rot: (90, 0, 0), color: (0.08, 0.08, 0.08), colision: false),
-            (tipo: Esfera, medidas: (0.008, 0, 0), pos: (0.07, 0.04, -0.212), color: (1.0, 0.45, 0.05), emision: 3.0, colision: false),
-        ],
-        funcion: Some(Surtido(objetos: [
-            (producto: "colador_freidora", pos: (0, 0.07, 0)),
-        ])),
-    ),
     (
         id: "hervidor_chico",
         nombre: "Hervidor baño maría chico",
@@ -126,21 +102,6 @@
         funcion: Some(Luz(pos: (0, 0, 0), color: (1.0, 0.75, 0.45), energia: 2.0, alcance: 7.0)),
     ),
     // ── Decoración ──────────────────────────────────────────
-    // Cartel de cerrado (SPEC-025): poste con brazo y un tablero colgado que dice CERRADO.
-    (
-        id: "cartel_cerrado",
-        nombre: "Cartel de cerrado",
-        categoria: Decoracion,
-        precio: 4000,
-        forma: [
-            (tipo: Cilindro, medidas: (0.015, 0.7, 0), pos: (0, 0.35, 0), color: (0.3, 0.3, 0.32), metal: true, colision: false),
-            (tipo: Cilindro, medidas: (0.01, 0.34, 0), pos: (-0.17, 0.68, 0), rot: (0, 0, 90), color: (0.3, 0.3, 0.32), metal: true, colision: false),
-            (tipo: Cilindro, medidas: (0.003, 0.1, 0), pos: (-0.29, 0.63, 0), color: (0.1, 0.1, 0.1), colision: false),
-            (tipo: Cilindro, medidas: (0.003, 0.1, 0), pos: (-0.05, 0.63, 0), color: (0.1, 0.1, 0.1), colision: false),
-            (tipo: Caja, medidas: (0.3, 0.14, 0.012), pos: (-0.17, 0.51, 0), color: (0.8, 0.1, 0.08), colision: false),
-        ],
-        funcion: Some(Cartel(texto: "CERRADO", pos: (-0.17, 0.51, 0.0075), tamano: 0.065, color: (1.0, 1.0, 1.0))),
-    ),
     (
         id: "pizarra_precios",
         nombre: "Pizarra de precios",
@@ -152,21 +113,6 @@
         ],
     ),
     // ── Equipamiento ────────────────────────────────────────
-    // Tabla de cortar (SPEC-025): trae el cuchillo, el pelapapas y una papa.
-    (
-        id: "tabla_de_cortar",
-        nombre: "Tabla de cortar",
-        categoria: Equipamiento,
-        precio: 8000,
-        forma: [
-            (tipo: Caja, medidas: (0.4, 0.02, 0.26), pos: (0, 0.01, 0), color: (0.75, 0.58, 0.38)),
-        ],
-        funcion: Some(Surtido(objetos: [
-            (producto: "cuchillo", pos: (0.05, 0.05, 0.06), rot_y: -12),
-            (producto: "pelapapas", pos: (0.0, 0.05, -0.07), rot_y: 20),
-            (producto: "papa_cruda_sin_pelar", pos: (-0.12, 0.07, 0.0)),
-        ])),
-    ),
     (
         id: "aderecera_tres",
         nombre: "Aderecera de tres pomos",

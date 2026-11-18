@@ -52,7 +52,6 @@ Estado: Borrador | Aprobada | Implementada
 | ADE | 012 Aderezos |
 | AMB | 013 Ambientación |
 | SON | 024 Sonido |
-| PAP | 025 Papas y utensilios |
 
 ## Convenciones de código
 

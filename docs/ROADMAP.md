@@ -39,17 +39,6 @@ Cada etapa abre con sus specs (SPEC-000) y cierra con docs al día. Formato en [
 | 0307 | Clientes piden hamburguesa y choripán (menú de varios productos) | 009 | ⬜ |
 | 0308 | Datos `.ron` y prueba de humo ampliada | — | ⬜ |
 
-## Etapa 3.5 · Papas fritas (`feat (carrito)`) · PR TASK-0350
-| ID | Tarea | Spec | Estado |
-|---|---|---|---|
-| 0351 | Spec 025 Papas y utensilios; puerta en spec 006 | 025, 006 | ✅ |
-| 0352 | Modelar papas (4 estados), cajita, bolsa de papas | 025 | ✅ |
-| 0353 | Modelar freidora, colador, pelapapas, cuchillo, tabla y cartel de cerrado | 025 | ✅ |
-| 0354 | Puerta que se abre y cierra en el carro grande | 006 | ✅ |
-| 0355 | Pelar y cortar papas con pelapapas y cuchillo | — | ⬜ |
-| 0356 | Freír: aceite a ~180 °C, colador, papas fritas | — | ⬜ |
-| 0357 | Vender papas en cajita; el cartel de cerrado frena a los clientes | — | ⬜ |
-
 ## Etapa 4 · Carritos y mejoras (`feat (carrito)`) · PR TASK-0400
 | ID | Tarea | Spec | Estado |
 |---|---|---|---|

@@ -26,18 +26,9 @@ agregar un archivo de datos.
 - **REQ-CAR-05** Un accesorio se define en `godot/data/accesorios.ron` con id, nombre,
   categoría, precio, forma visual (lista de piezas simples: caja, cilindro, esfera, cono,
   con medidas, posición y color) y opcionalmente una **función**: Hervidor, Depósito
-  (con cantidad de lugares para bloques), Luz (color, potencia, alcance), Aderezos
-  (qué pomos tiene, SPEC-012), Surtido o Cartel (SPEC-025).
+  (con cantidad de lugares para bloques), Luz (color, potencia, alcance) o Aderezos
+  (qué pomos tiene, SPEC-012).
 - **REQ-CAR-06** Las luces de accesorios se prenden de noche y se apagan de día (SPEC-007).
-
-### Puerta
-- **REQ-CAR-11** Una base puede tener `puerta` (bisagra, ancho, alto, ángulo de apertura).
-  Sin `puerta` la base no cambia. El carro grande tiene una puerta en la pared del lado
-  del vendedor; las barras no.
-- **REQ-CAR-12** La puerta se abre y se cierra con E: gira sobre la bisagra en ~1 s hasta el
-  ángulo de apertura (o vuelve a 0°) y suena. El estado abierta/cerrada se conserva.
-- **REQ-CAR-13** Detrás de la puerta se ve un hueco oscuro (el interior; que se pueda entrar
-  es de la etapa 4, TASK-0406).
 
 ### Configuración del carrito del jugador
 - **REQ-CAR-07** El carrito del jugador es: una base + qué accesorio va en cada anclaje +
@@ -53,7 +44,6 @@ agregar un archivo de datos.
 
 - **CA-CAR-01** Cambio `base` a `"carro_grande"` en `carrito_jugador.ron`, abro el juego y
   aparece el carrito grande con sus accesorios en los nuevos anclajes.
-- **CA-CAR-03** Con el carro grande, miro la puerta trasera, apretá E: se abre; otra vez E: se cierra.
 - **CA-CAR-02** Pongo una sombrilla en un anclaje de mostrador: el juego avisa el error.
 
 ## Fuera de alcance (próximas etapas)

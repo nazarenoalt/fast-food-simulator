@@ -7,8 +7,6 @@
     precio: 950000,
     entrega: (0.5, 1.0, 0.4), // REQ-CAR-10: bandeja de entrega
     fila: (0.5, 0.0, 1.45), // REQ-CAR-10: primer lugar de la fila (sigue hacia +X)
-    // REQ-CAR-11: puerta en la pared del lado del vendedor (-Z); abre hacia afuera.
-    puerta: Some((bisagra: (-0.45, 0.22, -0.6), ancho: 0.9, alto: 0.7, apertura: 100)),
     anclajes: [
         (id: "mostrador_izq", pos: (-1.1, 1.0, 0.1), categorias: [Cocina, Equipamiento]),
         (id: "mostrador_centro", pos: (0.0, 1.0, 0.1), categorias: [Cocina, Equipamiento, Decoracion]),
@@ -19,7 +17,6 @@
         (id: "techo", pos: (0.0, 0.0, -0.2), categorias: [Carpa]),
         (id: "frente", pos: (0.0, 0.0, 0.61), categorias: [Telon, Cerco, Decoracion]),
         (id: "cerco", pos: (0.0, 0.0, 1.8), categorias: [Cerco, Decoracion]),
-        (id: "cartel", pos: (1.6, 1.0, 0.5), categorias: [Decoracion]),
         (id: "luz_1", pos: (-0.7, 2.1, 0.2), categorias: [Luz]),
         (id: "luz_2", pos: (0.7, 2.1, 0.2), categorias: [Luz]),
     ],

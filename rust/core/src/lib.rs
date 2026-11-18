@@ -18,7 +18,6 @@ pub mod hervidor; // SPEC-003 (fuente de calor)
 pub mod peatones; // SPEC-013
 pub mod plaza; // SPEC-008
 pub mod proveedor; // SPEC-011
-pub mod puerta; // SPEC-006 (puerta del carrito)
 pub mod reloj; // SPEC-007
 pub mod sonido; // SPEC-024
 

@@ -10,9 +10,6 @@
         "sombra": "sombrilla_roja",
         "luz_1": "foco_calido",
         "frente": "telon_panchos",
-        "cartel": "cartel_cerrado",
-        // SPEC-025: también hay "freidora" y "tabla_de_cortar" (en un anclaje de mostrador),
-        // y bloques "bolsa_papas" y "pack_cajitas" para el estante.
     },
     // Bloque que va en cada lugar del depósito (None = vacío).
     stock: {

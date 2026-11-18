@@ -32,18 +32,6 @@ pub struct Anclaje {
     pub categorias: Vec<Categoria>,
 }
 
-/// REQ-CAR-11: puerta que gira sobre una bisagra vertical. El panel se extiende hacia +X
-/// desde la bisagra (en el giro cero); `apertura` es el giro final en Y, en grados
-/// (positivo = el borde libre va hacia -Z, o sea hacia el lado del vendedor).
-#[derive(Debug, Clone, PartialEq, Deserialize)]
-pub struct DefPuerta {
-    /// Posición de la bisagra, relativa a la base (en el piso de la abertura).
-    pub bisagra: [f32; 3],
-    pub ancho: f32,
-    pub alto: f32,
-    pub apertura: f32,
-}
-
 /// REQ-CAR-01. Convención: el frente (lado del cliente) mira a +Z; el vendedor se para en -Z.
 #[derive(Debug, Clone, PartialEq, Deserialize)]
 pub struct BaseCarrito {
@@ -59,9 +47,6 @@ pub struct BaseCarrito {
     pub entrega: [f32; 3],
     /// REQ-CAR-10: primer lugar de la fila de clientes; la fila sigue hacia +X.
     pub fila: [f32; 3],
-    /// REQ-CAR-11: sin puerta por defecto.
-    #[serde(default)]
-    pub puerta: Option<DefPuerta>,
     pub anclajes: Vec<Anclaje>,
 }
 
@@ -93,28 +78,6 @@ pub enum Funcion {
         tipos: Vec<String>,
         separacion: f32,
     },
-    /// REQ-PAP-06: objetos sueltos que el accesorio trae ya apoyados.
-    Surtido {
-        objetos: Vec<ObjetoInicial>,
-    },
-    /// REQ-PAP-07: texto sobre un tablero. `pos` = centro del texto (relativo al accesorio),
-    /// `tamano` = alto de las letras en metros.
-    Cartel {
-        texto: String,
-        pos: [f32; 3],
-        tamano: f32,
-        color: [f32; 3],
-    },
-}
-
-/// Un producto suelto de un Surtido (REQ-PAP-06).
-#[derive(Debug, Clone, PartialEq, Deserialize)]
-pub struct ObjetoInicial {
-    pub producto: String,
-    pub pos: [f32; 3],
-    /// Giro en Y, grados.
-    #[serde(default)]
-    pub rot_y: f32,
 }
 
 /// REQ-CAR-05
@@ -376,186 +339,5 @@ mod tests {
         let mut c = cat.carrito_jugador.clone();
         c.base = "carro_grande".into();
         armar_cfg(&c).expect("la config del jugador debería funcionar en el carro grande");
-    }
-
-    // ── SPEC-006: puerta ────────────────────────────────────
-
-    #[test]
-    fn req_car_11_solo_el_carro_grande_tiene_puerta_y_entra_en_su_pared() {
-        for b in catalogo_real().bases {
-            match (&b.puerta, b.id.as_str()) {
-                (Some(p), "carro_grande") => {
-                    assert!(p.apertura > 0.0 && p.apertura <= 120.0, "se abre hacia afuera, hasta 120°");
-                    assert!(p.ancho > 0.4 && p.alto > 0.4);
-                    // La bisagra está sobre la pared del lado del vendedor y el panel cabe en ella.
-                    assert!((p.bisagra[2] + b.profundidad / 2.0).abs() < 0.01);
-                    assert!(p.bisagra[0].abs() + p.ancho <= b.ancho / 2.0);
-                    assert!(p.bisagra[1] >= 0.0 && p.bisagra[1] + p.alto < b.alto_mostrador);
-                }
-                (None, id) => assert_ne!(id, "carro_grande", "el carro grande tiene que tener puerta"),
-                (Some(_), id) => panic!("{id} no debería tener puerta"),
-            }
-        }
-    }
-
-    // ── SPEC-025: papas, utensilios, freidora y cartel ──────
-
-    fn color_de(cat: &crate::datos::Catalogo, id: &str) -> [f32; 3] {
-        cat.producto(id).unwrap().forma[0].color
-    }
-
-    #[test]
-    fn req_pap_01_estados_de_la_papa_se_distinguen() {
-        let cat = catalogo_real();
-        let ids = ["papa_cruda_sin_pelar", "papa_pelada", "papa_cortada", "papas_fritas"];
-        for id in ids {
-            let p = cat.producto(id).unwrap_or_else(|| panic!("falta {id}"));
-            assert!(p.masa > 0.0 && !p.forma.is_empty());
-            assert!(p.precio.is_none(), "{id}: todavía no se vende");
-        }
-        for (i, a) in ids.iter().enumerate() {
-            for b in &ids[i + 1..] {
-                let (pa, pb) = (cat.producto(a).unwrap(), cat.producto(b).unwrap());
-                assert!(
-                    color_de(&cat, a) != color_de(&cat, b) || pa.forma.len() != pb.forma.len(),
-                    "{a} y {b} se ven iguales"
-                );
-            }
-        }
-        // La pelada es más clara que la que tiene cáscara; las fritas son más doradas (menos azul) que las cortadas.
-        assert!(color_de(&cat, "papa_pelada")[2] > color_de(&cat, "papa_cruda_sin_pelar")[2]);
-        assert!(color_de(&cat, "papas_fritas")[2] < color_de(&cat, "papa_cortada")[2]);
-    }
-
-    #[test]
-    fn req_pap_02_03_envases_y_bolsa_de_papas() {
-        let cat = catalogo_real();
-        assert!(cat.producto("cajita_papas").is_some());
-        let pack = cat.bloque("pack_cajitas").expect("falta pack_cajitas");
-        assert_eq!(pack.producto, "cajita_papas");
-        let bolsa = cat.bloque("bolsa_papas").expect("falta bolsa_papas");
-        assert_eq!(bolsa.producto, "papa_cruda_sin_pelar");
-        assert_eq!(bolsa.empaque, crate::deposito::Empaque::Bolsa);
-        assert!(bolsa.capacidad() >= 10 && bolsa.precio > 0.0);
-        // Cabe en un lugar del estante (zona de 0.22 × 0.3 × 0.4).
-        let [x, y, z] = bolsa.tamano();
-        assert!(x <= 0.25 && y <= 0.3 && z <= 0.4, "la bolsa no entra en el estante: {x}×{y}×{z}");
-    }
-
-    #[test]
-    fn req_pap_04_utensilios() {
-        let cat = catalogo_real();
-        for id in ["pelapapas", "cuchillo", "colador_freidora"] {
-            let p = cat.producto(id).unwrap_or_else(|| panic!("falta {id}"));
-            assert!(p.precio.is_none() && p.coccion.is_none(), "{id} no se vende ni se cocina");
-            assert!(p.forma.len() >= 2 && p.masa > 0.0);
-        }
-        assert_eq!(cat.menu(), vec!["pancho".to_string()], "los utensilios no entran al menú");
-    }
-
-    fn accesorio<'a>(cat: &'a crate::datos::Catalogo, id: &str) -> &'a Accesorio {
-        cat.accesorios.iter().find(|a| a.id == id).unwrap_or_else(|| panic!("falta el accesorio {id}"))
-    }
-
-    #[test]
-    fn req_pap_05_freidora_con_cuba_que_retiene_el_colador() {
-        let cat = catalogo_real();
-        let f = accesorio(&cat, "freidora");
-        assert_eq!(f.categoria, Categoria::Cocina);
-        assert!(f.forma.iter().filter(|p| p.colision).count() >= 5, "fondo y cuatro paredes con colisión");
-        // La cuba es más grande que el colador, así que lo contiene.
-        let colador = cat.producto("colador_freidora").unwrap();
-        let crate::datos::Colision::Caja { medidas: [cw, _, cd] } = colador.colision else {
-            panic!("colisión de caja")
-        };
-        let fondo = f.forma.iter().find(|p| p.colision && p.medidas[1] < 0.02).expect("fondo");
-        assert!(fondo.medidas[0] > cw + 0.04 && fondo.medidas[2] > cd + 0.04);
-    }
-
-    #[test]
-    fn req_pap_06_surtido() {
-        let cat = catalogo_real();
-        let objetos = |id: &str| match &accesorio(&cat, id).funcion {
-            Some(Funcion::Surtido { objetos }) => objetos.iter().map(|o| o.producto.clone()).collect::<Vec<_>>(),
-            otra => panic!("{id} debería tener Surtido, tiene {otra:?}"),
-        };
-        assert_eq!(objetos("freidora"), vec!["colador_freidora"]);
-        let tabla = objetos("tabla_de_cortar");
-        for p in ["cuchillo", "pelapapas", "papa_cruda_sin_pelar"] {
-            assert!(tabla.contains(&p.to_string()), "la tabla trae {p}");
-        }
-        assert_eq!(accesorio(&cat, "tabla_de_cortar").categoria, Categoria::Equipamiento);
-    }
-
-    #[test]
-    fn req_pap_06_surtido_con_producto_inexistente_da_error_claro() {
-        use std::fs;
-        let dir = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../godot/data");
-        let leer = |n: &str| fs::read_to_string(dir.join(n)).unwrap();
-        let acc = r#"[(id: "x", nombre: "x", categoria: Cocina, precio: 1,
-            funcion: Some(Surtido(objetos: [(producto: "fantasma", pos: (0, 0, 0))])))]"#;
-        let e = crate::datos::cargar_catalogo(
-            &leer("productos.ron"),
-            &leer("bloques.ron"),
-            acc,
-            &[],
-            "",
-            &leer("aderezos.ron"),
-        )
-        .unwrap_err();
-        assert!(e.mensaje.contains("fantasma") && e.mensaje.contains("\"x\""), "{e}");
-    }
-
-    #[test]
-    fn req_pap_07_cartel_de_cerrado() {
-        let cat = catalogo_real();
-        let c = accesorio(&cat, "cartel_cerrado");
-        assert_eq!(c.categoria, Categoria::Decoracion);
-        let Some(Funcion::Cartel { texto, tamano, pos, .. }) = &c.funcion else { panic!("sin función Cartel") };
-        assert_eq!(texto, "CERRADO");
-        assert!(*tamano > 0.03 && *tamano < 0.2);
-        // El texto va apenas delante del tablero (hacia el cliente, +Z), así que se lee de frente.
-        let tablero = c.forma.iter().find(|p| p.tipo == crate::forma::TipoPieza::Caja && p.medidas[0] > 0.2).unwrap();
-        assert!(pos[2] > tablero.pos[2] && pos[2] < tablero.pos[2] + 0.05);
-    }
-
-    #[test]
-    fn req_pap_08_todo_se_puede_ubicar_en_cada_base() {
-        let cat = catalogo_real();
-        for b in &cat.bases {
-            for acc in ["freidora", "tabla_de_cortar", "cartel_cerrado"] {
-                let a = accesorio(&cat, acc);
-                assert!(
-                    b.anclajes.iter().any(|an| an.categorias.contains(&a.categoria)),
-                    "{}: no hay dónde poner {acc}",
-                    b.id
-                );
-            }
-            // El cartel tiene su propio anclaje, para que no le quite lugar a nada.
-            let ancla =
-                b.anclajes.iter().find(|a| a.id == "cartel").unwrap_or_else(|| panic!("{}: sin anclaje cartel", b.id));
-            assert_eq!(ancla.categorias, vec![Categoria::Decoracion]);
-            assert!(ancla.pos[0].abs() < b.ancho / 2.0, "{}: el cartel queda dentro del carrito", b.id);
-        }
-    }
-
-    #[test]
-    fn ca_pap_01_carro_grande_con_todo_lo_nuevo() {
-        let mut c = config(
-            "carro_grande",
-            &[
-                ("mostrador_izq", "freidora"),
-                ("mostrador_centro", "tabla_de_cortar"),
-                ("mostrador_der", "hervidor_chico"),
-                ("cartel", "cartel_cerrado"),
-            ],
-        );
-        c.stock.insert("lateral".into(), vec![Some("bolsa_papas".into()), Some("pack_cajitas".into())]);
-        c.accesorios.insert("lateral".into(), "estante_deposito".into());
-        let armado = armar_cfg(&c).expect("la config con papas debería ser válida");
-        assert_eq!(armado.colocados.len(), 5);
-        // La misma regla de siempre: un cartel en un anclaje de mostrador es un error.
-        let mal = config("carro_grande", &[("mostrador_izq", "cartel_cerrado")]);
-        assert!(matches!(armar_cfg(&mal), Err(ErrorCarrito::CategoriaNoPermitida { .. })));
     }
 }
