@@ -426,7 +426,7 @@ Las piezas que el código necesita encontrar llevan un nombre fijo, en minúscul
 | Prefijo | Para qué | Ejemplo |
 |---|---|---|
 | `pieza_` | Pieza que el código mueve o cambia | `pieza_pintura`, `pieza_salchicha`, `pieza_piloto`, `pieza_agua` |
-| `punto_` | Lugar marcado con un *Empty* (posición, sin malla) | `punto_luz`, `punto_lugar_1` (lugar de depósito) |
+| `punto_` | Lugar marcado con un *Empty* (posición, sin malla) | `punto_luz`, `punto_lugar_1` (lugar de depósito), `punto_bahia_1` (hueco para alacena), y en las personas `punto_pelo`, `punto_mano_d`, `punto_mano_i`, `punto_espalda`, `punto_pecho` (enganches de peinados y accesorios) |
 | `-colonly` | Colisión invisible | `estante-colonly` |
 
 **Variantes de color dentro de una pieza.** Si una pieza cambia de colores por partes (la
@@ -570,3 +570,4 @@ revisión. Si alguno falla, el script termina con error. El resto se revisa a oj
 | v1.8 | Corrección de 3.2: `piezas.cilindro()` mide el radio en las aristas salvo con `radio_a_caras=True` (la v1.3 decía lo contrario). Nuevo `M_Terracota` (`#B4623E`) para macetas. |
 | v1.9 | `comun.py` suma lo que varios modelos repetían: `chequeo_normales_cerrado()` (2.4), `colision_cajas()` (6.1), `reemplazar_linea()` para chequeos propios y las vistas `vendedor` y `tres_cuartos_vendedor` en `encuadrar()`. |
 | v1.10 | Grupo "Personajes" (pieles, pelos y telas) y excepción de 6 materiales en personajes (piel, pelo, remera, pantalón, zapatillas, detalles). Nuevos `M_PlumaGris`, `M_PlumaOscura`, `M_Muro1..4`, `M_ToldoVerde`, `M_ToldoNaranja`. Puntos de los personajes: `punto_pelo` (hueso Head) y `punto_mano_d` (mano derecha). |
+| v1.11 | Las personas traen también `punto_mano_i`, `punto_espalda` y `punto_pecho` para `accesorios_persona` (6.2). |

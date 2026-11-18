@@ -39,6 +39,8 @@ cuello los anillos de la unión se reparten entre los dos huesos (máx. 2–3 po
                 transformación identidad: para cambiarlo, se pone un `pelo_<nombre>` de
                 pelos_set.glb como hijo de punto_pelo, en (0, 0, 0), sin giro ni escala.
     punto_mano_d  hijo de RightHand, en la palma (donde va el pancho al comer).
+    punto_mano_i, punto_espalda, punto_pecho  para accesorios_persona (mano izquierda, mochila
+                y bolso cruzado): ver puntos_extra().
 
 ── Animaciones ────────────────────────────────────────────────────────────────
 Acciones calculadas por código para las medidas de cada variante (los pies apoyados no
@@ -1327,6 +1329,7 @@ def construir(id_, P):
     rh = esq.rest["RightHand"]
     palma = rh @ V((0.0, esq.largo["RightHand"] * 0.45, 0.0)) + V((0.012 * M["g"], 0, 0))
     mano.matrix_world = Matrix.Translation(palma)   # en descanso, alineado con el mundo
+    extra = puntos_extra(arm, esq, M, P, mano)
     # Animaciones.
     bpy.context.scene.render.fps = FPS
     lista, caminar, trotar = animaciones(M, P)
@@ -1338,7 +1341,42 @@ def construir(id_, P):
         act, cuadros = _keyframes(arm, esq, nombre, seg, fun, solo)
         acciones.append((nombre, act, cuadros, fun))
     return dict(M=M, arm=arm, cuerpo=cuerpo, pelo=pelo_obj, punto=punto, mano=mano, esq=esq,
-                acciones=acciones, caminar=caminar, trotar=trotar)
+                acciones=acciones, caminar=caminar, trotar=trotar, extra=extra)
+
+
+def puntos_extra(arm, esq, M, P, mano):
+    """Puntos de enganche de accesorios_persona (guía 6.2), con la misma receta que punto_pelo:
+    punto_espalda (hueso UpperChest, escala k), punto_pecho (hueso Chest, escala k con el ancho
+    de la cintura en x, así la correa del bolso calza en todas las variantes) y punto_mano_i
+    (hueso LeftHand, espejo de punto_mano_d, alineado con el mundo en descanso)."""
+    k = M["k"]
+    escalas = {"punto_espalda": ("UpperChest", (k, k, k)),
+               "punto_pecho": ("Chest", (k * P.get("ancho", 1.0) * P.get("cintura", 1.0), k, k))}
+    pts = {}
+    for nombre, (hueso, (sx, sy, sz)) in escalas.items():
+        e = bpy.data.objects.new(nombre, None)
+        e.empty_display_size = 0.05
+        bpy.context.scene.collection.objects.link(e)
+        e.parent = arm
+        e.parent_type = "BONE"
+        e.parent_bone = hueso
+        bpy.context.view_layer.update()
+        base = esq.rot(hueso) @ Quaternion(V((1, 0, 0)), math.radians(90)).inverted()
+        e.matrix_world = (Matrix.Translation(esq.rest[hueso].translation) @ base.to_matrix().to_4x4() @
+                          Matrix.Diagonal((sx, sy, sz, 1.0)))
+        pts[nombre] = e
+    e = bpy.data.objects.new("punto_mano_i", None)
+    e.empty_display_size = 0.04
+    bpy.context.scene.collection.objects.link(e)
+    e.parent = arm
+    e.parent_type = "BONE"
+    e.parent_bone = "LeftHand"
+    bpy.context.view_layer.update()
+    d = mano.matrix_world.translation
+    e.matrix_world = Matrix.Translation(V((-d.x, d.y, d.z)))
+    pts["punto_mano_i"] = e
+    bpy.context.view_layer.update()
+    return pts
 
 
 # ── Revisión ───────────────────────────────────────────────────────────
@@ -1659,7 +1697,7 @@ def main(id_, P, presupuesto, descripcion):
     nombres = [a[0] for a in R["acciones"]]
     durac = ", ".join(f"{a[0]} {m('%.2g' % (a[2] / FPS))} s" for a in R["acciones"])
     revision.append((True, f"Animaciones (loop, {FPS} cuadros/s): {durac}"))
-    exportar = [R["arm"], R["cuerpo"], R["punto"], R["pelo"], R["mano"]]
+    exportar = [R["arm"], R["cuerpo"], R["punto"], R["pelo"], R["mano"]] + list(R["extra"].values())
     comun.guardar_blend(comun.RAIZ / f"arte/fuentes/{FAMILIA}/{id_}.blend")
     glb = comun.RAIZ / f"godot/modelos/{FAMILIA}/{id_}.glb"
     exportar_glb(exportar, glb)
