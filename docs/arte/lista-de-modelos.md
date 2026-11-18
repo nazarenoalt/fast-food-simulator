@@ -256,11 +256,11 @@ El juego ya tiene ciudad (SPEC-013): edificios en cajas de 4 a 12 m de ancho con
 
 ---
 
-## Orden sugerido para empezar
+## Estado y próximos pasos
 
-1. ✔ **Biblioteca** (`materiales.blend`, `referencias.blend`) — sin esto no hay coherencia.
-2. ✔ **Comida de la etapa 1** (`pan_pancho`, `pan_pancho_cerrado`, `salchicha`, `pancho`), hecha: chicos, rápidos y se ven de cerca; definen el "sabor" del estilo.
-3. ✔ **`barra_chica` + `hervidor_chico`**: lo que el jugador ve todo el tiempo.
-4. ✔ Resto de accesorios de la etapa 1.
-5. ✔ Plaza de la etapa 1 (banco, farol, árboles, fuente).
-6. Después, cada etapa a medida que se escriben sus specs.
+1. ✔ **Biblioteca** (`materiales.blend`, `referencias.blend`).
+2. ✔ **Etapa 1 completa**: comida, stock, carritos, accesorios y plaza.
+3. ✔ **Etapa 2** (lo que el juego ya tiene), **etapa 4** (comida, equipos y stock), **etapa 5** (accesorios, alacenas, techos y toldos) y **etapa 6** (fachadas, autos, nubes): hechos como propuesta, antes de sus specs.
+4. En curso: personajes con esqueleto (etapa 3), colectivo, paraguas, food truck, tráiler y lo chico de la etapa 2.
+5. **Para que el juego use los modelos hace falta la spec SPEC-006 v2** (que `forma` pueda apuntar a un `.glb`). Cada fila marca lo que esa spec tendría que resolver: anclajes nuevos (bahías, piso, techo), choques entre accesorios y piezas que el código mueve o tiñe.
+6. Pendiente de paleta: colores de muro y toldo de la ciudad, y los grises de la paloma.
