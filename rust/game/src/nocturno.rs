@@ -26,6 +26,15 @@ pub fn material(base: [f32; 3], brillo: [f32; 3], energia: f32) -> Gd<StandardMa
     m
 }
 
+/// Suma un material que ya existe (ej. la lamparita de un modelo): brilla con `energia`
+/// solo de noche. REQ-MOD-07
+pub fn registrar(mut m: Gd<StandardMaterial3D>, energia: f32) {
+    m.set_feature(Feature::EMISSION, true);
+    let noche = ES_DE_NOCHE.with(|n| *n.borrow());
+    m.set_emission_energy_multiplier(if noche { energia } else { 0.0 });
+    NOCTURNOS.with(|v| v.borrow_mut().push((m, energia)));
+}
+
 /// REQ-DIA-06, REQ-AMB-02, REQ-AMB-09
 pub fn set_noche(on: bool) {
     ES_DE_NOCHE.with(|n| *n.borrow_mut() = on);

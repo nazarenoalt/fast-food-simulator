@@ -16,13 +16,13 @@ agregar un archivo de datos.
   nombre, medidas (ancho, profundidad, alto del mostrador), color, si tiene ruedas, y su
   lista de anclajes. Agregar un `.ron` nuevo agrega una base nueva sin tocar código.
 - **REQ-CAR-02** Etapa 1 trae tres bases de distinto tamaño: barra chica, barra mediana y
-  carro grande.
+  carro grande. Después se suma el **carro kiosco** (REQ-CAR-12).
 - **REQ-CAR-03** Cada anclaje tiene id, posición y giro relativos a la base, y la lista de
   categorías de accesorio que acepta.
 
 ### Accesorios
 - **REQ-CAR-04** Categorías de accesorio: Decoración, Equipamiento, Cerco, Carpa, Telón,
-  Cocina, Depósito, Sombrilla, Luz.
+  Cocina, Depósito, Sombrilla, Luz y Porche (cerramiento para comer al costado del carro).
 - **REQ-CAR-05** Un accesorio se define en `godot/data/accesorios.ron` con id, nombre,
   categoría, precio, forma visual (lista de piezas simples: caja, cilindro, esfera, cono,
   con medidas, posición y color) y opcionalmente una **función**: Hervidor, Depósito
@@ -39,19 +39,30 @@ agregar un archivo de datos.
 - **REQ-CAR-09** Estilo: la configuración puede cambiar el color de la base sin cambiar la base.
 - **REQ-CAR-10** Cada base define dónde va su bandeja de entrega sobre el mostrador
   (SPEC-009) y dónde se paran los clientes para hacer fila.
+- **REQ-CAR-11** Una base puede definir además, relativos a ella: dónde aparece el jugador
+  (`jugador`, si no, el lugar de la escena), dónde deja el proveedor el pallet (`pallet`, si
+  no, al costado del carrito) y cuántos grados arranca abierta la puerta de su modelo
+  (`puerta`, para las bases con interior, SPEC-014).
+- **REQ-CAR-12** El **carro kiosco** (carro de chorizos de esquina) es una base con interior:
+  el vendedor trabaja adentro, sobre un piso a 0,15 m, detrás de una vitrina con ventana de
+  atención; trae techo y cartel propios (no tiene anclajes de sombrilla ni de carpa) y un
+  anclaje al costado para el porche de nylon.
 
 ## Criterios de aceptación
 
 - **CA-CAR-01** Cambio `base` a `"carro_grande"` en `carrito_jugador.ron`, abro el juego y
   aparece el carrito grande con sus accesorios en los nuevos anclajes.
 - **CA-CAR-02** Pongo una sombrilla en un anclaje de mostrador: el juego avisa el error.
+- **CA-CAR-03** Con `base: "carro_kiosco"` el jugador arranca adentro del kiosco, detrás de la
+  ventana, y puede salir por la puerta, que está abierta.
 
 ## Fuera de alcance (próximas etapas)
 
-- Comprar y colocar accesorios desde el juego, carritos con interior caminable,
-  remolque, modelos 3D definitivos (hoy son piezas simples).
+- Comprar y colocar accesorios desde el juego, el food truck y el tráiler, abrir y cerrar
+  puertas, las alacenas bajo mesada y las vitrinas del kiosco como depósito. Los modelos 3D están en SPEC-014.
 
 ## Notas de diseño
 
 - Las formas de los accesorios son piezas simples (cajas, cilindros) hasta tener modelos de
-  Blender. El campo de forma podrá apuntar a un `.glb` más adelante sin cambiar el resto.
+  Blender. Desde SPEC-014, bases y accesorios pueden usar un modelo `.glb` (`modelo`), y la
+  forma simple queda de respaldo.

@@ -1,18 +1,18 @@
 // El carrito del jugador (SPEC-006, REQ-CAR-07).
-// Probá cambiar "barra_chica" por "barra_mediana" o "carro_grande".
+// Probá cambiar "carro_kiosco" por "barra_chica", "barra_mediana" o "carro_grande"
+// (en esas bases van "lateral" para el estante, "sombra" para la sombrilla y "luz_1" para el foco).
 (
-    base: "barra_chica",
+    base: "carro_kiosco",
     color: Some((0.78, 0.13, 0.1)), // REQ-CAR-09: estilo propio
     accesorios: {
         "mostrador_izq": "hervidor_chico",
         "mostrador_der": "aderecera_tres",
-        "lateral": "estante_deposito",
-        "sombra": "sombrilla_roja",
-        "luz_1": "foco_calido",
+        "atras_der": "estante_deposito",
         "frente": "telon_panchos",
+        "lateral_der": "porche_nylon",
     },
     // Bloque que va en cada lugar del depósito (None = vacío).
     stock: {
-        "lateral": [Some("bolsa_panes_12"), Some("caja_salchichas_12"), Some("caja_salchichas_12"), None],
+        "atras_der": [Some("bolsa_panes_12"), Some("caja_salchichas_12"), Some("caja_salchichas_12"), None],
     },
 )

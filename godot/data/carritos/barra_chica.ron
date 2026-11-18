@@ -2,6 +2,7 @@
 // Posiciones de anclajes relativas al centro del piso de la base.
 (
     id: "barra_chica",
+    modelo: Some("carritos/barra_chica"), // SPEC-014
     nombre: "Barra chica",
     ancho: 1.6, profundidad: 0.7, alto_mostrador: 0.95,
     color: (0.8, 0.8, 0.82),

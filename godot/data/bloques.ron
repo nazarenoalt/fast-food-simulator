@@ -3,6 +3,7 @@
 [
     (
         id: "bolsa_panes_12",
+        modelo: Some("stock/bolsa_panes_12"), // SPEC-014
         nombre: "bolsa de panes",
         producto: "pan_pancho",
         grilla: (1, 6, 2),
@@ -13,6 +14,7 @@
     ),
     (
         id: "caja_salchichas_12",
+        modelo: Some("stock/caja_salchichas_12"),
         nombre: "paquete de salchichas",
         producto: "salchicha",
         grilla: (1, 6, 2),

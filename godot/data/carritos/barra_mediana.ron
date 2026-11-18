@@ -1,5 +1,6 @@
 (
     id: "barra_mediana",
+    modelo: Some("carritos/barra_mediana"), // SPEC-014
     nombre: "Barra mediana",
     ancho: 2.4, profundidad: 0.8, alto_mostrador: 0.95,
     color: (0.8, 0.8, 0.82),
