@@ -575,6 +575,8 @@ impl INode for PruebaHumo {
                 // CA-PLA-01: plancha encendida, apoyo una hamburguesa.
                 self.chequear(todos::<Plancha>(&mundo).len() == 1, "REQ-PLA-01 el carrito tiene su plancha");
                 let mut pl = todos::<Plancha>(&mundo).pop().unwrap();
+                // Me paro al lado: el sonido 3D no suena lejos. REQ-SON-04
+                self.pararse_al_lado(&mundo, pl.get_global_position());
                 self.disparos_ref = disparos_de_sonido(&mundo);
                 pl.bind_mut().alternar();
                 pl.bind_mut().set_temperatura(200.0);
@@ -614,6 +616,7 @@ impl INode for PruebaHumo {
                 self.chequear(h.bind().punto() == Some(Punto::Cocido), "CA-PLA-02 queda cocida de los dos lados");
                 // CA-PAR-01: sin carbón no se enciende; cargo una bolsa, enciendo y apoyo un chorizo.
                 let mut pa = todos::<Parrilla>(&mundo).pop().expect("REQ-PAR-01 el carrito tiene su parrilla");
+                self.pararse_al_lado(&mundo, pa.get_global_position());
                 self.disparos_ref = disparos_de_sonido(&mundo);
                 self.chequear(!pa.bind_mut().alternar(), "REQ-PAR-01 sin carbón no se enciende");
                 self.chequear(pa.bind_mut().cargar(1.0).is_ok(), "REQ-PAR-01 entra una bolsa de carbón");
@@ -719,9 +722,7 @@ impl INode for PruebaHumo {
                 // CA-HEL-03: dejo la puerta abierta.
                 let mut he = todos::<Heladera>(&mundo).pop().unwrap();
                 // Me paro al lado de la heladera: el sonido 3D no suena lejos. REQ-SON-04
-                if let Some(mut j) = todos::<Jugador>(&mundo).pop() {
-                    j.set_global_position(he.get_global_position() + Vector3::new(0.0, 0.05, 1.0));
-                }
+                self.pararse_al_lado(&mundo, he.get_global_position());
                 self.disparos_ref = disparos_de_sonido(&mundo);
                 he.bind_mut().alternar();
                 self.esperar(120 * 60);
@@ -894,4 +895,13 @@ impl INode for PruebaHumo {
 /// Cuántos sonidos disparó el juego hasta ahora. REQ-SON-08
 fn disparos_de_sonido(mundo: &Gd<Node>) -> u32 {
     todos::<Sonido>(mundo).first().map(|s| s.bind().disparos()).unwrap_or(0)
+}
+
+impl PruebaHumo {
+    /// Lleva al jugador (y su cámara, el oído) a 1 m de `pos`. REQ-SON-04
+    fn pararse_al_lado(&self, mundo: &Gd<Node>, pos: Vector3) {
+        if let Some(mut j) = todos::<Jugador>(mundo).pop() {
+            j.set_global_position(pos + Vector3::new(0.0, 0.05, 1.0));
+        }
+    }
 }
