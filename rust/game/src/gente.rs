@@ -377,6 +377,10 @@ impl Gente {
                 // REQ-CLI-03: los de atrás avanzan.
                 c.peaton.bind_mut().set_lugar_fila(destino, mirada);
                 if c.peaton.bind().en_lugar() {
+                    if !c.llego {
+                        // REQ-SON-08: campanita cuando el cliente llega a la fila.
+                        crate::sonido::sonar_en(&yo, carrito_core::sonido::ids::CAMPANITA, destino);
+                    }
                     c.llego = true;
                 }
                 c.llego && Some(id) == primero && c.pedido.is_none()
@@ -437,6 +441,8 @@ impl Gente {
                             c.peaton.bind_mut().decir(&texto, Color::from_rgb(0.6, 1.0, 0.6), 3.5);
                             c.peaton.bind_mut().comer();
                             hud::avisar(&yo, &format!("Venta: {texto}"));
+                            // REQ-SON-08
+                            crate::sonido::sonar(&yo, carrito_core::sonido::ids::COBRO);
                             se_van.push(id);
                         }
                     }

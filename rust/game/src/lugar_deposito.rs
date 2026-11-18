@@ -74,6 +74,9 @@ impl INode3D for LugarDeposito {
             paquete.queue_free();
             let bloque = BloqueStock::crear_con_temp(def, temp);
             self.base_mut().add_child(&bloque);
+            // REQ-SON-08
+            let pos = self.base().get_global_position();
+            crate::sonido::sonar_en(&self.to_gd(), carrito_core::sonido::ids::PAQUETE_GUARDADO, pos);
             return;
         }
     }

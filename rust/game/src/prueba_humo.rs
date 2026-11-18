@@ -23,6 +23,7 @@ use crate::paquete::Paquete;
 use crate::parrilla::Parrilla;
 use crate::peaton::Peaton;
 use crate::plancha::Plancha;
+use crate::sonido::Sonido;
 use crate::transito::{Autos, Nubes};
 use carrito_core::tostado::EstadoPan;
 
@@ -712,6 +713,44 @@ impl INode for PruebaHumo {
                     saldo >= self.saldo_antes + 3500.0,
                     &format!("REQ-CLI-04 la hamburguesa cocida se paga (caja {} → {saldo})", self.saldo_antes),
                 );
+
+                // CA-SON-03: el audio (aunque sea el driver Dummy) existe y no rompe nada.
+                let sonidos = todos::<Sonido>(&mundo);
+                self.chequear(sonidos.len() == 1, "REQ-SON-01 hay un nodo central de sonido");
+                let mut son = sonidos.into_iter().next().unwrap();
+                self.chequear(son.bind().buses_creados(), "REQ-SON-01 existen los buses Ambiente, Efectos y Música");
+                self.chequear(
+                    carrito_core::sonido::ids::TODOS.iter().all(|id| son.bind().tiene_sonido(id)),
+                    "REQ-SON-02 sonidos.ron define todos los sonidos del juego",
+                );
+                self.chequear(
+                    son.bind().disparos() >= 1,
+                    &format!("REQ-SON-08 el juego disparó sonidos solo ({})", son.bind().disparos()),
+                );
+                let antes = son.bind().disparos();
+                crate::sonido::sonar(&son, carrito_core::sonido::ids::TIENDA_ABRIR);
+                self.chequear(son.bind().disparos() == antes + 1, "CA-SON-03 se dispara un sonido sin fallar");
+                // REQ-SON-09: sin archivos de audio, igual funciona (los que faltan se omiten).
+                // REQ-SON-09: los archivos que faltan se omiten sin error (solo se informa cuántos).
+                godot_print!("  [info] archivos de audio que faltan: {}", son.bind().faltantes());
+                // REQ-SON-01: M silencia y reactiva.
+                let master = || godot::classes::AudioServer::singleton().get_bus_volume_db(0);
+                son.bind_mut().alternar_silencio();
+                let mudo = son.bind().silenciado() && master() <= -79.0;
+                son.bind_mut().alternar_silencio();
+                self.chequear(
+                    mudo && !son.bind().silenciado() && master() > -1.0,
+                    "CA-SON-03 silenciar y reactivar el sonido",
+                );
+                self.chequear(
+                    son.bind().volumen_bus(carrito_core::sonido::Bus::Musica) == 0.5,
+                    "REQ-SON-01 la música arranca a 0,5",
+                );
+                // Frena el audio y deja pasar unos cuadros antes de cerrar.
+                son.bind_mut().detener_todo();
+                self.esperar(30);
+            }
+            31 => {
                 self.terminar();
             }
             _ => {}

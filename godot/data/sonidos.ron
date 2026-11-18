@@ -1,0 +1,61 @@
+// Sonidos del juego (SPEC-024). Los archivos van en godot/audio/ (.ogg) y se acreditan en CREDITOS.md.
+// archivos = variantes (una al azar, sin repetir la anterior). Un archivo que falta no da error.
+// bus: Ambiente | Efectos | Musica. espacial = sale de un punto del mundo (3D).
+[
+    // Pájaros de día (bucle largo)
+    (id: "pajaros", archivos: ["pajaros_dia.ogg"], bus: Ambiente, volumen_db: -6, bucle: true),
+    // Grillos de noche (bucle largo)
+    (id: "grillos", archivos: ["grillos_noche.ogg"], bus: Ambiente, volumen_db: -8, bucle: true),
+    // Murmullo de gente a lo lejos
+    (id: "murmullo_plaza", archivos: ["murmullo_plaza.ogg"], bus: Ambiente, volumen_db: -10, bucle: true),
+    // Viento suave
+    (id: "viento", archivos: ["viento_suave.ogg"], bus: Ambiente, volumen_db: -14, bucle: true),
+    // Lluvia (preparada: llega con SPEC-023)
+    (id: "lluvia", archivos: ["lluvia.ogg"], bus: Ambiente, volumen_db: -8, bucle: true),
+    // Música de fondo tranquila (estéreo, opcional)
+    (id: "musica_tranquila", archivos: ["musica_tranquila.ogg"], bus: Musica, volumen_db: -10, bucle: true),
+    // Interruptor del hervidor
+    (id: "hervidor_interruptor", archivos: ["interruptor_1.ogg", "interruptor_2.ogg"], bus: Efectos, volumen_db: -4, espacial: true, distancia_max: 8, enfriamiento: 0.2),
+    // Agua hirviendo (mientras está prendido)
+    (id: "hervidor_hierve", archivos: ["agua_hirviendo.ogg"], bus: Efectos, volumen_db: -8, espacial: true, distancia_max: 6, bucle: true),
+    // Interruptor de la plancha (preparado: etapa 3)
+    (id: "plancha_interruptor", archivos: ["interruptor_1.ogg", "interruptor_2.ogg"], bus: Efectos, volumen_db: -4, espacial: true, distancia_max: 8, enfriamiento: 0.2),
+    // Comida friéndose en la plancha (preparado: etapa 3)
+    (id: "plancha_chisporroteo", archivos: ["chisporroteo.ogg"], bus: Efectos, volumen_db: -8, espacial: true, distancia_max: 6, bucle: true),
+    // Brasas y crepitar del carbón (preparado: etapa 3)
+    (id: "parrilla_brasas", archivos: ["brasas.ogg"], bus: Efectos, volumen_db: -8, espacial: true, distancia_max: 6, bucle: true),
+    // Echar carbón (preparado: etapa 3)
+    (id: "parrilla_carbon", archivos: ["carbon_bolsa.ogg"], bus: Efectos, volumen_db: -4, espacial: true, distancia_max: 8, enfriamiento: 0.3),
+    // Puerta de la heladera (preparado: etapa 3)
+    (id: "heladera_puerta", archivos: ["puerta_metal_abre.ogg", "puerta_metal_cierra.ogg"], bus: Efectos, volumen_db: -4, espacial: true, distancia_max: 8, enfriamiento: 0.3),
+    // Agarrar un objeto
+    (id: "agarrar", archivos: ["agarrar_1.ogg", "agarrar_2.ogg", "agarrar_3.ogg"], bus: Efectos, volumen_db: -8, enfriamiento: 0.08),
+    // Soltar un objeto
+    (id: "soltar", archivos: ["soltar_1.ogg", "soltar_2.ogg", "soltar_3.ogg"], bus: Efectos, volumen_db: -8, enfriamiento: 0.08),
+    // Tirar un objeto
+    (id: "tirar", archivos: ["tirar_1.ogg", "tirar_2.ogg"], bus: Efectos, volumen_db: -8, enfriamiento: 0.15),
+    // Golpe suave al apoyar comida
+    (id: "apoyar", archivos: ["apoyar_1.ogg", "apoyar_2.ogg", "apoyar_3.ogg"], bus: Efectos, volumen_db: -10, espacial: true, distancia_max: 10, enfriamiento: 0.1),
+    // Apretar un pomo de aderezo
+    (id: "pomo", archivos: ["pomo_aderezo_1.ogg", "pomo_aderezo_2.ogg"], bus: Efectos, volumen_db: -4, espacial: true, distancia_max: 8, enfriamiento: 0.2),
+    // Llega el pedido del proveedor
+    (id: "paquete_llega", archivos: ["paquete_llega.ogg"], bus: Efectos, volumen_db: -2, espacial: true, distancia_max: 30, enfriamiento: 1),
+    // Paquete que se acomoda en el estante
+    (id: "paquete_guardado", archivos: ["paquete_guardado.ogg"], bus: Efectos, volumen_db: -4, espacial: true, distancia_max: 10, enfriamiento: 0.3),
+    // Sacar algo de una bolsa
+    (id: "sacar_bolsa", archivos: ["bolsa_abre.ogg"], bus: Efectos, volumen_db: -4, espacial: true, distancia_max: 8, enfriamiento: 0.2),
+    // Sacar algo de una caja de cartón
+    (id: "sacar_caja", archivos: ["caja_carton.ogg"], bus: Efectos, volumen_db: -4, espacial: true, distancia_max: 8, enfriamiento: 0.2),
+    // Caja registradora al cobrar
+    (id: "cobro", archivos: ["caja_registradora.ogg"], bus: Efectos, volumen_db: -2, enfriamiento: 0.5),
+    // Campanita de cliente que llega
+    (id: "campanita", archivos: ["campanita_1.ogg", "campanita_2.ogg"], bus: Efectos, volumen_db: -4, espacial: true, distancia_max: 25, enfriamiento: 1),
+    // Pasos del jugador
+    (id: "pasos_jugador", archivos: ["paso_1.ogg", "paso_2.ogg", "paso_3.ogg", "paso_4.ogg"], bus: Efectos, volumen_db: -14, enfriamiento: 0.2),
+    // Auto que pasa cerca
+    (id: "auto_pasa", archivos: ["auto_pasa_1.ogg", "auto_pasa_2.ogg"], bus: Efectos, volumen_db: -8, espacial: true, distancia_max: 35, enfriamiento: 2),
+    // Palomas que salen volando
+    (id: "paloma_aleteo", archivos: ["paloma_aleteo_1.ogg", "paloma_aleteo_2.ogg"], bus: Efectos, volumen_db: -6, espacial: true, distancia_max: 20, enfriamiento: 1),
+    // Abrir el panel del proveedor
+    (id: "tienda_abrir", archivos: ["tienda_abre.ogg"], bus: Efectos, volumen_db: -8, enfriamiento: 0.2),
+]

@@ -38,6 +38,8 @@ pub struct Comida {
     /// REQ-PAR-07: estado guardado de un armado (choripán): chorizo y pan al encastrar.
     punto_fijo: Option<carrito_core::coccion::Punto>,
     pan_fijo: Option<EstadoPan>,
+    /// Velocidad vertical del cuadro anterior, para oír cuando se apoya. REQ-SON-08
+    vy_anterior: f32,
     /// Lo tiene el jugador en la mano.
     pub sostenida: bool,
     /// Ya se usó en un armado (está por desaparecer).
@@ -80,6 +82,7 @@ impl Comida {
             aire: None,
             punto_fijo: None,
             pan_fijo: None,
+            vy_anterior: 0.0,
             sostenida: false,
             consumida: false,
             entorno: None,
@@ -478,6 +481,13 @@ impl IRigidBody3D for Comida {
 
     fn physics_process(&mut self, delta: f64) {
         let dt = delta as f32;
+        // REQ-SON-08: golpe suave cuando cae y se apoya (frena de golpe al bajar).
+        let vy = self.base().get_linear_velocity().y;
+        if !self.sostenida && self.vy_anterior < -0.8 && vy > self.vy_anterior * 0.3 {
+            let pos = self.base().get_global_position();
+            crate::sonido::sonar_en(&self.to_gd(), carrito_core::sonido::ids::APOYAR, pos);
+        }
+        self.vy_anterior = vy;
         if self.cocina {
             // REQ-COC-02: fuera de toda fuente, el entorno es el ambiente.
             let cuadro = Engine::singleton().get_physics_frames();
