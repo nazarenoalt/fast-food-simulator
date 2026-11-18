@@ -201,7 +201,7 @@ pub fn visual_producto(
                 tintes.push(mat.cast::<StandardMaterial3D>());
             }
         }
-        // REQ-PLA (cocción por lados, SPEC-014): cada cara toma el color de su lado.
+        // REQ-PLA-05: cada cara toma el color de su lado.
         if let Some(lado) = p.tinte_lado.filter(|l| *l < 2) {
             if let Some(mat) = mi.get_material_override() {
                 tintes_lado[lado].push(mat.cast::<StandardMaterial3D>());
