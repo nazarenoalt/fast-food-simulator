@@ -58,10 +58,10 @@ pub fn avisar(desde: &Gd<impl Inherits<Node>>, texto: &str) {
 impl Hud {
     /// REQ-INT-02, REQ-INT-08
     pub fn set_cartel(&mut self, texto: &str) {
-        if let Some(c) = &mut self.cartel {
-            if c.get_text().to_string() != texto {
-                c.set_text(texto);
-            }
+        if let Some(c) = &mut self.cartel
+            && c.get_text() != texto
+        {
+            c.set_text(texto);
         }
     }
 
@@ -183,10 +183,10 @@ impl ICanvasLayer for Hud {
         });
         if self.resumen_t > 0.0 {
             self.resumen_t -= dt;
-            if self.resumen_t <= 0.0 {
-                if let Some(r) = &mut self.resumen {
-                    r.set_visible(false);
-                }
+            if self.resumen_t <= 0.0
+                && let Some(r) = &mut self.resumen
+            {
+                r.set_visible(false);
             }
         }
     }

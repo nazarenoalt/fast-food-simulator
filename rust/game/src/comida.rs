@@ -508,10 +508,10 @@ impl IRigidBody3D for Comida {
                 e.paso(p, t, dt);
             }
             // REQ-HEL-03: la carne perecedera pierde frescura según su temperatura.
-            if self.def.perecedero {
-                if let (Some(t), Some(f)) = (self.temperatura(), &mut self.frescura) {
-                    f.paso(t, dt);
-                }
+            if self.def.perecedero
+                && let (Some(t), Some(f)) = (self.temperatura(), &mut self.frescura)
+            {
+                f.paso(t, dt);
             }
             // REQ-COC-06
             self.actualizar_color();

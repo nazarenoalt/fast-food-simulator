@@ -69,12 +69,11 @@ fn material_luz(raiz: &Gd<Node>) -> Option<Gd<StandardMaterial3D>> {
     let mut pila = vec![carrito];
     while let Some(n) = pila.pop() {
         let nombre = n.get_name().to_string();
-        if carrito_core::modelos::PIEZAS_LUZ.iter().any(|p| nombre.starts_with(p)) {
-            if let Some(m) = n.clone().try_cast::<MeshInstance3D>().ok().and_then(|mi| mi.get_active_material(0)) {
-                if let Ok(m) = m.try_cast::<StandardMaterial3D>() {
-                    return Some(m);
-                }
-            }
+        if carrito_core::modelos::PIEZAS_LUZ.iter().any(|p| nombre.starts_with(p))
+            && let Some(m) = n.clone().try_cast::<MeshInstance3D>().ok().and_then(|mi| mi.get_active_material(0))
+            && let Ok(m) = m.try_cast::<StandardMaterial3D>()
+        {
+            return Some(m);
         }
         pila.extend(n.get_children().iter_shared());
     }
@@ -175,24 +174,24 @@ impl INode for PruebaHumo {
                 self.chequear(z < plaza::Z_VEREDA, "REQ-JUG-08 jugador detrás del mostrador");
                 // CA-CAR-03: si la base dice dónde aparece el jugador (carro kiosco), arranca ahí
                 // adentro, y la puerta del modelo está abierta.
-                if let Some(c) = todos::<Carrito>(&mundo).pop() {
-                    if let Some(p) = c.bind().posicion_jugador() {
-                        let j = jugadores.first().map(|j| j.get_global_position()).unwrap_or(Vector3::ZERO);
-                        let d = Vector2::new(j.x - p.x, j.z - p.z).length();
-                        let puerta = c
-                            .clone()
-                            .upcast::<Node>()
-                            .find_child_ex("pieza_puerta")
-                            .recursive(true)
-                            .owned(false)
-                            .done()
-                            .and_then(|n| n.try_cast::<Node3D>().ok())
-                            .map(|n| n.get_rotation_degrees().y);
-                        self.chequear(
+                if let Some(c) = todos::<Carrito>(&mundo).pop()
+                    && let Some(p) = c.bind().posicion_jugador()
+                {
+                    let j = jugadores.first().map(|j| j.get_global_position()).unwrap_or(Vector3::ZERO);
+                    let d = Vector2::new(j.x - p.x, j.z - p.z).length();
+                    let puerta = c
+                        .clone()
+                        .upcast::<Node>()
+                        .find_child_ex("pieza_puerta")
+                        .recursive(true)
+                        .owned(false)
+                        .done()
+                        .and_then(|n| n.try_cast::<Node3D>().ok())
+                        .map(|n| n.get_rotation_degrees().y);
+                    self.chequear(
                             d < 0.3 && j.y > 0.1 && puerta.is_some_and(|g| g > 45.0),
                             &format!("CA-CAR-03 el jugador arranca adentro (a {d:.2} m, y {:.2}) y la puerta está abierta ({puerta:?}°)", j.y),
                         );
-                    }
                 }
                 self.chequear(todos::<Hervidor>(&mundo).len() == 1, "REQ-CAR-07 el carrito tiene su hervidor");
 
@@ -250,8 +249,7 @@ impl INode for PruebaHumo {
                 self.chequear(s.bind().punto() == Some(Punto::Cocido), "CA-COC-02 afuera no se sigue cocinando");
 
                 // CA-ARM-01: pan sobre la mesada, salchicha suelta encima → pancho.
-                let carrito =
-                    todos::<Node3D>(&mundo).into_iter().find(|n| n.get_name().to_string() == "Carrito").unwrap();
+                let carrito = todos::<Node3D>(&mundo).into_iter().find(|n| n.get_name() == "Carrito").unwrap();
                 let sobre_mesada = carrito.get_global_position() + Vector3::new(0.4, 1.0, 0.0);
                 self.pan = Some(self.agregar_comida("pan_pancho", sobre_mesada));
                 self.esperar(60);
@@ -365,8 +363,7 @@ impl INode for PruebaHumo {
                 );
 
                 // ── Etapa 2: ambientación ──
-                let ciudad =
-                    todos::<Node3D>(&mundo).into_iter().find(|n| n.get_name().to_string() == "Ciudad").unwrap();
+                let ciudad = todos::<Node3D>(&mundo).into_iter().find(|n| n.get_name() == "Ciudad").unwrap();
                 self.chequear(ciudad.get_child_count() > 30, "REQ-AMB-01 hay edificios alrededor");
                 self.autos_antes = todos::<Autos>(&mundo)[0].bind().posiciones();
                 self.nube_antes = todos::<Nubes>(&mundo)[0].bind().posicion_primera();
@@ -763,7 +760,7 @@ impl INode for PruebaHumo {
                     .into_iter()
                     .find(|c| c.bind().producto() == "choripan")
                     .expect("hay un choripán");
-                let mut pomo = |id: &str| todos::<Pomo>(&mundo).into_iter().find(|p| p.bind().aderezo() == id);
+                let pomo = |id: &str| todos::<Pomo>(&mundo).into_iter().find(|p| p.bind().aderezo() == id);
                 let mut chimi = pomo("chimichurri").expect("REQ-ADE-01 hay pomo de chimichurri");
                 let antes = chimi.bind().usos();
                 let ok = chimi.bind_mut().aplicar(&mut choripan).is_ok() && chimi.bind().usos() == antes - 1;
