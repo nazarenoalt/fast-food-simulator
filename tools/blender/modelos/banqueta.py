@@ -53,6 +53,34 @@ def r_pata(y):
     return PATA_ABAJO_R + (PATA_ARRIBA_R - PATA_ABAJO_R) * y / y1
 
 
+def aro(bm, lados=6, tramos=8):
+    """Aro apoyapié: octógono horizontal que pasa por el centro de las patas a ARO_Y, caño de
+    `lados` lados. Cada anillo se arma con la vertical (Y) y la dirección radial, que en un
+    aro horizontal nunca se alinean con el caño: así todos los anillos giran igual. (Con
+    a5.tubo, que toma una referencia fija, los anillos de ±Z se aplastaban en un punto y los
+    de al lado quedaban dados vuelta: eran las puntitas al lado de las patas.) En cada
+    quiebre el anillo se estira 1/cos(22,5°) hacia afuera (inglete), para no afinarse."""
+    ra = r_pata(ARO_Y)
+    estirar = 1 / math.cos(math.pi / tramos)
+    previas = set(bm.faces)
+    anillos, eje = [], []
+    for i in range(tramos):
+        a = 2 * math.pi * i / tramos
+        radial = (math.cos(a), 0.0, math.sin(a))
+        c = (ra * radial[0], ARO_Y, ra * radial[2])
+        eje.append(piezas.g2b(c))
+        anillo = []
+        for k in range(lados):
+            t = 2 * math.pi * k / lados
+            dy, dr = ARO_R * math.cos(t), ARO_R * math.sin(t) * estirar
+            anillo.append(bm.verts.new(piezas.g2b((c[0] + dr * radial[0], c[1] + dy, c[2] + dr * radial[2]))))
+        anillos.append(anillo)
+    for a, b in zip(anillos, anillos[1:] + anillos[:1]):
+        for k in range(lados):
+            bm.faces.new((a[k], a[(k + 1) % lados], b[(k + 1) % lados], b[k])).material_index = 0
+    a5._hacia_afuera([f for f in bm.faces if f not in previas], eje + eje[:1])
+
+
 def construir():
     pintura, acero, goma = comun.cargar_materiales("M_PinturaCarrito", "M_Acero", "M_Goma")
     # Asiento: disco con el canto redondeado (16 lados, guía 3.2), la tapa de abajo se ve.
@@ -71,10 +99,7 @@ def construir():
         a = math.pi / 4 + k * math.pi / 2
         pts = [(r_pata(y) * math.cos(a), y, r_pata(y) * math.sin(a)) for y in (0.0, REGATON, y1)]
         a5.poste(bm, pts, PATA_R, PATA_LADOS, mats=[1, 0])
-    # Aro apoyapié: pasa por el centro de las patas a ARO_Y.
-    ra = r_pata(ARO_Y)
-    pts = [(ra * math.cos(a), ARO_Y, ra * math.sin(a)) for a in (2 * math.pi * i / 8 for i in range(8))]
-    a5.tubo(bm, pts, ARO_R, 6, mat=0, cerrado=True)
+    aro(bm)
     cuerpo = piezas.terminar(f"{ID}_cuerpo", bm, [acero, goma])
     a5.e2.suavizar_hasta(cuerpo, 46)   # patas y aro de 8 lados: redondos, no facetados
 

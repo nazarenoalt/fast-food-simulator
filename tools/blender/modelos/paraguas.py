@@ -188,7 +188,7 @@ def hoja_revision(c, tl, revision):
     alto = 0.5 + R  # para las fotos: apoyado con el borde a la altura justa sobre el piso
     for o in (c, tl, rayada, lisa):
         o.location.z = alto
-    # Con la persona: el puño en la mano, a 1,20 m, un poco adelante y al costado.
+    # Con la persona: el puño en la mano, a 1,32 m, un poco adelante y al costado.
     c2 = e2.copiar(c, "ref_cuerpo_persona")
     t2 = e2.copiar(tl, "ref_tela_persona")
     for o in (c2, t2):

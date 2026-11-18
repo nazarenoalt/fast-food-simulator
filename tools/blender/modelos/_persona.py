@@ -873,7 +873,7 @@ def pelo(estilo, material, nombre=None):
             esconder = 0.0
             if "coronilla" in E:     # pelado: corona de pelo solo a los costados y atrás
                 esconder = suave((front(a) - 0.62) / 0.16)   # adelante: queda adentro de la cabeza
-                tope = E["coronilla"] + 0.25 * esconder
+                tope = E["coronilla"] + 0.25 * esconder - 0.30 * (1 - front(a)) ** 1.5   # herradura
                 phi = tope + (phi_max - tope) * (j - 1) / (filas - 1)
             d = V((math.sin(phi) * math.sin(a), -math.sin(phi) * math.cos(a), math.cos(phi)))
             p = _superficie(bvh, centro, d)
