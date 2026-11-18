@@ -81,10 +81,10 @@ pub fn buscar(raiz: &Gd<Node3D>, nombre: &str) -> Option<Gd<Node3D>> {
 
 fn juntar(nodo: &Gd<Node>, prefijos: &[&str], salida: &mut Vec<Gd<Node3D>>) {
     let nombre = nodo.get_name().to_string();
-    if prefijos.iter().any(|p| nombre.starts_with(p)) {
-        if let Ok(n) = nodo.clone().try_cast::<Node3D>() {
-            salida.push(n);
-        }
+    if prefijos.iter().any(|p| nombre.starts_with(p))
+        && let Ok(n) = nodo.clone().try_cast::<Node3D>()
+    {
+        salida.push(n);
     }
     for hijo in nodo.get_children().iter_shared() {
         juntar(&hijo, prefijos, salida);
@@ -179,11 +179,12 @@ pub fn luces_de_noche(raiz: &Gd<Node3D>) {
     }
 }
 
+/// Materiales que toman el color de la cocción.
+pub type Tintes = Vec<Gd<StandardMaterial3D>>;
+
 /// Dibujo de un producto: su modelo, o sus piezas simples si no tiene o no carga.
-/// Devuelve el nodo y los materiales que toman el color de la cocción (REQ-MOD-05, REQ-COC-06).
-pub fn visual_producto(
-    def: &DefProducto,
-) -> (Gd<Node3D>, Vec<Gd<StandardMaterial3D>>, [Vec<Gd<StandardMaterial3D>>; 2]) {
+/// Devuelve el nodo, los tintes de todo el producto y los de cada lado (REQ-MOD-05, REQ-COC-06).
+pub fn visual_producto(def: &DefProducto) -> (Gd<Node3D>, Tintes, [Tintes; 2]) {
     if let Some(m) = def.modelo.as_deref().and_then(instanciar) {
         let mut tintes = Vec::new();
         for pieza in buscar_prefijos(&m, reglas::PIEZAS_COCCION) {
@@ -196,16 +197,16 @@ pub fn visual_producto(
     let mut tintes_lado = [Vec::new(), Vec::new()];
     for p in &def.forma {
         let mi = formas::visual_pieza(p);
-        if p.tinte_coccion {
-            if let Some(mat) = mi.get_material_override() {
-                tintes.push(mat.cast::<StandardMaterial3D>());
-            }
+        if p.tinte_coccion
+            && let Some(mat) = mi.get_material_override()
+        {
+            tintes.push(mat.cast::<StandardMaterial3D>());
         }
         // REQ-PLA-05: cada cara toma el color de su lado.
-        if let Some(lado) = p.tinte_lado.filter(|l| *l < 2) {
-            if let Some(mat) = mi.get_material_override() {
-                tintes_lado[lado].push(mat.cast::<StandardMaterial3D>());
-            }
+        if let Some(lado) = p.tinte_lado.filter(|l| *l < 2)
+            && let Some(mat) = mi.get_material_override()
+        {
+            tintes_lado[lado].push(mat.cast::<StandardMaterial3D>());
         }
         nodo.add_child(&mi);
     }

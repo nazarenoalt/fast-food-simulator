@@ -109,10 +109,10 @@ impl ICharacterBody3D for Jugador {
         // REQ-JUG-08 / REQ-CAR-11: si la base dice dónde aparece el jugador (ej. adentro del
         // carro kiosco), se lo pone ahí; si no, queda donde lo dejó la escena.
         let tree = self.base().get_tree();
-        if let Some(c) = tree.get_first_node_in_group(crate::carrito::GRUPO) {
-            if let Some(p) = c.try_cast::<crate::carrito::Carrito>().ok().and_then(|c| c.bind().posicion_jugador()) {
-                self.base_mut().set_global_position(p);
-            }
+        if let Some(c) = tree.get_first_node_in_group(crate::carrito::GRUPO)
+            && let Some(p) = c.try_cast::<crate::carrito::Carrito>().ok().and_then(|c| c.bind().posicion_jugador())
+        {
+            self.base_mut().set_global_position(p);
         }
 
         // REQ-JUG-05: cápsula de 1,75 m y radio 0,3; ojos a 1,65 m.
@@ -524,10 +524,10 @@ impl Jugador {
             }
         };
         let arbol = self.base().get_tree();
-        if let Some(n) = arbol.get_first_node_in_group(hud::GRUPO) {
-            if let Ok(mut h) = n.try_cast::<Hud>() {
-                h.bind_mut().set_cartel(&texto);
-            }
+        if let Some(n) = arbol.get_first_node_in_group(hud::GRUPO)
+            && let Ok(mut h) = n.try_cast::<Hud>()
+        {
+            h.bind_mut().set_cartel(&texto);
         }
     }
 }

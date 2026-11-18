@@ -110,8 +110,8 @@ mod tests {
 
     #[test]
     fn req_mun_03_vereda_y_calle_fuera_de_la_plaza() {
-        assert!(Z_VEREDA + ANCHO_VEREDA / 2.0 <= -LADO_PLAZA / 2.0);
-        assert!(Z_CALLE + ANCHO_CALLE / 2.0 <= Z_VEREDA - ANCHO_VEREDA / 2.0);
+        const { assert!(Z_VEREDA + ANCHO_VEREDA / 2.0 <= -LADO_PLAZA / 2.0) };
+        const { assert!(Z_CALLE + ANCHO_CALLE / 2.0 <= Z_VEREDA - ANCHO_VEREDA / 2.0) };
     }
 
     #[test]

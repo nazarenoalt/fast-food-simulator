@@ -15,8 +15,8 @@ fi
 
 cd "$RAIZ/rust"
 echo "== Formato";  cargo fmt --check
-# Con pipefail, un error de clippy corta acá; las advertencias no (TASK-0002).
-echo "== Lints";    cargo clippy --all-targets 2>&1 | tail -n 2
+# Con pipefail, cualquier advertencia de clippy corta acá (TASK-0002).
+echo "== Lints";    cargo clippy --all-targets -q -- -D warnings
 echo "== Tests (reglas, trazabilidad, docs y audio)"; cargo test -q
 echo "== Prueba de humo"; GODOT="$GODOT" "$RAIZ/tools/prueba_humo.sh" | grep -E "FALLA|PRUEBA DE HUMO"
 
