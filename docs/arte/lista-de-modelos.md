@@ -262,5 +262,5 @@ El juego ya tiene ciudad (SPEC-013): edificios en cajas de 4 a 12 m de ancho con
 1. ✔ **Biblioteca** (`materiales.blend`, `referencias.blend`).
 2. ✔ **Etapa 1 completa**: comida, stock, carritos, accesorios y plaza.
 3. ✔ **Etapa 2** (lo que el juego ya tiene), **etapa 4** (comida, equipos y stock), **etapa 5** (accesorios, alacenas, techos y toldos) y **etapa 6** (fachadas, autos, nubes): hechos como propuesta, antes de sus specs.
-4. En curso: personajes con esqueleto (etapa 3), colectivo, paraguas, food truck, tráiler y lo chico de la etapa 2.
+4. ✔ Personajes con esqueleto y animaciones (etapa 3), animales, vehículos, food truck y tráiler. En curso: `accesorios_persona`. Quedan a decidir: `vendedor` (solo si se muestran las manos en primera persona) y `semaforo` (hoy no hay esquinas).
 5. **Para que el juego use los modelos hace falta la spec SPEC-006 v2** (que `forma` pueda apuntar a un `.glb`). Cada fila marca lo que esa spec tendría que resolver: anclajes nuevos (bahías, piso, techo), choques entre accesorios y piezas que el código mueve o tiñe.
