@@ -53,7 +53,7 @@ pasarruedas), M_PlasticoNegro (tiradores, acople), M_LuzCalida (tubos) y T_carro
 Medidas propuestas para `carro_kiosco.ron` (el largo en X, la vitrina mirando al cliente):
     ancho 3,20, profundidad 1,70 (la pollera pintada), alto total 2,62 (arriba del cartel).
     alto_mostrador 1,05 (mesada y repisa de afuera; piso de adentro a 0,15).
-    Techo y cartel: 3,60 × 2,10 (sobresalen 0,20). Con la lanza, 4,03 de largo (sale 0,83).
+    Techo y cartel: 3,60 × 2,10 (sobresalen 0,20). De punta a punta, 4,23 (la lanza sale 0,83 por −X).
     Ventana de atención de x −0,835 a 0,835, de 1,05 a 1,93. Puerta de x 0,82 a 1,52, hasta 2,05.
 Anclajes propuestos (pos en Godot, desde el centro de la pollera a nivel de la calle):
     mostrador_izq (−0,57; 1,05; 0,55)    [Cocina, Equipamiento]          frente a la ventana
@@ -190,6 +190,9 @@ def _panel_amarillo(dib, caja, lineas, tam):
     rojo, crema = color_paleta("M_RojoAcento"), color_paleta("M_BlancoCrema")
     dib.rectangle((x0 + 4, y0 + 4, x1 - 5, y1 - 5), outline=rojo, width=2)
     paso = (y1 - y0) / len(lineas)
+    tam = min(tam, round(paso * 0.82))
+    while max(dib.textlength(t, font=fuente(tam)) for t in lineas) > (x1 - x0) * 0.86:
+        tam -= 1                                     # que entre la palabra más larga
     for i, t in enumerate(lineas):
         _letras(dib, ((x0 + x1) / 2, y0 + paso * (i + 0.5) + 1), t, tam, rojo, crema)
 
@@ -329,14 +332,13 @@ def paredes(bm):
     """Pollera pintada (con los pasarruedas y la puerta), chapa de abajo y pared de atrás."""
     arcos = [(-ARCO_X, ARCO_X, Y_CAJA, ARCO_Y)]
     pa, pb, pt = PUERTA
-    # Pollera: adelante y atrás (con los arcos) y las puntas, todo pintado.
+    # Pollera: adelante y atrás (con los arcos) y las puntas; pintada por fuera, acero por dentro.
     r.pared_con_vanos(bm, "z", -XH + 0.05 - EPS, XH - 0.05 + EPS, Y_CAJA, Y_POLLERA, ZH, ZH - 0.05,
-                      arcos, PINT, PINT, PINT, PINT)
+                      arcos, PINT, ACERO, PINT, ACERO)
     r.pared_con_vanos(bm, "z", -XH + 0.05 - EPS, XH - 0.05 + EPS, Y_CAJA, Y_POLLERA, -ZH, -ZH + 0.05,
-                      arcos + [(pa, pb, Y_CAJA, Y_POLLERA)], PINT, PINT, PINT, PINT)
+                      arcos + [(pa, pb, Y_CAJA, Y_POLLERA)], PINT, ACERO, PINT, ACERO)
     for s in (-1, 1):
-        piezas.caja(bm, (0.05, Y_POLLERA - Y_CAJA, 2 * ZH), (s * (XH - 0.025), (Y_CAJA + Y_POLLERA) / 2, 0),
-                    mat=PINT, bisel=0.006)
+        r.pared_con_vanos(bm, "x", -ZH, ZH, Y_CAJA, Y_POLLERA, s * XH, s * (XH - 0.05), [], PINT, ACERO, PINT, ACERO)
     # Chapa de arriba (acero): adelante hasta la mesada; puntas hasta 1,05; atrás hasta el techo.
     y0 = Y_POLLERA - 0.005
     r.pared_con_vanos(bm, "z", -XI - EPS, XI + EPS, y0, Y1 + 0.002, ZA, ZI, [], ACERO, ACERO, ACERO, ACERO)
@@ -764,8 +766,8 @@ def hoja_revision(m, revision):
         r.camara(pos, mira, lente, orto)
         cuadros.append((etiqueta, comun.render(tmp / f"{len(cuadros)}.png")))
     cartel_prendido(m, False)
-    comun.componer_hoja("carro_kiosco · 3,20 × 2,62 × 1,70 m (4,03 con la lanza) · kiosco de acero con vitrina y "
-                        "cartel corrido (propuesta, sin .ron)", cuadros, revision,
+    comun.componer_hoja("carro_kiosco · 3,20 × 2,62 × 1,70 m · kiosco de acero con vitrina y cartel corrido "
+                        "(propuesta, sin .ron)", cuadros, revision,
                         comun.RAIZ / f"docs/arte/revisiones/{ID}.jpg")
 
 
