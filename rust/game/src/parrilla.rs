@@ -2,6 +2,7 @@
 
 use carrito_core::forma::TipoPieza;
 use carrito_core::parrilla::{ErrorParrilla, Parrilla as EstadoParrilla, resplandor};
+use carrito_core::sonido::ids;
 use godot::classes::{Area3D, BoxShape3D, INode3D, Node3D, StandardMaterial3D};
 use godot::prelude::*;
 
@@ -23,6 +24,8 @@ pub struct Parrilla {
     estado: EstadoParrilla,
     zona: Option<Gd<Area3D>>,
     brasas: Option<Gd<StandardMaterial3D>>,
+    /// REQ-SON-08: ya suenan las brasas (para encender/apagar solo al cambiar).
+    crepita: bool,
 }
 
 #[godot_api]
@@ -36,7 +39,14 @@ impl Parrilla {
 
 impl Parrilla {
     pub fn crear(superficie: [f32; 2]) -> Gd<Self> {
-        Gd::from_init_fn(|base| Self { base, superficie, estado: EstadoParrilla::default(), zona: None, brasas: None })
+        Gd::from_init_fn(|base| Self {
+            base,
+            superficie,
+            estado: EstadoParrilla::default(),
+            zona: None,
+            brasas: None,
+            crepita: false,
+        })
     }
 
     /// REQ-PAR-01: enciende o apaga; si no se puede, devuelve el motivo para avisarle al jugador.
@@ -46,7 +56,11 @@ impl Parrilla {
 
     /// REQ-PAR-01: carga `kg` de carbón de una bolsa.
     pub fn cargar(&mut self, kg: f32) -> Result<(), ErrorParrilla> {
-        self.estado.cargar(kg)
+        self.estado.cargar(kg)?;
+        // REQ-SON-08: el carbón cayendo en la parrilla.
+        let yo = self.to_gd().upcast::<Node3D>();
+        crate::sonido::sonar_en(&yo, ids::PARRILLA_CARBON, yo.get_global_position());
+        Ok(())
     }
 
     /// Solo para pruebas.
@@ -125,6 +139,12 @@ impl INode3D for Parrilla {
         let horas = (delta * min_por_s / 60.0) as f32;
         self.estado.paso(delta as f32, horas);
         self.actualizar_brasas();
+
+        // REQ-SON-08: las brasas suenan solo con la parrilla prendida (se apaga sola sin carbón).
+        if self.estado.encendida != self.crepita {
+            self.crepita = self.estado.encendida;
+            crate::sonido::bucle(&self.to_gd().upcast::<Node3D>(), ids::PARRILLA_BRASAS, self.crepita);
+        }
 
         // REQ-PAR-04: lo apoyado encima toma la temperatura de la parrilla por su lado de abajo.
         let temp = self.estado.temp;

@@ -33,11 +33,12 @@ sonidos de cada acción y música tranquila opcional. El juego funciona igual si
 
 ### Acciones
 - **REQ-SON-08** Cada hecho del juego dispara su sonido: hervidor (interruptor y hervor
-  mientras está prendido con agua), plancha (interruptor y chisporroteo con carne encima),
-  agarrar, soltar, tirar y apoyar comida, pomo de aderezo, paquete que llega y que se guarda,
-  sacar del depósito, cobro, campanita de cliente que llega, pasos del jugador, autos que
-  pasan cerca, aleteo de palomas. Parrilla, heladera y lluvia quedan en los datos, sin
-  conectar.
+  mientras está prendido con agua), plancha (interruptor y chisporroteo mientras haya carne
+  encima y la plancha esté caliente, más de 100 °C), parrilla (carbón al cargarla y brasas
+  mientras esté prendida; se callan si se apaga sola sin carbón), heladera (puerta al abrir y
+  al cerrar), agarrar, soltar, tirar y apoyar comida, pomo de aderezo, paquete que llega y que
+  se guarda, sacar del depósito, cobro, campanita de cliente que llega, pasos del jugador,
+  autos que pasan cerca, aleteo de palomas. La lluvia queda en los datos, sin conectar.
 - **REQ-SON-09** Un archivo que falta o la ausencia de audio nunca es un error: el sonido
   se omite y el juego sigue.
 - **REQ-SON-10** Todo archivo de `godot/audio/` figura en `godot/audio/CREDITOS.md` con
