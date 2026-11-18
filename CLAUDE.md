@@ -1,4 +1,4 @@
-# Carrito: guía rápida (leer primero)
+# Fast Food Simulator: guía rápida (leer primero)
 
 Simulador 3D de carrito de comida: Godot 4.7 + Rust (godot-rust). Se desarrolla con
 specs primero ([SPEC-000](docs/specs/000-proceso.md)). Qué sigue: [ROADMAP](docs/ROADMAP.md).
