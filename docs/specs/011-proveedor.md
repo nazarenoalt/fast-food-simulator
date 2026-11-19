@@ -21,7 +21,7 @@ depósito.
   la vereda, al costado del carrito, con un aviso "Llegó tu pedido".
 - **REQ-PRO-05** Un paquete se agarra y se lleva como cualquier objeto (SPEC-002).
 - **REQ-PRO-06** Si un paquete suelto queda dentro de un lugar **libre** del depósito, se
-  acomoda solo: pasa a ser un bloque de stock (SPEC-004) en ese lugar. En un lugar ocupado
+  acomoda solo: pasa a ser un bloque de stock (SPEC-004) en ese lugar, con las unidades que le queden. En un lugar ocupado
   no entra.
 
 ## Criterios de aceptación

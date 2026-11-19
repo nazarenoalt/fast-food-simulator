@@ -3,7 +3,7 @@
 use godot::builtin::Side;
 use godot::classes::control::{LayoutPreset, MouseFilter};
 use godot::classes::text_server::AutowrapMode;
-use godot::classes::{CanvasLayer, Control, ICanvasLayer, Label, VBoxContainer};
+use godot::classes::{CanvasLayer, ColorRect, Control, ICanvasLayer, Label, VBoxContainer};
 use godot::global::HorizontalAlignment;
 use godot::prelude::*;
 
@@ -20,6 +20,9 @@ const SEGUNDOS_RESUMEN: f32 = 14.0;
 pub struct Hud {
     base: Base<CanvasLayer>,
     cartel: Option<Gd<Label>>,
+    /// REQ-INT-01: el punto (mano libre) y el puntero en cruz (con algo en la mano).
+    punto: Option<Gd<Label>>,
+    puntero: Option<Gd<Control>>,
     reloj: Option<Gd<Label>>,
     caja: Option<Gd<Label>>,
     avisos: Option<Gd<VBoxContainer>>,
@@ -65,6 +68,20 @@ impl Hud {
         }
     }
 
+    /// REQ-INT-01: con algo en la mano, puntero blanco en cruz; con la mano libre, el punto.
+    pub fn set_mano_ocupada(&mut self, ocupada: bool) {
+        if let Some(p) = &mut self.puntero
+            && p.is_visible() != ocupada
+        {
+            p.set_visible(ocupada);
+        }
+        if let Some(p) = &mut self.punto
+            && p.is_visible() == ocupada
+        {
+            p.set_visible(!ocupada);
+        }
+    }
+
     pub fn aviso(&mut self, texto: &str) {
         godot_print!("[aviso] {texto}");
         let Some(cont) = &mut self.avisos else { return };
@@ -104,6 +121,27 @@ impl ICanvasLayer for Hud {
         ubicar(&mut mira, LayoutPreset::CENTER, -20.0, -16.0, 20.0, 16.0);
         raiz.add_child(&mira);
 
+        // REQ-INT-01: puntero en cruz, blanco con borde oscuro (se ve sobre cualquier fondo).
+        let mut puntero = Control::new_alloc();
+        puntero.set_mouse_filter(MouseFilter::IGNORE);
+        ubicar(&mut puntero, LayoutPreset::CENTER, 0.0, 0.0, 0.0, 0.0);
+        for (largo, grueso, color) in
+            [(26.0, 6.0, Color::from_rgba(0.0, 0.0, 0.0, 0.55)), (22.0, 2.0, Color::from_rgb(1.0, 1.0, 1.0))]
+        {
+            for (w, h) in [(largo, grueso), (grueso, largo)] {
+                let mut barra = ColorRect::new_alloc();
+                barra.set_color(color);
+                barra.set_mouse_filter(MouseFilter::IGNORE);
+                barra.set_position(Vector2::new(-w / 2.0, -h / 2.0));
+                barra.set_size(Vector2::new(w, h));
+                puntero.add_child(&barra);
+            }
+        }
+        puntero.set_visible(false);
+        raiz.add_child(&puntero);
+        self.punto = Some(mira);
+        self.puntero = Some(puntero);
+
         let mut cartel = etiqueta("", 22);
         cartel.set_horizontal_alignment(HorizontalAlignment::CENTER);
         cartel.set_autowrap_mode(AutowrapMode::WORD_SMART);
@@ -123,7 +161,7 @@ impl ICanvasLayer for Hud {
 
         let mut ayuda = etiqueta(
             "WASD moverse · Shift correr · Espacio saltar\n\
-             Clic agarrar/soltar · Clic derecho tirar · E usar\n\
+             Clic agarrar / colocar donde apunta la cruz · Clic derecho tirar · E usar\n\
              Tab proveedor · B armar el carrito · T tiempo ×30 · C traer cliente (prueba) · Esc soltar el mouse",
             15,
         );
