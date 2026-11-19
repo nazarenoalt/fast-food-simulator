@@ -28,6 +28,10 @@ use crate::sonido::Sonido;
 use crate::transito::{Autos, Nubes};
 use carrito_core::tostado::EstadoPan;
 
+// TASK-0358: vender papas en cajita y cartel de cerrado.
+#[path = "prueba_humo_vender.rs"]
+mod vender;
+
 #[derive(GodotClass)]
 #[class(base=Node, init)]
 pub struct PruebaHumo {
@@ -68,6 +72,8 @@ pub struct PruebaHumo {
     salchichas_hervidor: usize,
     carnes: Option<(Gd<Comida>, Gd<Comida>)>,
     jugador_antes: Option<Transform3D>,
+    /// SPEC-029 / REQ-CLI-12: la prueba de vender papas y del cartel de cerrado.
+    vender: vender::Vender,
 }
 
 /// Material (de la primera superficie) de la pieza `nombre` de un modelo. SPEC-025
@@ -1360,8 +1366,10 @@ impl INode for PruebaHumo {
                         self.paso -= 1; // SPEC-027: se repite este paso hasta terminar
                     } else if !self.chequear_logo() {
                         self.paso -= 1; // SPEC-028: se repite este paso hasta terminar
-                    } else if self.chequear_papas_y_puerta() {
-                        self.terminar();
+                    } else if self.vender.fase == 0 && !self.chequear_papas_y_puerta() {
+                        self.paso -= 1; // se repite este paso hasta terminar
+                    } else if self.chequear_vender() {
+                        self.terminar(); // TASK-0358: papas en cajita y cartel de cerrado
                     } else {
                         self.paso -= 1; // se repite este paso hasta terminar
                     }

@@ -66,6 +66,37 @@ impl Fila {
     }
 }
 
+/// REQ-CLI-13: el `cartel_cerrado` está colgado (se lee «CERRADO») o descolgado (acostado sobre
+/// el mostrador). Arranca colgado; E lo alterna.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct CartelCerrado {
+    pub colgado: bool,
+}
+
+impl Default for CartelCerrado {
+    fn default() -> Self {
+        Self { colgado: true }
+    }
+}
+
+impl CartelCerrado {
+    pub fn alternar(&mut self) {
+        self.colgado = !self.colgado;
+    }
+
+    /// Lo que dice el cartel de la mira. REQ-CLI-13
+    pub fn accion(&self) -> &'static str {
+        if self.colgado { "[E] Descolgar cartel (abrir)" } else { "[E] Colgar cartel (cerrar)" }
+    }
+}
+
+/// REQ-CLI-12 (y REQ-CLI-03): ¿se suma a la fila un cliente nuevo que llega solo? No si la fila
+/// está llena ni con el cartel de cerrado colgado. Sin cartel (`None`) o descolgado, está
+/// abierto. (La tecla C de REQ-CLI-11 no pasa por acá: trae clientes igual.)
+pub fn llegan_clientes(fila: &Fila, cartel: Option<CartelCerrado>) -> bool {
+    !fila.llena() && cartel.is_none_or(|c| !c.colgado)
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Pedido {
     pub producto: String,
@@ -413,6 +444,72 @@ mod tests {
         assert!((e3.propina - 0.5).abs() < 1e-3);
         let e_baja = evaluar(&ped, &entregado(Punto::Pasado, &["x"]), 10.0, 0.5).unwrap();
         assert_eq!(e_baja.propina, 0.0);
+    }
+
+    fn papas(punto: Punto, ad: &[&str]) -> Entregado {
+        Entregado {
+            producto: "papas_en_cajita".into(),
+            punto: Some(punto),
+            pan: None,
+            frescura: None,
+            aderezos: ad.iter().map(|s| s.to_string()).collect(),
+        }
+    }
+
+    #[test]
+    fn req_cli_08_fre_11_papas_crudas_o_quemadas_se_rechazan() {
+        let ped = Pedido { producto: "papas_en_cajita".into(), aderezos: vec!["ketchup".into()] };
+        assert_eq!(evaluar(&ped, &papas(Punto::Crudo, &["ketchup"]), 8.0, 0.0), Err(Rechazo::Crudo));
+        assert_eq!(evaluar(&ped, &papas(Punto::Quemado, &["ketchup"]), 8.0, 0.0), Err(Rechazo::Quemado));
+        // Un pancho no es lo que pidió.
+        assert_eq!(evaluar(&ped, &entregado(Punto::Cocido, &["ketchup"]), 8.0, 0.0), Err(Rechazo::OtroProducto));
+    }
+
+    #[test]
+    fn req_cli_08_09_fre_11_papas_cocidas_y_pasadas() {
+        let ped = Pedido { producto: "papas_en_cajita".into(), aderezos: vec!["ketchup".into(), "mayonesa".into()] };
+        let bien = evaluar(&ped, &papas(Punto::Cocido, &["mayonesa", "ketchup"]), 8.0, 0.0).unwrap();
+        assert_eq!(bien.estrellas, 5.0);
+        // REQ-CLI-09: $8 más el 20% de propina con 5 estrellas.
+        assert_eq!(bien.pago, 8.0);
+        assert!((bien.propina - 1.6).abs() < 1e-4);
+        // −1,5 si están pasadas.
+        let pasadas = evaluar(&ped, &papas(Punto::Pasado, &["ketchup", "mayonesa"]), 8.0, 0.0).unwrap();
+        assert_eq!(pasadas.estrellas, 3.5);
+        let sin_mayonesa = evaluar(&ped, &papas(Punto::Pasado, &["ketchup"]), 8.0, 0.0).unwrap();
+        assert_eq!(sin_mayonesa.estrellas, 2.5);
+        assert_eq!(sin_mayonesa.propina, 0.0);
+    }
+
+    #[test]
+    fn req_cli_12_con_el_cartel_colgado_no_llegan_clientes_nuevos() {
+        let mut fila = Fila::default();
+        fila.unirse(1);
+        // Sin cartel, abierto.
+        assert!(llegan_clientes(&fila, None));
+        // Colgado: no se suma nadie, pero el que estaba sigue en la fila.
+        let colgado = CartelCerrado::default();
+        assert!(!llegan_clientes(&fila, Some(colgado)));
+        assert_eq!(fila.primero(), Some(1));
+        // Descolgado: abierto otra vez.
+        assert!(llegan_clientes(&fila, Some(CartelCerrado { colgado: false })));
+        // REQ-CLI-03: con la fila llena no llega nadie, aunque esté abierto.
+        for id in 2..=LUGARES_FILA as u64 {
+            fila.unirse(id);
+        }
+        assert!(!llegan_clientes(&fila, None));
+    }
+
+    #[test]
+    fn req_cli_13_el_cartel_arranca_colgado_y_e_lo_alterna() {
+        let mut c = CartelCerrado::default();
+        assert!(c.colgado);
+        assert_eq!(c.accion(), "[E] Descolgar cartel (abrir)");
+        c.alternar();
+        assert!(!c.colgado);
+        assert_eq!(c.accion(), "[E] Colgar cartel (cerrar)");
+        c.alternar();
+        assert!(c.colgado);
     }
 
     #[test]

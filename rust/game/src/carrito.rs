@@ -15,6 +15,7 @@ use godot::prelude::*;
 
 use crate::aderecera;
 use crate::bloque_stock::BloqueStock;
+use crate::cartel::{self, CartelCerrado};
 use crate::comida::Comida;
 use crate::datos::catalogo;
 use crate::heladera::Heladera;
@@ -349,6 +350,10 @@ impl Carrito {
                 }
                 None => {}
             }
+            // REQ-CLI-13: el cartel de cerrado se cuelga y se descuelga con E (arranca colgado).
+            if c.accesorio.categoria == Categoria::Cartel {
+                CartelCerrado::envolver(&mut nodo);
+            }
             self.puestos.insert(c.anclaje.id.clone(), (c.accesorio.clone(), nodo));
         }
     }
@@ -369,6 +374,14 @@ impl Carrito {
     pub fn tapa_visible(&self, bahia: u32) -> Option<bool> {
         let r = self.raiz_base.as_ref()?;
         modelos::buscar(r, &format!("{}{bahia}", ampliaciones::PIEZA_TAPA_BAHIA)).map(|t| t.is_visible())
+    }
+
+    /// REQ-CLI-12: el cartel de cerrado puesto, si hay (su nodo, para colgarlo o descolgarlo).
+    pub fn cartel_cerrado(&self) -> Option<Gd<CartelCerrado>> {
+        self.puestos
+            .values()
+            .filter(|(a, _)| a.categoria == Categoria::Cartel)
+            .find_map(|(_, n)| n.get_node_or_null(cartel::NOMBRE)?.try_cast::<CartelCerrado>().ok())
     }
 
     /// El nodo de lo que está puesto en el anclaje (para la prueba de humo).
