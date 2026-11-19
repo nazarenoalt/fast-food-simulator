@@ -282,10 +282,34 @@
                 (tipo: Cilindro, medidas: (0.011, 0.1, 0), pos: (0, 0.11, -0.2), rot: (65, 0, 0), color: (0.1, 0.1, 0.1)),
             ],
         ),
+        // ── Papas en cajita (SPEC-029): lo que se vende ──
+        (
+            id: "papas_en_cajita",
+            nombre: "papas en cajita",
+            masa: 0.14, // REQ-ARM-05: cajita + papas fritas
+            precio: Some(8), // REQ-FRE-11
+            aderezos: ["ketchup", "mayonesa"], // REQ-FRE-11, REQ-ADE-07
+            altura_aderezos: Some(0.066), // sobre los bastones
+            requiere: Some("Freidora"), // REQ-CLI-04
+            colision: Caja(medidas: (0.09, 0.11, 0.056)), // la de la cajita
+            // Sin modelo propio: la cajita roja de cartón con bastones dorados que asoman; los
+            // bastones toman el color de la cocción de las papas (REQ-ARM-03).
+            forma: [
+                (tipo: Caja, medidas: (0.08, 0.11, 0.046), color: (0.85, 0.12, 0.1)),
+                (tipo: Caja, medidas: (0.07, 0.004, 0.038), pos: (0, 0.056, 0), color: (0.89, 0.65, 0.23), tinte_coccion: true),
+                (tipo: Caja, medidas: (0.009, 0.06, 0.009), pos: (-0.025, 0.07, -0.008), rot: (0, 0, 8), color: (0.89, 0.65, 0.23), tinte_coccion: true),
+                (tipo: Caja, medidas: (0.009, 0.06, 0.009), pos: (-0.012, 0.075, 0.009), rot: (-6, 0, -4), color: (0.89, 0.65, 0.23), tinte_coccion: true),
+                (tipo: Caja, medidas: (0.009, 0.06, 0.009), pos: (0.0, 0.078, -0.006), rot: (5, 0, 3), color: (0.89, 0.65, 0.23), tinte_coccion: true),
+                (tipo: Caja, medidas: (0.009, 0.06, 0.009), pos: (0.012, 0.072, 0.01), rot: (0, 0, -7), color: (0.89, 0.65, 0.23), tinte_coccion: true),
+                (tipo: Caja, medidas: (0.009, 0.06, 0.009), pos: (0.025, 0.068, -0.004), rot: (-4, 0, -10), color: (0.89, 0.65, 0.23), tinte_coccion: true),
+                (tipo: Caja, medidas: (0.009, 0.06, 0.009), pos: (-0.004, 0.066, 0.014), rot: (8, 0, 2), color: (0.89, 0.65, 0.23), tinte_coccion: true),
+            ],
+        ),
     ],
     // REQ-ARM-01
     combinaciones: [
         (base: "pan_pancho", agregado: "salchicha", resultado: "pancho"),
         (base: "pan_choripan", agregado: "chorizo", resultado: "choripan"), // REQ-PAR-07
+        (base: "cajita_papas", agregado: "papas_fritas", resultado: "papas_en_cajita"), // REQ-FRE-11
     ],
 )

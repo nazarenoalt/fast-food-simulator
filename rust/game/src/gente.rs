@@ -118,7 +118,8 @@ impl INode3D for Gente {
         // REQ-CLI-01: llegada de clientes (proceso al azar con la tasa por hora de juego).
         let reputacion = util::unico::<Negocio>(&yo, negocio::GRUPO).map(|n| n.bind().reputacion()).unwrap_or(3.0);
         let p = clientes::tasa_clientes(hora, reputacion) / 60.0 * (min_por_s as f32 * dt);
-        if !self.fila.llena() && self.azar.chance(p) {
+        // REQ-CLI-12: con el cartel de cerrado colgado no se suman clientes nuevos.
+        if clientes::llegan_clientes(&self.fila, self.cartel_cerrado()) && self.azar.chance(p) {
             self.nuevo_cliente(false);
         }
         // REQ-CLI-11: tecla de prueba.
@@ -459,7 +460,20 @@ impl Gente {
         }
     }
 
+    /// REQ-CLI-12: el estado del cartel de cerrado del carrito, si tiene.
+    fn cartel_cerrado(&self) -> Option<clientes::CartelCerrado> {
+        let carrito = util::unico::<Carrito>(&self.to_gd(), carrito::GRUPO)?;
+        let cartel = carrito.bind().cartel_cerrado()?;
+        Some(cartel.bind().estado())
+    }
+
     // ── Para pruebas ──────────────────────────────────────────────
+
+    /// Una llegada sola, como las de REQ-CLI-01 pero segura (no al azar). Devuelve si se sumó
+    /// alguien a la fila: con el cartel colgado, no (REQ-CLI-12).
+    pub fn probar_llegada(&mut self) -> bool {
+        clientes::llegan_clientes(&self.fila, self.cartel_cerrado()) && self.nuevo_cliente(false).is_some()
+    }
 
     pub fn forzar_cliente(&mut self) -> Option<u64> {
         self.nuevo_cliente(true)

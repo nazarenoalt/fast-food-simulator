@@ -12,6 +12,7 @@ use godot::prelude::*;
 use crate::aderecera::Pomo;
 use crate::armado;
 use crate::bloque_stock::BloqueStock;
+use crate::cartel::CartelCerrado;
 use crate::comida::{self, Comida};
 use crate::datos::catalogo;
 use crate::formas;
@@ -60,6 +61,7 @@ pub enum Objetivo {
     Paquete(Gd<Paquete>),
     Pomo(Gd<Pomo>),
     Puerta(Gd<PuertaCarrito>),
+    Cartel(Gd<CartelCerrado>),
 }
 
 /// REQ-INT-08/09/10: qué pasa al colocar lo que tenés en la mano donde apunta la mira.
@@ -170,6 +172,7 @@ impl ICharacterBody3D for Jugador {
         // REQ-INT-01: lo que está a 2,5 m o menos bajo la mira.
         let mut rayo = RayCast3D::new_alloc();
         rayo.set_target_position(Vector3::new(0.0, 0.0, -ALCANCE));
+        rayo.set_collision_mask(1 | formas::CAPA_USABLES); // REQ-CLI-13: también el cartel
         let yo = self.to_gd();
         rayo.add_exception(&yo);
         camara.add_child(&rayo);
@@ -397,6 +400,10 @@ impl Jugador {
             };
             let n = match n.try_cast::<PuertaCarrito>() {
                 Ok(p) => return Some(Objetivo::Puerta(p)),
+                Err(n) => n,
+            };
+            let n = match n.try_cast::<CartelCerrado>() {
+                Ok(c) => return Some(Objetivo::Cartel(c)),
                 Err(n) => n,
             };
             nodo = n.get_parent();
@@ -694,6 +701,8 @@ impl Jugador {
             Some(Objetivo::Heladera(mut h)) => h.bind_mut().alternar(),
             // REQ-CAR-13
             Some(Objetivo::Puerta(mut p)) => p.bind_mut().alternar(),
+            // REQ-CLI-13
+            Some(Objetivo::Cartel(mut c)) => c.bind_mut().alternar(),
             // REQ-PAR-01
             Some(Objetivo::Parrilla(mut p)) => {
                 if let Err(e) = p.bind_mut().usar() {
@@ -828,6 +837,7 @@ impl Jugador {
                 Some(Objetivo::Parrilla(p)) => p.bind().cartel(),
                 Some(Objetivo::Heladera(h)) => h.bind().cartel(),
                 Some(Objetivo::Puerta(p)) => p.bind().cartel(),
+                Some(Objetivo::Cartel(c)) => c.bind().cartel(),
                 Some(Objetivo::Bloque(b)) => b.bind().cartel(),
                 Some(Objetivo::Paquete(p)) => format!("[Clic] Agarrar {}", p.bind().descripcion().to_lowercase()),
                 Some(Objetivo::Pomo(p)) => format!("{} — agarrá un pancho y apretá E para ponerle", p.bind().cartel()),

@@ -7,6 +7,7 @@ mod aderecera; // SPEC-012
 mod armado; // SPEC-017
 mod bloque_stock; // SPEC-004
 mod carrito; // SPEC-006
+mod cartel; // SPEC-009 (cartel de cerrado)
 mod ciudad; // SPEC-013
 mod comida; // SPEC-002/003/005
 mod datos;

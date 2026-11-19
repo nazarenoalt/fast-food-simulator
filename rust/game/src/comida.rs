@@ -306,6 +306,12 @@ impl Comida {
         self.actualizar_color();
     }
 
+    /// Solo para pruebas: fija el punto de un alimento que no tiene perfil de cocción (las
+    /// papas fritas antes de TASK-0357). Lo hereda el armado (REQ-FRE-11).
+    pub fn forzar_punto(&mut self, punto: carrito_core::coccion::Punto) {
+        self.punto_fijo = Some(punto);
+    }
+
     /// Solo para pruebas: deja la parte cocinable quemada.
     pub fn forzar_quemado(&mut self) {
         if let Some(l) = &mut self.lados {
@@ -410,8 +416,8 @@ impl Comida {
             {
                 let mut n = nueva.bind_mut();
                 // REQ-ARM-03: guarda el estado de la salchicha y deja de cocinarse.
-                if let Some((p, e)) = &heredado {
-                    n.detalle = Some(format!("{nombre_agregado} {}", e.punto(p).nombre()));
+                if let Some(punto) = punto_agregado {
+                    n.detalle = Some(con_punto(&nombre_agregado, punto));
                 }
                 if self.def.pan {
                     // REQ-PAR-07: el choripán guarda el estado del chorizo y del pan.
@@ -424,6 +430,11 @@ impl Comida {
                     n.detalle =
                         Some(format!("{nombre_agregado} {punto}, pan {}", pan.map(|p| p.nombre()).unwrap_or("")));
                 } else {
+                    // REQ-FRE-11: la cajita conserva la cocción de las papas, como el pancho la de
+                    // la salchicha (y si solo traían un punto fijo, ese).
+                    if heredado.is_none() {
+                        n.punto_fijo = punto_agregado;
+                    }
                     n.coccion = heredado;
                 }
                 n.cocina = false;
@@ -561,6 +572,12 @@ pub fn medidas_de(def: &DefProducto) -> (f32, f32, f32) {
         Colision::Caja { medidas: [x, y, z] } => (y / 2.0, x.max(z) / 2.0, x.max(y).max(z) / 2.0),
         Colision::Capsula { radio, largo } => (radio, largo / 2.0, largo / 2.0),
     }
+}
+
+/// "salchicha cocida", "papas fritas cocidas": el punto concuerda con el nombre en número.
+fn con_punto(nombre: &str, punto: carrito_core::coccion::Punto) -> String {
+    let plural = if nombre.ends_with('s') { "s" } else { "" };
+    format!("{nombre} {}{plural}", punto.nombre())
 }
 
 fn capitalizar(s: &str) -> String {

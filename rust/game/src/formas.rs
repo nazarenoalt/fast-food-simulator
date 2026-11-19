@@ -13,6 +13,10 @@ use godot::prelude::*;
 /// (agua del hervidor, bandeja, lugares del depósito, encastre) solo miran esta capa.
 pub const CAPA_OBJETOS: u32 = 1 << 1;
 
+/// Capa de lo que solo se usa con la mira y no choca con nada (el cartel de cerrado). El rayo
+/// del jugador la mira además de la capa 1. REQ-CLI-13
+pub const CAPA_USABLES: u32 = 1 << 2;
+
 /// Zona que detecta solo comida y paquetes.
 pub fn zona_objetos() -> Gd<godot::classes::Area3D> {
     let mut z = godot::classes::Area3D::new_alloc();
