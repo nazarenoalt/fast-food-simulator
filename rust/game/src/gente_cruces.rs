@@ -38,7 +38,8 @@ impl Gente {
     /// Cada cuadro, después de avisar vecinos. REQ-AMB-18: quien camina y está por bajar a
     /// una calzada (la calle o una lateral) mira si viene un auto a menos de 3 s del paso;
     /// si viene, espera en el cordón mirándolo, y cruza cuando pasó. Si el paso sigue ocupado
-    /// más de `ESPERA_MAXIMA`, cruza igual (los autos frenan por él, REQ-AMB-08).
+    /// más de `ESPERA_MAXIMA`, se conforma con un hueco más corto (los autos frenan por él,
+    /// REQ-AMB-08), y pasado `ESPERA_TOPE` cruza igual.
     pub(super) fn cuadro_cruces(&mut self, _dt: f32) {
         let yo = self.to_gd();
         let Some(autos) = util::unico::<Autos>(&yo, transito::GRUPO) else { return };
@@ -68,17 +69,21 @@ impl Gente {
             if !c.en_el_cordon() {
                 continue;
             }
-            let viene =
-                estado_autos.iter().find(|&&(carril, s, v)| cruces::viene_auto(&est.recorridos[carril], s, v, &c));
+            // Lo que lleva esperando en este cordón (si es otro, empieza de cero).
+            let esperado = est
+                .esperas
+                .get(&id)
+                .filter(|e| (e.cordon[0] - c.cordon[0]).hypot(e.cordon[1] - c.cordon[1]) < 1.0)
+                .map_or(0.0, |e| e.segundos);
+            let margen = cruces::margen_pedido(esperado);
+            let viene = estado_autos
+                .iter()
+                .find(|&&(carril, s, v)| cruces::viene_auto_antes(&est.recorridos[carril], s, v, &c, margen));
             let Some(&(carril, s, _)) = viene else { continue };
-            let nueva = Espera { cordon: c.cordon, donde: pos, segundos: 0.0 };
-            let espera = est.esperas.entry(id).or_insert(nueva);
-            if (espera.cordon[0] - c.cordon[0]).hypot(espera.cordon[1] - c.cordon[1]) > 1.0 {
-                *espera = Espera { cordon: c.cordon, donde: pos, segundos: 0.0 };
+            if esperado == 0.0 {
+                est.esperas.insert(id, Espera { cordon: c.cordon, donde: pos, segundos: 0.0 });
             }
-            if espera.segundos >= cruces::ESPERA_MAXIMA {
-                continue; // cruza igual
-            }
+            let Some(espera) = est.esperas.get_mut(&id) else { continue };
             if espera.segundos == 0.0 {
                 est.paradas += 1;
                 est.esperaron.insert(id);

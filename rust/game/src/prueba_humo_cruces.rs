@@ -109,7 +109,7 @@ impl PruebaHumo {
         }
 
         let listos = (0..2).all(|k| self.notas5[CRUZO + k] == 1.0);
-        // Casos armados: hasta 40 s (esperar el auto + hasta 20 s en el cordón + cruzar).
+        // Casos armados: hasta 40 s (esperar el auto + de 10 a 20 s en el cordón + cruzar).
         if !listos && transcurrido < 60 * 40 {
             return false;
         }

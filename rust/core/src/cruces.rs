@@ -11,8 +11,13 @@ use crate::plaza;
 pub const SEGUNDOS_AVISO: f32 = 3.0;
 /// A cuánto del borde de la calzada (por su camino) se para a mirar.
 pub const DISTANCIA_CORDON: f32 = 0.5;
-/// Si esperó tanto y el paso sigue ocupado, cruza igual (los autos frenan por él, REQ-AMB-08).
-pub const ESPERA_MAXIMA: f32 = 20.0;
+/// Con mucho tránsito casi nunca hay 3 s libres: si ya esperó tanto, se conforma con un
+/// hueco más corto (`AVISO_APURADO`), que alcanza para que el auto frene por él (REQ-AMB-08).
+pub const ESPERA_MAXIMA: f32 = 10.0;
+pub const AVISO_APURADO: f32 = 1.5;
+/// Si esperó el doble y el paso sigue ocupado (un auto parado encima), cruza igual: que no
+/// se trabe para siempre.
+pub const ESPERA_TOPE: f32 = 2.0 * ESPERA_MAXIMA;
 /// Medio largo del auto (4,1 m) y medio ancho (0,9 m) más el de una persona.
 const MEDIO_LARGO_AUTO: f32 = 2.1;
 const ALCANCE: f32 = 0.9 + 0.4;
@@ -189,7 +194,24 @@ pub fn tiempo_hasta_el_paso(rec: &Recorrido, s: f32, v: f32, cruce: &Cruce) -> O
 
 /// REQ-AMB-18: ¿viene un auto a menos de 3 s del paso (o ya está encima)?
 pub fn viene_auto(rec: &Recorrido, s: f32, v: f32, cruce: &Cruce) -> bool {
-    tiempo_hasta_el_paso(rec, s, v, cruce).is_some_and(|t| t < SEGUNDOS_AVISO)
+    viene_auto_antes(rec, s, v, cruce, SEGUNDOS_AVISO)
+}
+
+/// ¿Viene un auto a menos de `segundos` del paso (o ya está encima)?
+pub fn viene_auto_antes(rec: &Recorrido, s: f32, v: f32, cruce: &Cruce, segundos: f32) -> bool {
+    tiempo_hasta_el_paso(rec, s, v, cruce).is_some_and(|t| t < segundos.min(SEGUNDOS_AVISO))
+}
+
+/// REQ-AMB-18: cuánto margen pide quien lleva `esperado` segundos en el cordón: 3 s; si ya
+/// esperó `ESPERA_MAXIMA`, un hueco más corto; y pasado `ESPERA_TOPE`, ninguno.
+pub fn margen_pedido(esperado: f32) -> f32 {
+    if esperado < ESPERA_MAXIMA {
+        SEGUNDOS_AVISO
+    } else if esperado < ESPERA_TOPE {
+        AVISO_APURADO
+    } else {
+        0.0
+    }
 }
 
 #[cfg(test)]
@@ -305,6 +327,25 @@ mod tests {
         let s1 = s_en(&rec1, [x, -31.0]);
         assert!(viene_auto(&rec1, s1 - 15.0, 10.0, &c));
         assert!(!viene_auto(&rec1, s1 + 5.0, 10.0, &c));
+    }
+
+    #[test]
+    fn req_amb_18_no_se_traba_para_siempre() {
+        let x = SENDAS[1];
+        let c = cruce(&[[x, -24.7], [x, Z_VEREDA_ENFRENTE]]).unwrap();
+        let rec = recorrido(0);
+        let s0 = s_en(&rec, [x, -27.0]);
+        // Un auto a unos 2 s: al principio espera; después de mucho esperar ya no (un hueco de
+        // 2 s alcanza para que el auto frene), pero sí si el auto está por llegar.
+        assert_eq!(margen_pedido(0.0), SEGUNDOS_AVISO);
+        let apurado = margen_pedido(ESPERA_MAXIMA);
+        assert!(apurado < 2.0 && apurado > 1.0);
+        assert!(viene_auto_antes(&rec, s0 - 24.0, 10.0, &c, margen_pedido(0.0)));
+        assert!(!viene_auto_antes(&rec, s0 - 24.0, 10.0, &c, apurado));
+        assert!(viene_auto_antes(&rec, s0 - 10.0, 10.0, &c, apurado));
+        // Con un auto parado encima del paso, al final cruza igual.
+        assert!(viene_auto_antes(&rec, s0, 0.0, &c, apurado));
+        assert!(!viene_auto_antes(&rec, s0, 0.0, &c, margen_pedido(ESPERA_TOPE)));
     }
 
     #[test]
