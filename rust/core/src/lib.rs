@@ -26,6 +26,7 @@ pub mod parrilla; // SPEC-015 (carbón)
 pub mod peatones; // SPEC-013
 pub mod plancha; // SPEC-014 (fuente de calor)
 pub mod plaza; // SPEC-008
+pub mod preparar; // SPEC-029 (pelar y cortar)
 pub mod proveedor; // SPEC-011
 pub mod puerta; // SPEC-006 (puerta de las bases)
 pub mod reloj; // SPEC-007

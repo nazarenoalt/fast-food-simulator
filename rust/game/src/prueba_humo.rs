@@ -28,6 +28,9 @@ use crate::sonido::Sonido;
 use crate::transito::{Autos, Nubes};
 use carrito_core::tostado::EstadoPan;
 
+#[path = "prueba_humo_pelar.rs"]
+mod pelar; // SPEC-029: pelar y cortar
+
 #[derive(GodotClass)]
 #[class(base=Node, init)]
 pub struct PruebaHumo {
@@ -1360,8 +1363,10 @@ impl INode for PruebaHumo {
                         self.paso -= 1; // SPEC-027: se repite este paso hasta terminar
                     } else if !self.chequear_logo() {
                         self.paso -= 1; // SPEC-028: se repite este paso hasta terminar
-                    } else if self.chequear_papas_y_puerta() {
-                        self.terminar();
+                    } else if !self.chequear_papas_y_puerta() {
+                        self.paso -= 1; // se repite este paso hasta terminar
+                    } else if self.chequear_pelar() {
+                        self.terminar(); // SPEC-029: pelar y cortar
                     } else {
                         self.paso -= 1; // se repite este paso hasta terminar
                     }

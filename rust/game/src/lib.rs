@@ -29,6 +29,7 @@ mod parrilla; // SPEC-015
 mod peaton; // SPEC-013
 mod plancha; // SPEC-014
 mod plaza; // SPEC-008
+mod preparar; // SPEC-029 (pelar y cortar)
 mod prueba_humo;
 mod puerta; // SPEC-006 (puerta de las bases)
 mod sonido; // SPEC-024

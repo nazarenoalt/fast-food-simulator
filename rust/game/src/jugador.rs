@@ -22,6 +22,7 @@ use crate::lugar_deposito::{self, LugarDeposito};
 use crate::paquete::Paquete;
 use crate::parrilla::Parrilla;
 use crate::plancha::Plancha;
+use crate::preparar;
 use crate::puerta::PuertaCarrito;
 use crate::sonido;
 use crate::tienda;
@@ -670,6 +671,13 @@ impl Jugador {
                 }
                 return;
             }
+            // REQ-FRE-01..03: pelar o cortar con la herramienta de la mano.
+            let herramienta = comida.bind().producto().to_string();
+            if let Some(Objetivo::Comida(c)) = self.objetivo()
+                && preparar::usar(Some(&herramienta), c)
+            {
+                return;
+            }
             let Some(Objetivo::Pomo(mut pomo)) = self.objetivo() else { return };
             let repone = comida.bind().repone().map(str::to_string);
             let resultado = match repone {
@@ -799,6 +807,9 @@ impl Jugador {
                         t += &format!(" · [E] Poner {}", p.cartel());
                     }
                 }
+                if let Some(Objetivo::Comida(o)) = &objetivo {
+                    t += &preparar::cartel(Some(c.producto()), o); // REQ-FRE-01..03
+                }
                 t
             } else if let Ok(p) = m.try_cast::<Paquete>() {
                 let p = p.bind();
@@ -821,6 +832,7 @@ impl Jugador {
                     if c.bind().por_lados() {
                         t += " · [E] Dar vuelta";
                     }
+                    t += &preparar::cartel(None, &c); // REQ-FRE-03: sin la herramienta
                     t
                 }
                 Some(Objetivo::Hervidor(h)) => h.bind().cartel(),

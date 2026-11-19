@@ -43,6 +43,8 @@ pub struct Comida {
     pub sostenida: bool,
     /// Ya se usó en un armado (está por desaparecer).
     consumida: bool,
+    /// REQ-FRE-03: pasadas de pelar o cortar ya hechas (quedan aunque se la mueva).
+    pub pasadas: u32,
     /// Temperatura del entorno que le dio una fuente de calor, y en qué cuadro.
     entorno: Option<(f32, u64)>,
     tintes: Vec<Gd<StandardMaterial3D>>,
@@ -84,6 +86,7 @@ impl Comida {
             vy_anterior: 0.0,
             sostenida: false,
             consumida: false,
+            pasadas: 0,
             entorno: None,
             tintes: Vec::new(),
             tintes_lado: [Vec::new(), Vec::new()],
@@ -268,6 +271,11 @@ impl Comida {
     /// Si es un repuesto, qué aderezo repone. REQ-ADE-05
     pub fn repone(&self) -> Option<&str> {
         self.def.repone.as_deref()
+    }
+
+    /// REQ-FRE-03: cómo se prepara a mano (pelar, cortar), si se prepara.
+    pub fn preparacion(&self) -> Option<&carrito_core::preparar::Preparacion> {
+        self.def.preparar.as_ref()
     }
 
     /// Si es una bolsa de carbón, cuántos kg trae. REQ-PAR-01
