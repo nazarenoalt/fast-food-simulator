@@ -13,6 +13,7 @@ mod comida; // SPEC-002/003/005
 mod datos;
 mod dia_noche; // SPEC-007
 mod formas;
+mod freidora; // SPEC-029
 mod gente; // SPEC-009/013
 mod heladera; // SPEC-016
 mod hervidor; // SPEC-003

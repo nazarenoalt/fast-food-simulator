@@ -17,6 +17,9 @@ use godot::prelude::*;
 use crate::datos::catalogo;
 use crate::{formas, modelos};
 
+/// Marca de los nodos del dibujo y la colisión del producto (se cambian al convertirse).
+const CUERPO: &str = "cuerpo_producto";
+
 #[derive(GodotClass)]
 #[class(base=RigidBody3D, no_init)]
 pub struct Comida {
@@ -396,6 +399,61 @@ impl Comida {
         }
     }
 
+    /// Dibujo y colisión del producto (marcados para poder cambiarlos al convertirse).
+    fn armar_cuerpo(&mut self) {
+        let def = self.def.clone();
+        let mut yo = self.to_gd();
+        let marcar = |n: &mut Gd<godot::classes::Node>| n.set_meta(CUERPO, &true.to_variant());
+        // Forma visual: el modelo (SPEC-025) o las piezas simples. Las piezas que se
+        // cocinan (entera o por lados) tienen su propio material. REQ-MOD-05
+        let (visual, tintes, tintes_lado) = modelos::visual_producto(&def);
+        marcar(&mut visual.clone().upcast());
+        yo.add_child(&visual);
+        self.tintes = tintes;
+        self.tintes_lado = tintes_lado;
+
+        // Colisión.
+        let col = match def.colision {
+            Colision::Caja { medidas } => {
+                let mut s = BoxShape3D::new_gd();
+                s.set_size(formas::v3(medidas));
+                formas::nodo_colision(s.upcast(), Transform3D::IDENTITY)
+            }
+            Colision::Capsula { radio, largo } => {
+                let mut s = CapsuleShape3D::new_gd();
+                s.set_radius(radio);
+                s.set_height(largo);
+                // Acostada sobre X.
+                let t =
+                    Transform3D::new(Basis::from_axis_angle(Vector3::BACK, std::f32::consts::FRAC_PI_2), Vector3::ZERO);
+                formas::nodo_colision(s.upcast(), t)
+            }
+        };
+        marcar(&mut col.clone().upcast());
+        yo.add_child(&col);
+    }
+
+    /// REQ-FRE-10: se convierte en otro producto en el mismo lugar (la papa cortada en papas
+    /// fritas): es el mismo objeto (sigue en la mano o en el colador) con la misma temperatura,
+    /// avance y estado de cocción; cambian el dibujo, la colisión, la masa y el perfil.
+    fn convertir(&mut self, producto: &str) {
+        let Some(def) = catalogo().producto(producto).cloned() else { return };
+        if let (Some(nuevo), Some((perfil, _))) = (def.coccion.clone(), &mut self.coccion) {
+            *perfil = nuevo;
+        }
+        self.def = def;
+        let mut yo = self.to_gd();
+        for mut hijo in yo.get_children().iter_shared() {
+            if hijo.has_meta(CUERPO) {
+                yo.remove_child(&hijo);
+                hijo.queue_free();
+            }
+        }
+        yo.set_mass(self.def.masa);
+        self.armar_cuerpo();
+        self.actualizar_color();
+    }
+
     /// REQ-ARM-02: si una pieza agregable suelta está en la zona de encastre, se arma.
     fn intentar_encastre(&mut self) {
         if self.sostenida || self.consumida {
@@ -480,30 +538,9 @@ impl IRigidBody3D for Comida {
         mat.set_bounce(0.15);
         yo.set_physics_material_override(&mat);
 
-        // Forma visual: el modelo (SPEC-025) o las piezas simples. Las piezas que se
-        // cocinan (entera o por lados) tienen su propio material. REQ-MOD-05
-        let (visual, tintes, tintes_lado) = modelos::visual_producto(&def);
-        yo.add_child(&visual);
-        self.tintes = tintes;
-        self.tintes_lado = tintes_lado;
-
-        // Colisión.
-        match def.colision {
-            Colision::Caja { medidas } => {
-                let mut s = BoxShape3D::new_gd();
-                s.set_size(formas::v3(medidas));
-                yo.add_child(&formas::nodo_colision(s.upcast(), Transform3D::IDENTITY));
-            }
-            Colision::Capsula { radio, largo } => {
-                let mut s = CapsuleShape3D::new_gd();
-                s.set_radius(radio);
-                s.set_height(largo);
-                // Acostada sobre X.
-                let t =
-                    Transform3D::new(Basis::from_axis_angle(Vector3::BACK, std::f32::consts::FRAC_PI_2), Vector3::ZERO);
-                yo.add_child(&formas::nodo_colision(s.upcast(), t));
-            }
-        }
+        self.armar_cuerpo();
+        // REQ-FRE-07: el colador lleva lo que tiene adentro.
+        crate::freidora::Colador::preparar(&mut yo.clone().upcast(), &def.id);
 
         // REQ-ARM-02: zona de encastre arriba de los productos que son base de una combinación.
         if armado::es_base(&catalogo().combinaciones, &def.id) {
@@ -569,6 +606,14 @@ impl IRigidBody3D for Comida {
             }
             // REQ-COC-06
             self.actualizar_color();
+            // REQ-FRE-10: al quedar Cocida, la papa cortada pasa a papas fritas (regla de los datos).
+            if let Some(otro) = self
+                .punto()
+                .and_then(|p| carrito_core::freidora::reemplazo_al_cocerse(&self.def, p))
+                .map(str::to_string)
+            {
+                self.convertir(&otro);
+            }
         }
         self.intentar_encastre();
     }

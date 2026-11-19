@@ -65,7 +65,10 @@ mod tests {
             let p = cat.producto(id).unwrap_or_else(|| panic!("falta {id}"));
             assert_eq!(p.modelo.as_deref(), Some(format!("comida/{id}").as_str()));
             assert!(p.masa > 0.0 && !p.forma.is_empty(), "{id}");
-            assert!(p.precio.is_none() && p.coccion.is_none(), "{id}: todavía no se vende ni se cocina");
+            assert!(p.precio.is_none(), "{id}: suelta no se vende");
+            // REQ-FRE-09: cortadas y fritas se cocinan en el aceite; la cruda y la pelada, no.
+            let se_frie = matches!(id, "papa_cortada" | "papas_fritas");
+            assert_eq!(p.coccion.is_some(), se_frie, "{id}");
         }
         // Se distinguen: el color de respaldo de cada estado es distinto.
         let colores: Vec<[f32; 3]> = ESTADOS.iter().map(|id| cat.producto(id).unwrap().forma[0].color).collect();
@@ -147,7 +150,7 @@ mod tests {
         assert_eq!(doble.categoria, Categoria::Cocina);
         assert!(2.0 * ancho(f) <= porcion, "dos freidoras ({}) no entran en {porcion}", 2.0 * ancho(f));
         assert!(ancho(doble) <= porcion && ancho(doble) <= 2.0 * ancho(f) + 0.01);
-        // El colador (su canasto) es más chico que la cuba (0,206 × 0,31 del modelo).
+        // El colador (su canasto) es más chico que la cuba (0,205 × 0,309 del modelo, REQ-FRE-04).
         let [cx, _, cz] = caja(&cat.producto("colador_freidora").unwrap().colision);
         assert!(cx + 0.01 <= 0.206 && cz + 0.01 <= 0.31);
     }

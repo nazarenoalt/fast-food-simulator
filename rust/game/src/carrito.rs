@@ -18,6 +18,7 @@ use crate::bloque_stock::BloqueStock;
 use crate::cartel::{self, CartelCerrado};
 use crate::comida::Comida;
 use crate::datos::catalogo;
+use crate::freidora::Freidora;
 use crate::heladera::Heladera;
 use crate::hervidor::Hervidor;
 use crate::lugar_deposito::LugarDeposito;
@@ -262,10 +263,12 @@ impl Carrito {
             yo.add_child(&nodo);
 
             // REQ-MOD-01: el modelo del accesorio (corrido con pos_modelo, REQ-MOD-03) o sus
-            // piezas simples. El hervidor arma su propio dibujo (usa el agua y el piloto).
-            let es_hervidor = matches!(c.accesorio.funcion, Some(Funcion::Hervidor { .. }));
+            // piezas simples. El hervidor y la freidora arman su propio dibujo (usan el agua o
+            // el aceite y los pilotos).
+            let dibuja_su_modelo =
+                matches!(c.accesorio.funcion, Some(Funcion::Hervidor { .. } | Funcion::Freidora { .. }));
             let mut modelo = None;
-            if !es_hervidor {
+            if !dibuja_su_modelo {
                 modelo = c.accesorio.modelo.as_deref().and_then(|m| modelos::agregar(&mut nodo, m));
                 match modelo.clone() {
                     Some(mut m) => {
@@ -332,9 +335,14 @@ impl Carrito {
                     aderecera::construir(&mut nodo, tipos, *separacion);
                 }
                 Some(f @ (Funcion::Surtido { .. } | Funcion::Freidora { .. })) => {
+                    // REQ-FRE-04: las cubas de aceite de la freidora (con su modelo).
+                    if let Funcion::Freidora { cubas, objetos } = f {
+                        let modelo = c.accesorio.modelo.clone();
+                        nodo.add_child(&Freidora::crear(cubas, objetos, modelo, c.accesorio.pos_modelo));
+                    }
                     // REQ-PAP-06, REQ-FRE-06: objetos sueltos apoyados en el accesorio (el
                     // colador en la freidora, el cuchillo en la tabla); se agarran como
-                    // cualquier comida. El aceite de la freidora: TODO TASK-0357.
+                    // cualquier comida.
                     for o in f.objetos_iniciales() {
                         let mut c = Comida::crear(&o.producto);
                         c.set_position(formas::v3(o.pos));
