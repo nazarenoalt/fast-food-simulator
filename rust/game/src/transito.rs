@@ -11,6 +11,9 @@ use godot::prelude::*;
 use crate::peaton;
 use crate::{formas, nocturno, util};
 
+/// Grupo del nodo `Autos` (para que la gente mire si viene un auto, REQ-AMB-18).
+pub const GRUPO: &str = "autos";
+
 struct Auto {
     nodo: Gd<Node3D>,
     ruedas: Vec<Gd<Node3D>>,
@@ -107,6 +110,11 @@ impl Autos {
         self.autos.iter().map(|a| a.s).collect()
     }
 
+    /// Carril, metros recorridos y velocidad (m/s) de cada auto. REQ-AMB-18
+    pub fn estado(&self) -> Vec<(usize, f32, f32)> {
+        self.autos.iter().map(|a| (a.carril, a.s, a.v)).collect()
+    }
+
     pub fn vueltas(&self) -> &[Vuelta] {
         &self.vueltas
     }
@@ -140,6 +148,7 @@ impl Autos {
 #[godot_api]
 impl INode3D for Autos {
     fn ready(&mut self) {
+        self.base_mut().add_to_group(GRUPO);
         self.recorridos = (0..autos::CARRILES.len()).map(autos::recorrido).collect();
         for a in autos::autos_iniciales() {
             let auto = self.crear_auto(&a);
