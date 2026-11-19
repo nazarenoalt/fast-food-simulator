@@ -32,10 +32,11 @@ aceite caliente con el colador y se vendan en cajita. Usa el modelo de calor de 
 
 ### Colador
 - **REQ-FRE-07** Con papas (cortadas o fritas) en la mano, colocar sobre el colador las deja
-  adentro. Caben 2 porciones; lleno, el cartel lo dice y se apoya como siempre.
+  adentro, también con el colador bajado. Caben 4 porciones (varias tandas): cada una se fríe a
+  su ritmo y se saca sola. Lleno, el cartel lo dice y se apoya como siempre.
 - **REQ-FRE-08** E sobre un colador puesto en una cuba lo baja (el canasto queda dentro del
   aceite) o lo sube (encima del aceite, escurriendo). Arranca arriba. Lo que tiene adentro se
-  mueve con él; las papas se sacan agarrándolas.
+  mueve con él; las papas se sacan agarrándolas, arriba o abajo.
 
 ### Cocción
 - **REQ-FRE-09** La `papa_cortada` se cocina (REQ-COC-01 a 04). En aceite a 180 °C queda
