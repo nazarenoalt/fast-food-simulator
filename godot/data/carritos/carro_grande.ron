@@ -5,7 +5,7 @@
     ancho: 3.4, profundidad: 1.2, alto_mostrador: 1.0,
     color: (0.8, 0.8, 0.82),
     ruedas: true,
-    precio: 950000,
+    precio: 3800,
     entrega: (0.5, 1.0, 0.4), // REQ-CAR-10: bandeja de entrega
     fila: (0.5, 0.0, 1.45), // REQ-CAR-10: primer lugar de la fila (sigue hacia +X)
     puerta: Some(105.0), // REQ-CAR-11/13: puerta del lugar de la garrafa; arranca cerrada, E la abre
@@ -13,16 +13,22 @@
         (id: "mostrador_izq", pos: (-1.1, 1.0, 0.1), categorias: [Cocina, Equipamiento]),
         (id: "mostrador_centro", pos: (0.0, 1.0, 0.1), categorias: [Cocina, Equipamiento, Decoracion]),
         (id: "mostrador_der", pos: (1.1, 1.0, 0.1), categorias: [Cocina, Equipamiento, Decoracion]),
-        (id: "lateral", pos: (2.15, 0.0, -0.35), rot_y: 180, categorias: [Deposito, Decoracion]),
-        (id: "lateral_izq", pos: (-2.15, 0.0, -0.35), rot_y: 180, categorias: [Deposito, Decoracion]),
+        (id: "lateral", pos: (2.15, 0.0, -0.35), rot_y: 180, categorias: [Deposito, Decoracion, Mobiliario]),
+        (id: "lateral_izq", pos: (-2.15, 0.0, -0.35), rot_y: 180, categorias: [Deposito, Decoracion, Mobiliario]),
         (id: "parrilla", pos: (-2.15, 0.92, 0.45), categorias: [Cocina]),
         (id: "heladera", pos: (2.95, 0.0, -0.35), rot_y: 180, categorias: [Cocina]),
         (id: "sombra", pos: (-1.9, 0.0, -1.25), categorias: [Sombrilla]),
-        (id: "techo", pos: (0.0, 0.0, -0.2), categorias: [Carpa]),
+        (id: "techo", pos: (0.0, 0.0, -0.2), categorias: [Carpa, Techo]),
         (id: "frente", pos: (0.0, 0.0, 0.61), categorias: [Telon, Cerco, Decoracion]),
-        (id: "cerco", pos: (0.0, 0.0, 1.8), categorias: [Cerco, Decoracion]),
+        (id: "cerco", pos: (0.0, 0.0, 1.8), categorias: [Cerco, Decoracion, Mobiliario]),
         (id: "luz_1", pos: (-0.7, 2.1, 0.2), categorias: [Luz]),
         (id: "luz_2", pos: (0.7, 2.1, 0.2), categorias: [Luz]),
         (id: "cartel", pos: (0.0, 0.988, 0.662), categorias: [Cartel]), // REQ-PAP-07: adelante, en el canto de la mesada
+        (id: "toldo", pos: (0.0, 0.0, 0.61), categorias: [Toldo]), // REQ-AMP-07: en el punto del frente
+        (id: "guirnalda", pos: (0.0, 2.08, 0.6), categorias: [Guirnalda], requiere: Some(Techo)), // REQ-AMP-10
+        (id: "bahia_1", pos: (-1.27, 0.34, -0.6), categorias: [Alacena]), // REQ-AMP-04
+        (id: "bahia_2", pos: (-0.6, 0.34, -0.6), categorias: [Alacena]), // REQ-AMP-04
+        (id: "bahia_3", pos: (0.07, 0.34, -0.6), categorias: [Alacena]), // REQ-AMP-04
+        (id: "bahia_4", pos: (0.74, 0.34, -0.6), categorias: [Alacena]), // REQ-AMP-04
     ],
 )

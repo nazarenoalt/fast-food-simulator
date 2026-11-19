@@ -54,12 +54,12 @@ Cada etapa abre con sus specs (SPEC-000) y cierra con docs al día. Formato en [
 ## Etapa 4 · Carritos y mejoras (`feat (carrito)`) · PR TASK-0400
 | ID | Tarea | Spec | Estado |
 |---|---|---|---|
-| 0401 | Escribir spec 006 v2 y 017 Tienda | 006, 017 | ⬜ |
-| 0402 | Tienda de accesorios dentro del juego | 017 | ⬜ |
-| 0403 | Colocar accesorios en los anclajes | 006 | ⬜ |
-| 0404 | Cambiar estilos y colores | 006 | ⬜ |
-| 0405 | Bases de carrito nuevas | 006 | ⬜ |
-| 0406 | Carro con interior caminable | 006 | ⬜ |
+| 0401 | Escribir spec 006 v2 y 017 Tienda | 006, 017 | ✅ |
+| 0402 | Tienda de accesorios dentro del juego (modo armado, inventario y venta) | 017 | ✅ |
+| 0403 | Colocar y mover accesorios en los anclajes; techos, telones y mobiliario nuevos | 006, 017 | ✅ |
+| 0404 | Cambiar estilos y colores | 006, 017 | ✅ |
+| 0405 | Bases nuevas (food truck y tráiler), alacenas bajo mesada, toldos y guirnaldas; precios en escala pancho = $10 | 027, 010 | ✅ |
+| 0406 | Carro con interior caminable (escalón y puerta del food truck y el tráiler) | 027, 001 | ✅ |
 | 0407 | Logo del carrito: elegir entre varios diseños y escribirle tu texto | 006 | ⬜ |
 
 ## Etapa 5 · Plaza con rutinas (`feat (mundo)`) · PR TASK-0500

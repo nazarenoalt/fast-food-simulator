@@ -9,7 +9,7 @@
     ancho: 3.2, profundidad: 1.7, alto_mostrador: 1.05,
     color: (0.78, 0.13, 0.1),
     ruedas: true,
-    precio: 900000,
+    precio: 3600,
     entrega: (0.0, 1.05, 0.97), // REQ-CAR-10: en la repisa de afuera, en el medio de la ventana
     fila: (0.0, 0.0, 1.5), // REQ-CAR-10: frente a la ventana (sigue hacia +X)
     jugador: Some((0.0, 0.16, -0.05)), // REQ-CAR-11: adentro, detrás de la ventana
@@ -27,5 +27,9 @@
         (id: "luz_1", pos: (-1.2, 2.15, 0.97), categorias: [Luz]),
         (id: "luz_2", pos: (1.2, 2.15, 0.97), categorias: [Luz]),
         (id: "cartel", pos: (0.0, 1.038, 1.092), categorias: [Cartel]), // REQ-PAP-07: canto de la repisa de afuera
+        (id: "bahia_1", pos: (-0.99, 0.39, 0.27), categorias: [Alacena]), // REQ-AMP-04
+        (id: "bahia_2", pos: (-0.33, 0.39, 0.27), categorias: [Alacena]), // REQ-AMP-04
+        (id: "bahia_3", pos: (0.33, 0.39, 0.27), categorias: [Alacena]), // REQ-AMP-04
+        (id: "bahia_4", pos: (0.99, 0.39, 0.27), categorias: [Alacena]), // REQ-AMP-04
     ],
 )

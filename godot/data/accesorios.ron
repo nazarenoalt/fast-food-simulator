@@ -7,21 +7,21 @@
         modelo: Some("cocina/hervidor_chico"), // SPEC-025
         nombre: "Hervidor baño maría chico",
         categoria: Cocina,
-        precio: 45000,
+        precio: 180,
         funcion: Some(Hervidor(interior: (0.36, 0.18, 0.26))),
     ),
     (
         id: "plancha_chica",
         nombre: "Plancha chica",
         categoria: Cocina,
-        precio: 60000,
+        precio: 240,
         funcion: Some(Plancha(superficie: (0.5, 0.4))),
     ),
     (
         id: "parrilla_chica",
         nombre: "Parrilla de carbón chica",
         categoria: Cocina,
-        precio: 55000,
+        precio: 220,
         forma: [
             // Patas hasta el piso: el anclaje está a la altura del mostrador.
             (tipo: Caja, medidas: (0.04, 0.92, 0.04), pos: (-0.22, -0.46, -0.17), color: (0.2, 0.2, 0.22), metal: true),
@@ -35,7 +35,7 @@
         id: "heladera_chica",
         nombre: "Heladera chica",
         categoria: Cocina,
-        precio: 90000,
+        precio: 360,
         forma: [
             // Cuerpo hueco: el interior (0.54 × 1.1 × 0.52) queda libre para los paquetes.
             (tipo: Caja, medidas: (0.6, 1.2, 0.03), pos: (0, 0.6, -0.285), color: (0.93, 0.94, 0.95), metal: true),
@@ -58,7 +58,7 @@
         modelo: Some("cocina/freidora"),
         nombre: "Freidora",
         categoria: Cocina,
-        precio: 65000,
+        precio: 260,
         forma: [
             (tipo: Caja, medidas: (0.26, 0.24, 0.36), pos: (0, 0.12, -0.055), color: (0.82, 0.83, 0.85), metal: true),
             (tipo: Caja, medidas: (0.26, 0.33, 0.11), pos: (0, 0.165, 0.18), color: (0.82, 0.83, 0.85), metal: true),
@@ -70,7 +70,7 @@
         modelo: Some("cocina/freidora_doble"),
         nombre: "Freidora doble",
         categoria: Cocina,
-        precio: 115000,
+        precio: 460,
         forma: [
             (tipo: Caja, medidas: (0.521, 0.24, 0.36), pos: (0, 0.12, -0.055), color: (0.82, 0.83, 0.85), metal: true),
             (tipo: Caja, medidas: (0.521, 0.33, 0.11), pos: (0, 0.165, 0.18), color: (0.82, 0.83, 0.85), metal: true),
@@ -86,7 +86,7 @@
         modelo: Some("accesorios/estante_deposito"), // SPEC-025
         nombre: "Estante de depósito",
         categoria: Deposito,
-        precio: 30000,
+        precio: 120,
         forma: [
             (tipo: Caja, medidas: (0.03, 1.0, 0.03), pos: (-0.25, 0.5, -0.19), color: (0.35, 0.35, 0.38), metal: true),
             (tipo: Caja, medidas: (0.03, 1.0, 0.03), pos: (0.25, 0.5, -0.19), color: (0.35, 0.35, 0.38), metal: true),
@@ -105,7 +105,8 @@
         modelo: Some("accesorios/sombrilla"), // SPEC-025
         nombre: "Sombrilla roja",
         categoria: Sombrilla,
-        precio: 18000,
+        choca_con: [Techo], // REQ-AMP-11: la sombrilla no entra con un techo
+        precio: 72,
         forma: [
             (tipo: Cilindro, medidas: (0.25, 0.08, 0), pos: (0, 0.04, 0), color: (0.2, 0.2, 0.22)),
             (tipo: Cilindro, medidas: (0.022, 2.4, 0), pos: (0.31, 1.16, 0), rot: (0, 0, -15), color: (0.85, 0.85, 0.85), metal: true),
@@ -119,7 +120,8 @@
         superficies: [("pieza_pano", [(0.95, 0.95, 0.9), (0.1, 0.45, 0.8)])],
         nombre: "Sombrilla rayada",
         categoria: Sombrilla,
-        precio: 22000,
+        choca_con: [Techo], // REQ-AMP-11: la sombrilla no entra con un techo
+        precio: 88,
         forma: [
             (tipo: Cilindro, medidas: (0.25, 0.08, 0), pos: (0, 0.04, 0), color: (0.2, 0.2, 0.22)),
             (tipo: Cilindro, medidas: (0.022, 2.4, 0), pos: (0.31, 1.16, 0), rot: (0, 0, -15), color: (0.85, 0.85, 0.85), metal: true),
@@ -133,7 +135,7 @@
         modelo: Some("accesorios/carpa_2x2"), // SPEC-025
         nombre: "Carpa 2×2",
         categoria: Carpa,
-        precio: 60000,
+        precio: 240,
         forma: [
             (tipo: Cilindro, medidas: (0.025, 2.3, 0), pos: (-1.1, 1.15, -0.9), color: (0.8, 0.8, 0.8), metal: true),
             (tipo: Cilindro, medidas: (0.025, 2.3, 0), pos: (1.1, 1.15, -0.9), color: (0.8, 0.8, 0.8), metal: true),
@@ -148,7 +150,7 @@
         modelo: Some("accesorios/telon_panchos"), // SPEC-025
         nombre: "Telón \"Panchos\"",
         categoria: Telon,
-        precio: 9000,
+        precio: 36,
         forma: [
             (tipo: Caja, medidas: (1.3, 0.42, 0.01), pos: (0, 0.52, 0.005), color: (0.98, 0.8, 0.1), colision: false),
             (tipo: Caja, medidas: (1.3, 0.06, 0.012), pos: (0, 0.66, 0.006), color: (0.85, 0.12, 0.1), colision: false),
@@ -161,7 +163,7 @@
         modelo: Some("accesorios/cerco_bajo"), // SPEC-025
         nombre: "Cerco bajo de madera",
         categoria: Cerco,
-        precio: 15000,
+        precio: 60,
         forma: [
             (tipo: Caja, medidas: (0.06, 0.6, 0.06), pos: (-1.2, 0.3, 0), color: (0.5, 0.33, 0.2)),
             (tipo: Caja, medidas: (0.06, 0.6, 0.06), pos: (1.2, 0.3, 0), color: (0.5, 0.33, 0.2)),
@@ -176,7 +178,7 @@
         pos_modelo: (0, 0.345, 0), // REQ-MOD-03: el modelo cuelga desde arriba; la lamparita queda en el anclaje
         nombre: "Foco cálido colgante",
         categoria: Luz,
-        precio: 5000,
+        precio: 20,
         forma: [
             (tipo: Cilindro, medidas: (0.004, 0.3, 0), pos: (0, 0.15, 0), color: (0.1, 0.1, 0.1), colision: false),
         ],
@@ -188,7 +190,7 @@
         modelo: Some("accesorios/pizarra_precios"), // SPEC-025
         nombre: "Pizarra de precios",
         categoria: Decoracion,
-        precio: 7000,
+        precio: 28,
         forma: [
             (tipo: Caja, medidas: (0.32, 0.4, 0.02), pos: (0, 0.22, 0), rot: (-12, 0, 0), color: (0.08, 0.1, 0.08)),
             (tipo: Caja, medidas: (0.36, 0.44, 0.015), pos: (0, 0.22, -0.006), rot: (-12, 0, 0), color: (0.55, 0.35, 0.2)),
@@ -201,7 +203,7 @@
         modelo: Some("accesorios/cartel_cerrado"),
         nombre: "Cartel de cerrado",
         categoria: Cartel,
-        precio: 4000,
+        precio: 16,
         forma: [
             (tipo: Caja, medidas: (0.32, 0.16, 0.014), pos: (0, -0.18, 0), color: (0.85, 0.12, 0.1), colision: false),
             (tipo: Cilindro, medidas: (0.004, 0.02, 0), pos: (0, -0.004, -0.002), rot: (90, 0, 0), color: (0.82, 0.83, 0.85), metal: true, colision: false),
@@ -213,7 +215,7 @@
         modelo: Some("accesorios/porche_nylon"), // SPEC-025
         nombre: "Porche de nylon",
         categoria: Porche, // REQ-CAR-04
-        precio: 40000,
+        precio: 160,
         // Respaldo (REQ-MOD-09): caños y techito; el nylon no choca.
         forma: [
             (tipo: Cilindro, medidas: (0.02, 2.1, 0), pos: (2.05, 1.05, 0.9), color: (0.1, 0.45, 0.8)),
@@ -229,7 +231,7 @@
         modelo: Some("accesorios/aderecera_tres"), // SPEC-025
         nombre: "Aderecera de tres pomos",
         categoria: Equipamiento,
-        precio: 12000,
+        precio: 48,
         forma: [
             (tipo: Caja, medidas: (0.3, 0.015, 0.1), pos: (0, 0.0075, -0.22), color: (0.75, 0.75, 0.78), metal: true),
         ],
@@ -239,7 +241,7 @@
         id: "aderecera_cinco",
         nombre: "Aderecera de cinco pomos",
         categoria: Equipamiento,
-        precio: 18000,
+        precio: 72,
         forma: [
             (tipo: Caja, medidas: (0.48, 0.015, 0.1), pos: (0, 0.0075, -0.22), color: (0.75, 0.75, 0.78), metal: true),
         ],
@@ -250,11 +252,165 @@
         modelo: Some("accesorios/servilletero"), // SPEC-025
         nombre: "Servilletero",
         categoria: Equipamiento,
-        precio: 3000,
+        precio: 12,
         forma: [
             (tipo: Caja, medidas: (0.12, 0.1, 0.08), pos: (0, 0.05, 0), color: (0.75, 0.75, 0.78), metal: true),
             (tipo: Caja, medidas: (0.1, 0.02, 0.07), pos: (0, 0.105, 0), color: (0.98, 0.98, 0.98)),
         ],
+    ),
+    // ── Techos (REQ-TIE-12): uno por tamaño de base (REQ-TIE-11). Precios provisorios ──
+    (
+        id: "techo_plano_chico",
+        modelo: Some("accesorios/techo_plano_chico"), // SPEC-025
+        nombre: "Techo plano (chico)",
+        categoria: Techo, // REQ-AMP-09
+        precio: 140,
+        bases: Some(["barra_chica"]), // REQ-TIE-11
+    ),
+    (
+        id: "techo_plano_mediano",
+        modelo: Some("accesorios/techo_plano_mediano"), // SPEC-025
+        nombre: "Techo plano (mediano)",
+        categoria: Techo, // REQ-AMP-09
+        precio: 180,
+        bases: Some(["barra_mediana"]), // REQ-TIE-11
+    ),
+    (
+        id: "techo_plano_grande",
+        modelo: Some("accesorios/techo_plano_grande"), // SPEC-025
+        nombre: "Techo plano (grande)",
+        categoria: Techo, // REQ-AMP-09
+        precio: 240,
+        bases: Some(["carro_grande"]), // REQ-TIE-11
+    ),
+    (
+        id: "techo_dos_aguas_chico",
+        modelo: Some("accesorios/techo_dos_aguas_chico"), // SPEC-025
+        nombre: "Techo a dos aguas (chico)",
+        categoria: Techo, // REQ-AMP-09
+        precio: 160,
+        bases: Some(["barra_chica"]), // REQ-TIE-11
+    ),
+    (
+        id: "techo_dos_aguas_mediano",
+        modelo: Some("accesorios/techo_dos_aguas_mediano"), // SPEC-025
+        nombre: "Techo a dos aguas (mediano)",
+        categoria: Techo, // REQ-AMP-09
+        precio: 200,
+        bases: Some(["barra_mediana"]), // REQ-TIE-11
+    ),
+    (
+        id: "techo_dos_aguas_grande",
+        modelo: Some("accesorios/techo_dos_aguas_grande"), // SPEC-025
+        nombre: "Techo a dos aguas (grande)",
+        categoria: Techo, // REQ-AMP-09
+        precio: 260,
+        bases: Some(["carro_grande"]), // REQ-TIE-11
+    ),
+    (
+        id: "techo_curvo_chico",
+        modelo: Some("accesorios/techo_curvo_chico"), // SPEC-025
+        nombre: "Techo curvo (chico)",
+        categoria: Techo, // REQ-AMP-09
+        precio: 160,
+        bases: Some(["barra_chica"]), // REQ-TIE-11
+    ),
+    (
+        id: "techo_curvo_mediano",
+        modelo: Some("accesorios/techo_curvo_mediano"), // SPEC-025
+        nombre: "Techo curvo (mediano)",
+        categoria: Techo, // REQ-AMP-09
+        precio: 200,
+        bases: Some(["barra_mediana"]), // REQ-TIE-11
+    ),
+    (
+        id: "techo_curvo_grande",
+        modelo: Some("accesorios/techo_curvo_grande"), // SPEC-025
+        nombre: "Techo curvo (grande)",
+        categoria: Techo, // REQ-AMP-09
+        precio: 260,
+        bases: Some(["carro_grande"]), // REQ-TIE-11
+    ),
+    (
+        id: "marquesina_chico",
+        modelo: Some("accesorios/marquesina_chico"), // SPEC-025
+        nombre: "Marquesina con cartel (chico)",
+        categoria: Techo, // REQ-AMP-09
+        precio: 220,
+        bases: Some(["barra_chica"]), // REQ-TIE-11
+    ),
+    (
+        id: "marquesina_mediano",
+        modelo: Some("accesorios/marquesina_mediano"), // SPEC-025
+        nombre: "Marquesina con cartel (mediano)",
+        categoria: Techo, // REQ-AMP-09
+        precio: 280,
+        bases: Some(["barra_mediana"]), // REQ-TIE-11
+    ),
+    (
+        id: "marquesina_grande",
+        modelo: Some("accesorios/marquesina_grande"), // SPEC-025
+        nombre: "Marquesina con cartel (grande)",
+        categoria: Techo, // REQ-AMP-09
+        precio: 360,
+        bases: Some(["carro_grande"]), // REQ-TIE-11
+    ),
+    // ── Más decoración y mobiliario (REQ-TIE-12, REQ-TIE-13). Precios provisorios ──
+    (
+        id: "telon_hamburguesas",
+        modelo: Some("accesorios/telon_hamburguesas"), // SPEC-025
+        nombre: "Telón \"Hamburguesas\"",
+        categoria: Telon,
+        precio: 36,
+    ),
+    (
+        id: "telon_choripan",
+        modelo: Some("accesorios/telon_choripan"), // SPEC-025
+        nombre: "Telón \"Choripán\"",
+        categoria: Telon,
+        precio: 36,
+    ),
+    (
+        id: "cerco_metal",
+        modelo: Some("accesorios/cerco_metal"), // SPEC-025
+        nombre: "Cerco de metal",
+        categoria: Cerco,
+        precio: 100,
+    ),
+    (
+        id: "cartel_luminoso",
+        modelo: Some("accesorios/cartel_luminoso"), // SPEC-025
+        nombre: "Cartel luminoso",
+        categoria: Decoracion,
+        precio: 60,
+    ),
+    (
+        id: "pizarra_grande",
+        modelo: Some("accesorios/pizarra_grande"), // SPEC-025
+        nombre: "Pizarra de menú grande",
+        categoria: Mobiliario,
+        precio: 48,
+    ),
+    (
+        id: "maceta",
+        modelo: Some("accesorios/maceta"), // SPEC-025
+        nombre: "Maceta con planta",
+        categoria: Mobiliario,
+        precio: 24,
+    ),
+    (
+        id: "mesa_alta",
+        modelo: Some("accesorios/mesa_alta"), // SPEC-025
+        nombre: "Mesa alta",
+        categoria: Mobiliario,
+        precio: 80,
+    ),
+    (
+        id: "banqueta",
+        modelo: Some("accesorios/banqueta"), // SPEC-025
+        nombre: "Banqueta alta",
+        categoria: Mobiliario,
+        precio: 32,
     ),
     // Tabla para las papas (SPEC-026): trae el cuchillo, el pelapapas y una papa.
     (
@@ -262,7 +418,7 @@
         modelo: Some("cocina/tabla_papas"),
         nombre: "Tabla con cuchillo y pelapapas",
         categoria: Equipamiento,
-        precio: 9000,
+        precio: 36,
         forma: [
             (tipo: Caja, medidas: (0.35, 0.02, 0.25), pos: (0, 0.01, 0), color: (0.7, 0.55, 0.38)),
         ],
@@ -271,5 +427,196 @@
             (producto: "pelapapas", pos: (0.07, 0.029, -0.055), rot_y: -8),
             (producto: "papa_cruda", pos: (-0.1, 0.051, -0.06)),
         ])),
+    ),
+    // ── Alacenas bajo mesada (REQ-AMP-04/05): lugares en los punto_lugar_N del modelo ──
+    (
+        id: "alacena_abierta",
+        modelo: Some("accesorios/alacena_abierta"), // REQ-MOD-14
+        nombre: "Alacena abierta",
+        categoria: Alacena,
+        precio: 100,
+        forma: [
+            (tipo: Caja, medidas: (0.57, 0.49, 0.61), pos: (0, 0.245, 0.305), color: (0.82, 0.83, 0.85), metal: true),
+        ],
+        funcion: Some(Deposito(lugares: [(-0.13, 0.413, 0.27), (0.13, 0.413, 0.27), (-0.13, 0.212, 0.27), (0.13, 0.212, 0.27), (-0.13, 0.012, 0.27), (0.13, 0.012, 0.27)])),
+    ),
+    (
+        id: "alacena_puertas",
+        modelo: Some("accesorios/alacena_puertas"), // REQ-MOD-14
+        nombre: "Alacena de dos puertas",
+        categoria: Alacena,
+        precio: 160,
+        forma: [
+            (tipo: Caja, medidas: (0.57, 0.49, 0.61), pos: (0, 0.245, 0.305), color: (0.82, 0.83, 0.85), metal: true),
+        ],
+        funcion: Some(Deposito(lugares: [(-0.13, 0.317, 0.27), (0.13, 0.317, 0.27), (-0.13, 0.012, 0.27), (0.13, 0.012, 0.27)])),
+    ),
+    (
+        id: "alacena_cajones",
+        modelo: Some("accesorios/alacena_cajones"), // REQ-MOD-14
+        nombre: "Cajonera de tres cajones",
+        categoria: Alacena,
+        precio: 180,
+        forma: [
+            (tipo: Caja, medidas: (0.57, 0.49, 0.61), pos: (0, 0.245, 0.305), color: (0.82, 0.83, 0.85), metal: true),
+        ],
+        funcion: Some(Deposito(lugares: [(-0.125, 0.419, 0.265), (0.125, 0.419, 0.265), (-0.125, 0.239, 0.265), (0.125, 0.239, 0.265), (-0.125, 0.058, 0.265), (0.125, 0.058, 0.265)])),
+    ),
+    (
+        id: "alacena_mixta",
+        modelo: Some("accesorios/alacena_mixta"), // REQ-MOD-14
+        nombre: "Alacena con puerta y cajones",
+        categoria: Alacena,
+        precio: 200,
+        forma: [
+            (tipo: Caja, medidas: (0.57, 0.49, 0.61), pos: (0, 0.245, 0.305), color: (0.82, 0.83, 0.85), metal: true),
+        ],
+        funcion: Some(Deposito(lugares: [(-0.14, 0.317, 0.27), (-0.14, 0.012, 0.27), (0.14, 0.419, 0.265), (0.14, 0.239, 0.265), (0.14, 0.058, 0.265)])),
+    ),
+    // ── Toldos (REQ-AMP-07): uno por tamaño; los medianos también en el food truck y el tráiler ──
+    (
+        id: "toldo_frente_chico",
+        modelo: Some("accesorios/toldo_frente_chico"), // REQ-MOD-14
+        nombre: "Toldito de frente (chico)",
+        categoria: Toldo,
+        precio: 50,
+        bases: Some(["barra_chica"]), // REQ-TIE-11
+        choca_con: [Cartel], // REQ-AMP-11: lo taparía al cartel
+        forma: [
+            (tipo: Caja, medidas: (1.6, 0.02, 0.8), pos: (0, 2.0, 0.4), color: (0.8, 0.15, 0.12), colision: false),
+        ],
+    ),
+    (
+        id: "toldo_frente_mediano",
+        modelo: Some("accesorios/toldo_frente_mediano"), // REQ-MOD-14
+        nombre: "Toldito de frente (mediano)",
+        categoria: Toldo,
+        precio: 60,
+        bases: Some(["barra_mediana"]), // REQ-TIE-11
+        choca_con: [Cartel], // REQ-AMP-11: lo taparía al cartel
+        forma: [
+            (tipo: Caja, medidas: (2.4, 0.02, 0.8), pos: (0, 2.0, 0.4), color: (0.8, 0.15, 0.12), colision: false),
+        ],
+    ),
+    (
+        id: "toldo_frente_grande",
+        modelo: Some("accesorios/toldo_frente_grande"), // REQ-MOD-14
+        nombre: "Toldito de frente (grande)",
+        categoria: Toldo,
+        precio: 80,
+        bases: Some(["carro_grande"]), // REQ-TIE-11
+        choca_con: [Cartel], // REQ-AMP-11: lo taparía al cartel
+        forma: [
+            (tipo: Caja, medidas: (3.4, 0.02, 0.8), pos: (0, 2.0, 0.4), color: (0.8, 0.15, 0.12), colision: false),
+        ],
+    ),
+    (
+        id: "toldo_rayado_chico",
+        modelo: Some("accesorios/toldo_rayado_chico"), // REQ-MOD-14
+        nombre: "Toldo rayado (chico)",
+        categoria: Toldo,
+        precio: 100,
+        bases: Some(["barra_chica"]), // REQ-TIE-11
+        choca_con: [Carpa], // REQ-AMP-11: no entra con una carpa
+        forma: [
+            (tipo: Caja, medidas: (1.6, 0.02, 0.8), pos: (0, 2.0, 0.4), color: (0.8, 0.15, 0.12), colision: false),
+        ],
+    ),
+    (
+        id: "toldo_rayado_mediano",
+        modelo: Some("accesorios/toldo_rayado_mediano"), // REQ-MOD-14
+        nombre: "Toldo rayado (mediano)",
+        categoria: Toldo,
+        precio: 130,
+        bases: Some(["barra_mediana", "food_truck", "trailer"]), // REQ-TIE-11
+        choca_con: [Carpa], // REQ-AMP-11: no entra con una carpa
+        forma: [
+            (tipo: Caja, medidas: (2.4, 0.02, 0.8), pos: (0, 2.0, 0.4), color: (0.8, 0.15, 0.12), colision: false),
+        ],
+    ),
+    (
+        id: "toldo_rayado_grande",
+        modelo: Some("accesorios/toldo_rayado_grande"), // REQ-MOD-14
+        nombre: "Toldo rayado (grande)",
+        categoria: Toldo,
+        precio: 170,
+        bases: Some(["carro_grande"]), // REQ-TIE-11
+        choca_con: [Carpa], // REQ-AMP-11: no entra con una carpa
+        forma: [
+            (tipo: Caja, medidas: (3.4, 0.02, 0.8), pos: (0, 2.0, 0.4), color: (0.8, 0.15, 0.12), colision: false),
+        ],
+    ),
+    (
+        id: "toldo_enrollable_chico",
+        modelo: Some("accesorios/toldo_enrollable_chico"), // REQ-MOD-14
+        nombre: "Toldo enrollable (chico)",
+        categoria: Toldo,
+        precio: 140,
+        bases: Some(["barra_chica"]), // REQ-TIE-11
+        choca_con: [Carpa], // REQ-AMP-11: no entra con una carpa
+        forma: [
+            (tipo: Caja, medidas: (1.6, 0.02, 0.8), pos: (0, 2.0, 0.4), color: (0.8, 0.15, 0.12), colision: false),
+        ],
+    ),
+    (
+        id: "toldo_enrollable_mediano",
+        modelo: Some("accesorios/toldo_enrollable_mediano"), // REQ-MOD-14
+        nombre: "Toldo enrollable (mediano)",
+        categoria: Toldo,
+        precio: 180,
+        bases: Some(["barra_mediana", "food_truck", "trailer"]), // REQ-TIE-11
+        choca_con: [Carpa], // REQ-AMP-11: no entra con una carpa
+        forma: [
+            (tipo: Caja, medidas: (2.4, 0.02, 0.8), pos: (0, 2.0, 0.4), color: (0.8, 0.15, 0.12), colision: false),
+        ],
+    ),
+    (
+        id: "toldo_enrollable_grande",
+        modelo: Some("accesorios/toldo_enrollable_grande"), // REQ-MOD-14
+        nombre: "Toldo enrollable (grande)",
+        categoria: Toldo,
+        precio: 230,
+        bases: Some(["carro_grande"]), // REQ-TIE-11
+        choca_con: [Carpa], // REQ-AMP-11: no entra con una carpa
+        forma: [
+            (tipo: Caja, medidas: (3.4, 0.02, 0.8), pos: (0, 2.0, 0.4), color: (0.8, 0.15, 0.12), colision: false),
+        ],
+    ),
+    // ── Guirnaldas (REQ-AMP-10): van de los caños de adelante de un techo ──
+    (
+        id: "guirnalda_luces_chico",
+        modelo: Some("accesorios/guirnalda_luces_chico"), // REQ-MOD-14
+        nombre: "Guirnalda de luces (chico)",
+        categoria: Guirnalda,
+        precio: 50,
+        bases: Some(["barra_chica"]), // REQ-TIE-11
+        forma: [
+            (tipo: Cilindro, medidas: (0.004, 1.54, 0), rot: (0, 0, 90), color: (0.1, 0.1, 0.1), colision: false),
+        ],
+        funcion: Some(Luz(pos: (0, -0.26, 0), color: (1.0, 0.78, 0.45), energia: 1.5, alcance: 5.0)), // REQ-CAR-06
+    ),
+    (
+        id: "guirnalda_luces_mediano",
+        modelo: Some("accesorios/guirnalda_luces_mediano"), // REQ-MOD-14
+        nombre: "Guirnalda de luces (mediano)",
+        categoria: Guirnalda,
+        precio: 65,
+        bases: Some(["barra_mediana"]), // REQ-TIE-11
+        forma: [
+            (tipo: Cilindro, medidas: (0.004, 2.34, 0), rot: (0, 0, 90), color: (0.1, 0.1, 0.1), colision: false),
+        ],
+        funcion: Some(Luz(pos: (0, -0.26, 0), color: (1.0, 0.78, 0.45), energia: 1.5, alcance: 5.0)), // REQ-CAR-06
+    ),
+    (
+        id: "guirnalda_luces_grande",
+        modelo: Some("accesorios/guirnalda_luces_grande"), // REQ-MOD-14
+        nombre: "Guirnalda de luces (grande)",
+        categoria: Guirnalda,
+        precio: 90,
+        bases: Some(["carro_grande"]), // REQ-TIE-11
+        forma: [
+            (tipo: Cilindro, medidas: (0.004, 3.34, 0), rot: (0, 0, 90), color: (0.1, 0.1, 0.1), colision: false),
+        ],
+        funcion: Some(Luz(pos: (0, -0.26, 0), color: (1.0, 0.78, 0.45), energia: 1.5, alcance: 5.0)), // REQ-CAR-06
     ),
 ]

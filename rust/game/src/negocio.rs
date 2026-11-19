@@ -120,6 +120,23 @@ impl Negocio {
         self.hoy.perdidos
     }
 
+    /// SPEC-017: el modo armado paga y cobra con la caja (REQ-ECO-02).
+    pub fn caja_mut(&mut self) -> &mut Caja {
+        &mut self.caja
+    }
+
+    /// REQ-TIE-02: compra en la tienda del modo armado.
+    pub fn registrar_gasto(&mut self, monto: f32) {
+        if monto > 0.0 {
+            self.hoy.gasto(monto);
+        }
+    }
+
+    /// REQ-TIE-09: venta de algo guardado.
+    pub fn registrar_ingreso(&mut self, monto: f32) {
+        self.hoy.ingreso(monto);
+    }
+
     /// Solo para pruebas.
     pub fn set_saldo(&mut self, s: f32) {
         self.caja.saldo = s;

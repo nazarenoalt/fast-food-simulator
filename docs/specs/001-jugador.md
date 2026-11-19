@@ -19,6 +19,8 @@ y caminar por la plaza.
   y empuja suavemente los objetos sueltos con física al chocarlos.
 - **REQ-JUG-07** Clic captura el mouse; Esc lo libera (para poder salir de la ventana).
 - **REQ-JUG-08** El jugador aparece detrás del mostrador del carrito.
+- **REQ-JUG-09** Camina por escalones de hasta 0,30 m sin saltar (el del food truck y el
+  tráiler, SPEC-027): si choca de frente con un borde que se puede pisar, sube a ese nivel.
 
 ## Criterios de aceptación
 

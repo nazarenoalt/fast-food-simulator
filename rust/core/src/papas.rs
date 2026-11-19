@@ -204,8 +204,10 @@ mod tests {
                 b.anclajes.iter().find(|a| a.id == "cartel").unwrap_or_else(|| panic!("{}: sin anclaje cartel", b.id));
             assert_eq!(a.categorias, vec![Categoria::Cartel], "{}", b.id);
             assert_eq!(b.anclajes.iter().filter(|x| x.categorias.contains(&Categoria::Cartel)).count(), 1);
-            // Adelante, centrado y mirando al cliente (+Z), donde lo ven los de la fila.
-            assert!(a.pos[0].abs() < 1e-6 && a.rot_y.abs() < 1e-6, "{}", b.id);
+            // Adelante, centrado (en la base, o en la ventana y la fila: REQ-AMP-03) y mirando al
+            // cliente (+Z), donde lo ven los de la fila.
+            let centrado = a.pos[0].abs() < 1e-6 || (a.pos[0] - b.fila[0]).abs() < 1e-6;
+            assert!(centrado && a.rot_y.abs() < 1e-6, "{}", b.id);
             assert!(a.pos[2] > b.profundidad / 2.0 && b.fila[2] > a.pos[2] + 0.3, "{}: adelante del carro", b.id);
             // Del canto del mostrador: el clavo entra en la losa (0,04 m abajo del mostrador).
             let clavo = a.pos[1] - 0.008;

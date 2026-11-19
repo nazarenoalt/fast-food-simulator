@@ -9,8 +9,9 @@
 | Espacio | Saltar |
 | Clic izquierdo | Agarrar / soltar |
 | Clic derecho | Tirar lo que tenés en la mano |
-| E | Usar: prender el hervidor, la plancha o la parrilla, abrir y cerrar la heladera o la puerta del carrito (carro grande y kiosco), dar vuelta una hamburguesa, un chorizo o un pan, sacar del depósito, poner aderezo (con la comida en la mano), recargar un pomo (con el repuesto en la mano), echar carbón en la parrilla (con la bolsa en la mano) |
+| E | Usar: prender el hervidor, la plancha o la parrilla, abrir y cerrar la heladera, la puerta del carrito (carro grande, kiosco, food truck y tráiler) o las puertas y cajones de las alacenas, dar vuelta una hamburguesa, un chorizo o un pan, sacar del depósito, poner aderezo (con la comida en la mano), recargar un pomo (con el repuesto en la mano), echar carbón en la parrilla (con la bolsa en la mano) |
 | Tab | Panel del proveedor (comprar mercadería) |
+| B | Modo armado: poner, mover, guardar y vender accesorios; con Tab adentro, color, bases e inventario ([SPEC-017](specs/017-tienda.md), [SPEC-027](specs/027-ampliaciones.md)) |
 | T | Tiempo ×30 (para ver el atardecer rápido) |
 | C | Traer un cliente al instante (para probar) |
 | M | Silenciar o reactivar todo el sonido |
@@ -38,6 +39,13 @@ carrito; llevá el paquete a un lugar libre del estante y queda guardado.
   (traen su colador) y `tabla_papas` (cuchillo, pelapapas y una papa) para los anclajes de
   mostrador, `cartel_cerrado` para el anclaje `cartel` (cuelga adelante, del canto del
   mostrador), y las bolsas de papas de 2 y 5 kg y `pack_cajitas` en el proveedor. Freír viene después.
+
+## Armar el carrito
+- **Food truck y tráiler** (panel de bases, Tab en el modo armado): arrancás afuera, adelante;
+  dá la vuelta, abrí la puerta con E y subí el escalón. Atendés por la ventana.
+- **Alacenas** en los huecos de abajo de la mesada (bahías): guardan mercadería; puertas y
+  cajones se abren con E. **Toldos** en el frente; **guirnaldas** solo con un techo puesto.
+- Hay cosas que no van juntas (la sombrilla con un techo, el toldo con la carpa): el juego avisa.
 
 ## Otros platos
 - **Hamburguesa:** E sobre la plancha para prenderla, apoyá una hamburguesa y dale vuelta con

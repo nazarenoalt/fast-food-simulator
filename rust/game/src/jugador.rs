@@ -3,12 +3,14 @@
 use godot::classes::input::MouseMode;
 use godot::classes::{
     Camera3D, CapsuleShape3D, CharacterBody3D, ICharacterBody3D, Input, InputEvent, InputEventKey,
-    InputEventMouseButton, InputEventMouseMotion, InputMap, Node, ProjectSettings, RayCast3D, RigidBody3D,
+    InputEventMouseButton, InputEventMouseMotion, InputMap, KinematicCollision3D, Node, ProjectSettings, RayCast3D,
+    RigidBody3D,
 };
 use godot::global::{Key, MouseButton};
 use godot::prelude::*;
 
 use crate::aderecera::Pomo;
+use crate::armado;
 use crate::bloque_stock::BloqueStock;
 use crate::comida::Comida;
 use crate::formas;
@@ -30,6 +32,8 @@ const VEL_SALTO: f32 = 4.5;
 const ALTO: f32 = 1.75; // REQ-JUG-05
 const RADIO: f32 = 0.3; // REQ-JUG-05
 const ALTO_OJOS: f32 = 1.65; // REQ-JUG-05
+/// REQ-JUG-09: escalón más alto que se sube caminando.
+const ESCALON_MAX: f32 = 0.30;
 const ALCANCE: f32 = 2.5; // REQ-INT-01
 const DIST_MANO: f32 = 1.0; // REQ-INT-03
 const RESORTE: f32 = 12.0; // REQ-INT-04
@@ -80,6 +84,7 @@ fn registrar_acciones() {
         ("usar", Key::E),
         ("tiempo_rapido", Key::T),
         ("tienda", Key::TAB),
+        ("armado", Key::B), // REQ-TIE-01
         ("traer_cliente", Key::C),
     ] {
         if !mapa.has_action(accion) {
@@ -166,10 +171,14 @@ impl ICharacterBody3D for Jugador {
             }
             // REQ-JUG-07: clic captura el mouse (salvo con el panel del proveedor abierto).
             if !capturado {
-                if tienda::abierta() {
+                if tienda::abierta() || armado::menu_abierto() {
                     return;
                 }
                 input.set_mouse_mode(MouseMode::CAPTURED);
+                return;
+            }
+            // REQ-TIE-01: en el modo armado los clics son del modo armado.
+            if armado::activo() {
                 return;
             }
             match boton.get_button_index() {
@@ -188,6 +197,11 @@ impl ICharacterBody3D for Jugador {
     fn physics_process(&mut self, delta: f64) {
         let dt = delta as f32;
         self.mover(dt);
+        // REQ-TIE-01: en el modo armado no se usa nada y el cartel es del modo armado.
+        if armado::activo() {
+            self.actualizar_mano(dt);
+            return;
+        }
         if Input::singleton().is_action_just_pressed("usar") {
             self.usar();
         }
@@ -197,6 +211,32 @@ impl ICharacterBody3D for Jugador {
 }
 
 impl Jugador {
+    /// REQ-JUG-09: prueba subir `ESCALON_MAX`, avanzar y bajar hasta apoyar. Si arriba hay techo,
+    /// si sigue chocando (es una pared) o si no hay piso, no hace nada.
+    fn subir_escalon(&mut self, avance: Vector3) {
+        let t = self.base().get_global_transform();
+        let arriba = Vector3::UP * ESCALON_MAX;
+        if self.base_mut().test_move(t, arriba) {
+            return;
+        }
+        // Avanza lo suficiente para apoyar arriba del borde (no en la punta), sin pasar el radio.
+        let paso = avance.normalized() * avance.length().max(RADIO * 0.66);
+        let t_arriba = t.translated(arriba);
+        if self.base_mut().test_move(t_arriba, paso) {
+            return;
+        }
+        let t_adelante = t_arriba.translated(paso);
+        let col = KinematicCollision3D::new_gd();
+        if !self.base_mut().test_move_ex(t_adelante, -arriba).collision(&col).done() {
+            return;
+        }
+        let bajada = col.get_travel();
+        if (arriba + bajada).y < 0.02 || col.get_normal().y < 0.7 {
+            return;
+        }
+        self.base_mut().set_global_position(t_adelante.origin + bajada);
+    }
+
     fn mover(&mut self, dt: f32) {
         let input = Input::singleton();
         let mut v = self.base().get_velocity();
@@ -222,8 +262,13 @@ impl Jugador {
             v.x = 0.0;
             v.z = 0.0;
         }
+        let apoyado = self.base().is_on_floor();
         self.base_mut().set_velocity(v);
         self.base_mut().move_and_slide();
+        // REQ-JUG-09: si choca de frente con un borde bajo (escalón), sube a ese nivel.
+        if apoyado && self.base().is_on_wall() && dir.length() > 0.01 {
+            self.subir_escalon(Vector3::new(v.x, 0.0, v.z) * dt);
+        }
 
         // REQ-SON-08: un paso cada tanto caminado, solo apoyado en el piso.
         let horizontal = Vector2::new(v.x, v.z).length();

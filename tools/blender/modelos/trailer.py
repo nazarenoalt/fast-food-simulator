@@ -1,5 +1,5 @@
-"""Modelo: tráiler de comida (id `trailer`, etapa 5; "remolque" en SPEC-006, fuera de
-alcance; todavía sin `.ron`: medidas y anclajes propuestos acá para la spec).
+"""Modelo: tráiler de comida (id `trailer`; en el juego desde SPEC-027:
+godot/data/carritos/trailer.ron).
 
 Genera:
     arte/fuentes/carritos/trailer.blend
@@ -35,7 +35,8 @@ Anclajes propuestos (pos en Godot, desde el centro de la casilla a nivel de la c
     atras_izq (−0,95; 1,45; −0,70)      [Cocina, Equipamiento, Deposito]   mesada de atrás
     atras_der (−0,20; 1,45; −0,70)      [Cocina, Equipamiento, Deposito]
     frente (−0,15; 0,70; 1,01)          [Telon, Decoracion]
-    cartel (−0,15; 2,55; 0,0)           [Decoracion]   arriba del techo
+    cartel (−0,15; 1,438; 1,202) [Cartel]  canto de la repisa (REQ-AMP-03; cartel_techo arriba, toldo y carpa:
+                                        ver el .ron y SPEC-027)
     luz_1 (−0,60; 2,50; 0,0), luz_2 (0,60; 2,50; 0,0)  [Luz]  techo de adentro
     entrega (0,45; 1,45; 1,12)   en la repisa de afuera
     fila (−0,15; 0,0; 1,65)      primer lugar, frente a la ventana (sigue hacia +X)
@@ -93,13 +94,13 @@ P = {
     "materiales": ("M_PinturaCarrito", "M_Acero", "M_Goma", "M_PlasticoNegro", "M_MetalOscuro", "M_BlancoCrema"),
     "ancho": 3.00, "prof": 2.00, "alto_total": 2.55,
     "x0": -1.50, "x1": 1.50, "zh": 1.00, "alto": 2.55, "r_techo": 0.35, "seg_techo": 4,
-    "y_base": 0.30, "y_piso": 0.50, "y_puerta": 2.15, "y_escalon": 0.25,
+    "y_base": 0.30, "y_piso": 0.50, "y_puerta": 2.30, "y_escalon": 0.25,  # SPEC-027: 1,80 m de vano (el jugador mide 1,75)
     "ventana": (-1.20, 0.90, 1.41, 2.10), "repisa": 0.25, "puerta": (0.55, 1.30),
     "z_mueble": 0.37, "bahias_x": [(-1.43, -0.62), (0.22, 1.43)], "mesada_atras": (-1.448, 0.35),
     "fondo_atras": 0.50,
     "ejes": [{"x": -0.20, "r": 0.32, "ancho": 0.20, "z": 0.86, "caja": True, "arco": 0.40, "y_arco": 0.70}],
     "z_pasarrueda": 0.72,
-    "toldo_abierto": -110.0,
+    "toldo_abierto": -110.0, "tapa_sobra": 0.15, "amortiguador": 0.12,  # SPEC-027: toldo debajo
     "anclajes": [
         ("mostrador_izq", (-0.85, 1.45, 0.66), 0.0),
         ("mostrador_centro", (-0.15, 1.45, 0.66), 0.0),
@@ -107,7 +108,10 @@ P = {
         ("atras_izq", (-0.95, 1.45, -0.70), 0.0),
         ("atras_der", (-0.20, 1.45, -0.70), 0.0),
         ("frente", (-0.15, 0.70, 1.01), 0.0),
-        ("cartel", (-0.15, 2.55, 0.0), 0.0),
+        ("cartel", (-0.15, 1.438, 1.202), 0.0),       # REQ-AMP-03: canto de la repisa (REQ-PAP-07)
+        ("cartel_techo", (-0.15, 2.55, 0.0), 0.0),  # REQ-AMP-03: arriba del techo (cartel luminoso)
+        ("toldo", (-0.15, 0.0, 1.00), 0.0),         # REQ-AMP-07: la lona queda debajo de la tapa
+        ("carpa", (-0.15, 0.0, 2.8), 0.0),          # REQ-AMP-08: adelante, sin tocar la tapa abierta
         ("luz_1", (-0.60, 2.50, 0.0), 0.0),
         ("luz_2", (0.60, 2.50, 0.0), 0.0),
     ],
@@ -135,4 +139,4 @@ VISTAS = [
 
 if __name__ == "__main__":
     r.main(P, "trailer · 3,00 × 2,55 × 2,00 m (3,94 con la lanza) · base con interior caminable "
-              "(propuesta, sin .ron)", VISTAS)
+              "(SPEC-027)", VISTAS)

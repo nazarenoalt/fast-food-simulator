@@ -10,7 +10,7 @@
         separacion: (0.18, 0.047, 0.058),
         empaque: Bolsa,
         color_empaque: (0.92, 0.94, 1.0),
-        precio: 1800,
+        precio: 7,
     ),
     (
         id: "caja_salchichas_12",
@@ -21,7 +21,7 @@
         separacion: (0.16, 0.024, 0.025),
         empaque: Bandeja,
         color_empaque: (0.78, 0.62, 0.42),
-        precio: 3200,
+        precio: 13,
     ),
     (
         id: "caja_hamburguesas_12",
@@ -31,7 +31,7 @@
         separacion: (0.115, 0.03, 0.115),
         empaque: Bandeja,
         color_empaque: (0.78, 0.62, 0.42),
-        precio: 4800,
+        precio: 19,
     ),
     (
         id: "pack_mostaza",
@@ -41,7 +41,7 @@
         separacion: (0.09, 0.19, 0.09),
         empaque: Bandeja,
         color_empaque: (0.78, 0.62, 0.42),
-        precio: 2000,
+        precio: 8,
     ),
     (
         id: "pack_ketchup",
@@ -51,7 +51,7 @@
         separacion: (0.09, 0.19, 0.09),
         empaque: Bandeja,
         color_empaque: (0.78, 0.62, 0.42),
-        precio: 2000,
+        precio: 8,
     ),
     (
         id: "pack_mayonesa",
@@ -61,7 +61,7 @@
         separacion: (0.09, 0.19, 0.09),
         empaque: Bandeja,
         color_empaque: (0.78, 0.62, 0.42),
-        precio: 2000,
+        precio: 8,
     ),
     (
         id: "caja_chorizos_12",
@@ -71,7 +71,7 @@
         separacion: (0.17, 0.034, 0.034),
         empaque: Bandeja,
         color_empaque: (0.78, 0.62, 0.42),
-        precio: 5200,
+        precio: 21,
     ),
     (
         id: "pack_carbon",
@@ -81,7 +81,7 @@
         separacion: (0.22, 0.08, 0.3),
         empaque: Bandeja,
         color_empaque: (0.78, 0.62, 0.42),
-        precio: 2400,
+        precio: 10,
     ),
     (
         id: "bolsa_panes_choripan_12",
@@ -91,7 +91,7 @@
         separacion: (0.21, 0.052, 0.068),
         empaque: Bolsa,
         color_empaque: (0.92, 0.94, 1.0),
-        precio: 2200,
+        precio: 9,
     ),
     (
         id: "pack_papas_pay",
@@ -101,7 +101,7 @@
         separacion: (0.09, 0.19, 0.09),
         empaque: Bandeja,
         color_empaque: (0.78, 0.62, 0.42),
-        precio: 2000,
+        precio: 8,
     ),
     (
         id: "pack_chimichurri",
@@ -111,7 +111,7 @@
         separacion: (0.09, 0.19, 0.09),
         empaque: Bandeja,
         color_empaque: (0.78, 0.62, 0.42),
-        precio: 2000,
+        precio: 8,
     ),
     // ── Papas fritas (SPEC-026) ──
     // REQ-PAP-03: bolsas de arpillera (cerradas: las papas de adentro no se ven). La grilla
@@ -125,7 +125,7 @@
         separacion: (0.096, 0.062, 0.072),
         empaque: Bolsa,
         color_empaque: (0.64, 0.54, 0.37),
-        precio: 2400,
+        precio: 10,
     ),
     (
         id: "bolsa_papas_5kg",
@@ -136,7 +136,7 @@
         separacion: (0.096, 0.062, 0.072),
         empaque: Bolsa,
         color_empaque: (0.64, 0.54, 0.37),
-        precio: 4400,
+        precio: 18,
     ),
     (
         id: "pack_cajitas",
@@ -146,6 +146,6 @@
         separacion: (0.095, 0.115, 0.06),
         empaque: Bandeja,
         color_empaque: (0.78, 0.62, 0.42),
-        precio: 1500,
+        precio: 6,
     ),
 ]

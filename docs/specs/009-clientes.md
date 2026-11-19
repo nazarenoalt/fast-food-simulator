@@ -44,7 +44,7 @@ y se van) y juzgan lo que les diste.
 - **REQ-CLI-09** Si lo acepta paga el precio del producto más una propina de hasta 20%
   (0% con 3 estrellas o menos, 20% con 5), y se va comiendo.
 - **REQ-CLI-10** Cada cliente atendido o perdido actualiza la reputación (SPEC-010) y se
-  muestra un aviso con el resultado (ej. "+$2.750 · ★★★★☆").
+  muestra un aviso con el resultado (ej. "+$12 · ★★★★☆").
 - **REQ-CLI-11** (Para probar) La tecla C trae un cliente a la fila al instante.
 
 ## Criterios de aceptación

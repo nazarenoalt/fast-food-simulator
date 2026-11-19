@@ -243,8 +243,8 @@ mod tests {
             frescura: Some(fr),
             aderezos: vec![],
         };
-        let fresca = evaluar(&ped, &e(100.0), 4000.0, 0.0).unwrap().estrellas;
-        let dudosa = evaluar(&ped, &e(30.0), 4000.0, 0.0).unwrap().estrellas;
+        let fresca = evaluar(&ped, &e(100.0), 16.0, 0.0).unwrap().estrellas;
+        let dudosa = evaluar(&ped, &e(30.0), 16.0, 0.0).unwrap().estrellas;
         assert_eq!(fresca, 5.0);
         assert_eq!(dudosa, 4.0);
     }
@@ -261,6 +261,6 @@ mod tests {
             frescura: Some(0.0),
             aderezos: vec![],
         };
-        assert_eq!(evaluar(&ped, &e, 4000.0, 0.0), Err(Rechazo::EchadaAPerder));
+        assert_eq!(evaluar(&ped, &e, 16.0, 0.0), Err(Rechazo::EchadaAPerder));
     }
 }

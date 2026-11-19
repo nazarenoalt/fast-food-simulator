@@ -118,7 +118,8 @@ impl ICanvasLayer for Tienda {
     }
 
     fn process(&mut self, _delta: f64) {
-        if Input::singleton().is_action_just_pressed("tienda") {
+        // REQ-TIE-07: en el modo armado, Tab es del panel del carrito.
+        if Input::singleton().is_action_just_pressed("tienda") && !crate::armado::activo() {
             self.alternar();
         }
         if !abierta() {

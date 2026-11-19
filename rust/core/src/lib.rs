@@ -3,6 +3,7 @@
 //! Cada módulo implementa una spec de `docs/specs/`.
 
 pub mod aderezos; // SPEC-012
+pub mod ampliaciones; // SPEC-027
 pub mod armado; // SPEC-005
 pub mod azar; // números al azar con semilla
 pub mod caminos; // SPEC-013 (red de peatones)
@@ -27,6 +28,7 @@ pub mod proveedor; // SPEC-011
 pub mod puerta; // SPEC-006 (puerta de las bases)
 pub mod reloj; // SPEC-007
 pub mod sonido;
+pub mod tienda; // SPEC-017
 pub mod tostado; // SPEC-015 (pan tostado) // SPEC-024
 
 /// Temperatura ambiente en °C.

@@ -1,6 +1,6 @@
 //! SPEC-010 · Economía: caja, reputación y estadísticas del día.
 
-pub const SALDO_INICIAL: f32 = 30_000.0; // REQ-ECO-01
+pub const SALDO_INICIAL: f32 = 120.0; // REQ-ECO-01
 pub const REPUTACION_INICIAL: f32 = 3.0; // REQ-ECO-04
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -71,6 +71,10 @@ impl EstadisticasDia {
     pub fn gasto(&mut self, monto: f32) {
         self.gastos += monto;
     }
+    /// REQ-TIE-09: plata que entra sin ser una venta (vender algo usado).
+    pub fn ingreso(&mut self, monto: f32) {
+        self.ingresos += monto;
+    }
     pub fn resumen(&self, dia: u32) -> String {
         format!(
             "Resumen del día {dia}: {} ventas · ingresos {} · gastos {} · ganancia {} · {} clientes se fueron sin comprar",
@@ -83,7 +87,7 @@ impl EstadisticasDia {
     }
 }
 
-/// "$2.750", "-$1.200"
+/// "$12", "$2.750", "-$1.200"
 pub fn plata(monto: f32) -> String {
     let negativo = monto < 0.0;
     let entero = monto.abs().round() as u64;
@@ -105,18 +109,18 @@ mod tests {
     #[test]
     fn req_eco_01_caja_inicial_cobra_y_paga() {
         let mut c = Caja::default();
-        assert_eq!(c.saldo, 30_000.0);
-        c.cobrar(2750.0);
-        assert_eq!(c.saldo, 32_750.0);
-        c.pagar(1800.0).unwrap();
-        assert_eq!(c.saldo, 30_950.0);
+        assert_eq!(c.saldo, 120.0);
+        c.cobrar(11.0);
+        assert_eq!(c.saldo, 131.0);
+        c.pagar(7.0).unwrap();
+        assert_eq!(c.saldo, 124.0);
     }
 
     #[test]
     fn req_eco_02_no_gastar_lo_que_no_hay() {
-        let mut c = Caja { saldo: 1000.0 };
-        assert_eq!(c.pagar(1800.0), Err(SinSaldo { falta: 800.0 }));
-        assert_eq!(c.saldo, 1000.0);
+        let mut c = Caja { saldo: 4.0 };
+        assert_eq!(c.pagar(7.0), Err(SinSaldo { falta: 3.0 }));
+        assert_eq!(c.saldo, 4.0);
     }
 
     #[test]
@@ -134,13 +138,13 @@ mod tests {
     #[test]
     fn req_eco_05_estadisticas_y_resumen() {
         let mut e = EstadisticasDia::default();
-        e.venta(2750.0);
-        e.venta(2500.0);
-        e.gasto(1800.0);
+        e.venta(11.0);
+        e.venta(10.0);
+        e.gasto(7.0);
         e.perdido();
         assert_eq!((e.ventas, e.atendidos, e.perdidos), (2, 2, 1));
         let r = e.resumen(1);
-        assert!(r.contains("día 1") && r.contains("2 ventas") && r.contains("$5.250") && r.contains("$3.450"));
+        assert!(r.contains("día 1") && r.contains("2 ventas") && r.contains("$21") && r.contains("$14"));
     }
 
     #[test]

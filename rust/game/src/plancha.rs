@@ -56,6 +56,10 @@ impl Plancha {
     }
 
     /// Solo para pruebas.
+    pub fn temperatura(&self) -> f32 {
+        self.estado.temp
+    }
+
     pub fn set_temperatura(&mut self, t: f32) {
         self.estado.temp = t;
     }

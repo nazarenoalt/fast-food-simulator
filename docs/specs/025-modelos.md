@@ -53,6 +53,8 @@ anclajes, depósito) sigue igual.
   `altura_aderezos` (0,0152 m).
 - **REQ-MOD-13** El carro kiosco (REQ-CAR-12) y el porche de nylon usan su modelo; la puerta
   del kiosco arranca abierta (REQ-CAR-11) y gira `pieza_puerta` sobre su bisagra.
+- **REQ-MOD-14** Las alacenas, los toldos, las guirnaldas, el food truck y el tráiler usan su
+  modelo (SPEC-027).
 
 ## Criterios de aceptación
 
@@ -66,7 +68,6 @@ anclajes, depósito) sigue igual.
 
 - Personajes (con esqueleto y animaciones), palomas y perro.
 - Ciudad: fachadas, autos, nubes.
-- Alacenas bajo mesada, techos y toldos, food truck y tráiler (necesitan anclajes nuevos).
 - Pomos y repuestos de aderezo, chorrito de aderezo, comida y equipos de la etapa 4.
 
 ## Notas de diseño

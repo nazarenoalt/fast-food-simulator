@@ -4,6 +4,7 @@
 use godot::prelude::*;
 
 mod aderecera; // SPEC-012
+mod armado; // SPEC-017
 mod bloque_stock; // SPEC-004
 mod carrito; // SPEC-006
 mod ciudad; // SPEC-013

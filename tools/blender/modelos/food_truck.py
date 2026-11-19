@@ -1,5 +1,5 @@
-"""Modelo: food truck (id `food_truck`, etapa 5; todavía sin `.ron`: medidas y anclajes
-propuestos acá para la spec).
+"""Modelo: food truck (id `food_truck`; en el juego desde SPEC-027:
+godot/data/carritos/food_truck.ron).
 
 Genera:
     arte/fuentes/carritos/food_truck.blend
@@ -37,7 +37,8 @@ Anclajes propuestos (pos en Godot, desde el centro de la casilla a nivel de la c
     atras_izq (−1,75; 1,45; −0,775)     [Cocina, Equipamiento, Deposito]   mesada de atrás
     atras_der (−0,75; 1,45; −0,775)     [Cocina, Equipamiento, Deposito]
     frente (−0,60; 0,70; 1,11)          [Telon, Decoracion]   el telón queda bajo la ventana
-    cartel (−0,60; 2,62; 0,75)          [Decoracion]          arriba del techo (cartel luminoso)
+    cartel (−0,60; 1,438; 1,302) [Cartel]  canto de la repisa (REQ-AMP-03; cartel_techo arriba, toldo y carpa:
+                                        ver el .ron y SPEC-027)
     luz_1 (−1,20; 2,57; 0,30), luz_2 (0,0; 2,57; 0,30)  [Luz]  colgadas del techo de adentro
     entrega (−0,10; 1,45; 1,22)  en la repisa de afuera
     fila (−0,60; 0,0; 1,75)      primer lugar, frente a la ventana (sigue hacia +X)
@@ -128,7 +129,7 @@ P = {
     "materiales": ("M_PinturaCarrito", "M_Acero", "M_Goma", "M_PlasticoNegro", "M_Hierro", "M_BlancoCrema"),
     "ancho": 4.50, "prof": 2.20, "alto_total": 2.72,
     "x0": -2.25, "x1": 1.05, "zh": 1.10, "alto": 2.62, "r_techo": 0.10, "seg_techo": 2,
-    "y_base": 0.30, "y_piso": 0.50, "y_puerta": 2.25, "y_escalon": 0.25,
+    "y_base": 0.30, "y_piso": 0.50, "y_puerta": 2.32, "y_escalon": 0.25,  # SPEC-027: 1,82 m de vano (el jugador mide 1,75)
     "ventana": (-1.75, 0.55, 1.41, 2.25), "repisa": 0.25, "puerta": (0.10, 0.85),
     "z_mueble": 0.47, "bahias_x": [(-1.12, 0.99)], "mesada_atras": (-2.198, -0.20), "fondo_atras": 0.55,
     "ejes": [
@@ -136,7 +137,7 @@ P = {
         {"x": EJE_ADELANTE, "r": R_RUEDA, "ancho": 0.24, "z": 0.95, "caja": False},
     ],
     "z_pasarrueda": 0.79,
-    "toldo_abierto": -110.0,
+    "toldo_abierto": -110.0, "tapa_sobra": 0.15, "amortiguador": 0.12,  # SPEC-027: toldo debajo
     "anclajes": [
         ("mostrador_izq", (-1.35, 1.45, 0.75), 0.0),
         ("mostrador_centro", (-0.60, 1.45, 0.75), 0.0),
@@ -144,7 +145,10 @@ P = {
         ("atras_izq", (-1.75, 1.45, -0.775), 0.0),
         ("atras_der", (-0.75, 1.45, -0.775), 0.0),
         ("frente", (-0.60, 0.70, 1.11), 0.0),
-        ("cartel", (-0.60, 2.62, 0.75), 0.0),
+        ("cartel", (-0.60, 1.438, 1.302), 0.0),       # REQ-AMP-03: canto de la repisa (REQ-PAP-07)
+        ("cartel_techo", (-0.60, 2.62, 0.75), 0.0),  # REQ-AMP-03: arriba del techo (cartel luminoso)
+        ("toldo", (-0.60, 0.15, 1.10), 0.0),         # REQ-AMP-07: la lona queda debajo de la tapa
+        ("carpa", (-0.60, 0.0, 3.0), 0.0),          # REQ-AMP-08: adelante, sin tocar la tapa abierta
         ("luz_1", (-1.20, 2.57, 0.30), 0.0),
         ("luz_2", (0.0, 2.57, 0.30), 0.0),
     ],
@@ -171,4 +175,4 @@ VISTAS = [
 ]
 
 if __name__ == "__main__":
-    r.main(P, "food_truck · 4,50 × 2,72 × 2,20 m · base con interior caminable (propuesta, sin .ron)", VISTAS)
+    r.main(P, "food_truck · 4,50 × 2,72 × 2,20 m · base con interior caminable (SPEC-027)", VISTAS)
