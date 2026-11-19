@@ -1,6 +1,6 @@
 //! SPEC-011 · Paquete que llega del proveedor: se agarra y se lleva al depósito.
 
-use carrito_core::deposito::DefBloque;
+use carrito_core::deposito::{Bloque, DefBloque};
 use godot::classes::{BoxShape3D, IRigidBody3D, Node3D, PhysicsMaterial, RigidBody3D};
 use godot::prelude::*;
 
@@ -13,6 +13,8 @@ use crate::formas;
 pub struct Paquete {
     base: Base<RigidBody3D>,
     def: DefBloque,
+    /// Unidades que le quedan (uno levantado del estante puede venir empezado). REQ-DEP-09
+    restantes: u32,
     /// Lo tiene el jugador en la mano. REQ-PRO-05
     pub sostenido: bool,
     /// Ya se acomodó en el depósito (está por desaparecer).
@@ -24,7 +26,18 @@ pub struct Paquete {
 impl Paquete {
     pub fn crear(def: DefBloque) -> Gd<Self> {
         let temp = bloque_stock::temp_inicial(&def);
-        Gd::from_init_fn(|base| Self { base, def, sostenido: false, acomodado: false, temp })
+        let restantes = def.capacidad();
+        Self::crear_con(def, restantes, temp)
+    }
+
+    /// REQ-DEP-09: un paquete con `restantes` unidades y a `temp` °C (levantado del estante).
+    pub fn crear_con(def: DefBloque, restantes: u32, temp: f32) -> Gd<Self> {
+        let restantes = Bloque::con_restantes(def.clone(), restantes).restantes;
+        Gd::from_init_fn(|base| Self { base, def, restantes, sostenido: false, acomodado: false, temp })
+    }
+
+    pub fn restantes(&self) -> u32 {
+        self.restantes
     }
 
     pub fn def(&self) -> &DefBloque {
@@ -32,7 +45,9 @@ impl Paquete {
     }
 
     pub fn descripcion(&self) -> String {
-        carrito_core::aderezos::capitalizar(&format!("{} ({} unidades)", self.def.nombre, self.def.capacidad()))
+        let (n, total) = (self.restantes, self.def.capacidad());
+        let unidades = if n == total { format!("{n} unidades") } else { format!("{n}/{total} unidades") };
+        carrito_core::aderezos::capitalizar(&format!("{} ({unidades})", self.def.nombre))
     }
 }
 
@@ -53,7 +68,7 @@ impl IRigidBody3D for Paquete {
         let [tx, ty, tz] = def.tamano();
         let masa_unidad = catalogo().producto(&def.producto).map(|p| p.masa).unwrap_or(0.05);
         let mut yo = self.to_gd();
-        yo.set_mass(masa_unidad * def.capacidad() as f32 + 0.05);
+        yo.set_mass(masa_unidad * self.restantes as f32 + 0.05);
         yo.set_angular_damp(2.0);
         yo.set_collision_layer(1 | formas::CAPA_OBJETOS);
         let mut mat = PhysicsMaterial::new_gd();
@@ -65,7 +80,7 @@ impl IRigidBody3D for Paquete {
         let mut visual = Node3D::new_alloc();
         visual.set_position(Vector3::new(0.0, -ty / 2.0, 0.0));
         yo.add_child(&visual);
-        bloque_stock::construir_visual(&mut visual, &def, def.capacidad());
+        bloque_stock::construir_visual(&mut visual, &def, self.restantes);
 
         let mut s = BoxShape3D::new_gd();
         s.set_size(Vector3::new(tx + 0.01, ty + 0.01, tz + 0.01));

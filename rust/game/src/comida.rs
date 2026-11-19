@@ -156,6 +156,39 @@ impl Comida {
         }
     }
 
+    /// REQ-HEL-08: le queda algo crudo (en lo que se cocina por lados, algún lado).
+    fn cruda(&self) -> bool {
+        use carrito_core::coccion::Punto;
+        match (&self.coccion, &self.lados) {
+            (Some((p, _)), Some(l)) => l.lados.iter().any(|e| e.punto(p) == Punto::Crudo),
+            (Some((p, e)), None) => e.punto(p) == Punto::Crudo,
+            _ => false,
+        }
+    }
+
+    /// Medidas para agarrarlo y colocarlo: (media altura, medio ancho, media medida mayor).
+    /// REQ-INT-03, REQ-INT-09
+    pub fn medidas(&self) -> (f32, f32, f32) {
+        medidas_de(&self.def)
+    }
+
+    /// REQ-COC-10: si se cocina entero en el agua (para volcar un paquete en el hervidor).
+    pub fn va_al_hervidor(producto: &str) -> bool {
+        catalogo().producto(producto).is_some_and(|d| d.va_al_hervidor())
+    }
+
+    /// REQ-INT-10: si `agregado` se arma sobre esta comida, dónde ponerlo (centro de la zona de
+    /// encastre, global).
+    pub fn encastre_para(&self, agregado: &str) -> Option<Vector3> {
+        let zona = self.zona_encastre.as_ref()?;
+        armado::combinar(&catalogo().combinaciones, &self.def.id, agregado)?;
+        Some(zona.get_global_position())
+    }
+
+    pub fn nombre(&self) -> &str {
+        &self.def.nombre
+    }
+
     /// REQ-PLA-04
     pub fn por_lados(&self) -> bool {
         self.lados.is_some()
@@ -507,16 +540,26 @@ impl IRigidBody3D for Comida {
                 let t = if t_entorno != TEMP_AMBIENTE { t_entorno } else { aire.unwrap_or(t_entorno) };
                 e.paso(p, t, dt);
             }
-            // REQ-HEL-03: la carne perecedera pierde frescura según su temperatura.
+            // REQ-HEL-03: la carne perecedera pierde frescura según su temperatura;
+            // REQ-HEL-08: una vez lista (sin nada crudo), ya no.
+            let cruda = self.cruda();
             if self.def.perecedero
                 && let (Some(t), Some(f)) = (self.temperatura(), &mut self.frescura)
             {
-                f.paso(t, dt);
+                f.paso_alimento(t, cruda, dt);
             }
             // REQ-COC-06
             self.actualizar_color();
         }
         self.intentar_encastre();
+    }
+}
+
+/// (media altura, medio ancho, media medida mayor) de un producto suelto. REQ-INT-03, REQ-INT-09
+pub fn medidas_de(def: &DefProducto) -> (f32, f32, f32) {
+    match def.colision {
+        Colision::Caja { medidas: [x, y, z] } => (y / 2.0, x.max(z) / 2.0, x.max(y).max(z) / 2.0),
+        Colision::Capsula { radio, largo } => (radio, largo / 2.0, largo / 2.0),
     }
 }
 

@@ -61,6 +61,11 @@ pub struct PruebaHumo {
     /// SPEC-027: fase de la prueba de ampliaciones y lo que se mide entre cuadros.
     fase_amp: u32,
     bloque_cajon: Option<(Gd<BloqueStock>, Vector3)>,
+    /// SPEC-002 (etapa 2.5): fase de la prueba de agarre y lo que se mide entre cuadros.
+    fase_agarre: u32,
+    salchichas_hervidor: usize,
+    carnes: Option<(Gd<Comida>, Gd<Comida>)>,
+    jugador_antes: Option<Transform3D>,
 }
 
 /// Material (de la primera superficie) de la pieza `nombre` de un modelo. SPEC-025
@@ -1236,20 +1241,173 @@ impl INode for PruebaHumo {
                 self.esperar(30);
             }
             31 => {
-                if self.fase_papas == 0 && self.fase_amp == 0 {
-                    self.chequear_armado(); // SPEC-017, una sola vez
-                }
-                if !self.chequear_ampliaciones() {
-                    self.paso -= 1; // SPEC-027: se repite este paso hasta terminar
-                } else if self.chequear_papas_y_puerta() {
-                    self.terminar();
+                if self.fase_agarre < 3 {
+                    self.chequear_agarre(); // SPEC-002 v2, REQ-DEP-09, REQ-COC-10, REQ-HEL-08
+                    self.paso -= 1;
                 } else {
-                    self.paso -= 1; // se repite este paso hasta terminar
+                    if self.fase_papas == 0 && self.fase_amp == 0 {
+                        self.chequear_armado(); // SPEC-017, una sola vez
+                    }
+                    if !self.chequear_ampliaciones() {
+                        self.paso -= 1; // SPEC-027: se repite este paso hasta terminar
+                    } else if self.chequear_papas_y_puerta() {
+                        self.terminar();
+                    } else {
+                        self.paso -= 1; // se repite este paso hasta terminar
+                    }
                 }
             }
             _ => {}
         }
         self.paso += 1;
+    }
+}
+
+impl PruebaHumo {
+    /// Salchichas sueltas dentro de la cuba del hervidor (y las que hay). REQ-COC-10
+    fn salchichas_en_hervidor(mundo: &Gd<Node>) -> Vec<Gd<Comida>> {
+        let Some(h) = todos::<Hervidor>(mundo).pop() else { return Vec::new() };
+        let t = h.get_global_transform();
+        todos::<Comida>(mundo)
+            .into_iter()
+            .filter(|c| c.bind().producto() == "salchicha" && !c.is_queued_for_deletion())
+            .filter(|c| {
+                let p = t.affine_inverse() * c.get_global_position();
+                p.x.abs() < 0.2 && p.z.abs() < 0.15 && p.y > -0.02 && p.y < 0.2
+            })
+            .collect()
+    }
+
+    /// Agarre de la etapa 2.5: levantar un paquete del estante, volcar salchichas al hervidor,
+    /// colocar una salchicha en el pan apuntando, y que lo cocido no se pudra. Una fase por llamada.
+    fn chequear_agarre(&mut self) {
+        let mundo = self.mundo();
+        let Some(mut j) = todos::<Jugador>(&mundo).pop() else {
+            self.chequear(false, "REQ-INT-03 hay jugador");
+            self.fase_agarre = 3;
+            return;
+        };
+        let lejos = Vector3::new(-5.0, 0.3, plaza::Z_VEREDA);
+        match self.fase_agarre {
+            0 => {
+                self.jugador_antes = Some(j.get_global_transform());
+                if let Some(viejo) = j.bind_mut().soltar() {
+                    let mut viejo = viejo;
+                    viejo.set_global_position(lejos);
+                }
+                // REQ-DEP-09: levanto un paquete del estante con lo que le queda.
+                // (las bolsas de papas no: las cuenta REQ-PAP-03 más adelante)
+                let libres: Vec<Gd<BloqueStock>> = todos::<BloqueStock>(&mundo)
+                    .into_iter()
+                    .filter(|b| !b.is_queued_for_deletion() && b.bind().restantes() > 0)
+                    .filter(|b| b.bind().producto() != "papa_cruda")
+                    .collect();
+                let bloque = libres.iter().find(|b| b.bind().producto() == "pan_pancho").or(libres.first()).cloned();
+                if let Some(b) = bloque {
+                    let n = b.bind().restantes();
+                    j.bind_mut().levantar(b.clone());
+                    let paquete = j.bind().en_mano().and_then(|m| m.try_cast::<Paquete>().ok());
+                    let ok = b.is_queued_for_deletion()
+                        && paquete.as_ref().is_some_and(|p| p.bind().restantes() == n && p.bind().sostenido);
+                    self.chequear(ok, &format!("REQ-DEP-09 levanto un paquete del estante con sus {n} unidades"));
+                    if let Some(mut p) = j.bind_mut().soltar() {
+                        p.set_global_position(lejos + Vector3::new(1.0, 0.0, 0.0));
+                    }
+                } else {
+                    self.chequear(false, "REQ-DEP-09 hay un bloque en el depósito");
+                }
+
+                // REQ-COC-10: con una caja de salchichas en la mano, E sobre el hervidor las vuelca.
+                self.salchichas_hervidor = Self::salchichas_en_hervidor(&mundo).len();
+                let def = crate::datos::catalogo().bloque("caja_salchichas_12").expect("caja de salchichas").clone();
+                let mut caja = Paquete::crear(def);
+                mundo.clone().add_child(&caja);
+                caja.set_global_position(j.get_global_position() + Vector3::new(0.0, 1.4, 0.0));
+                j.bind_mut().agarrar(caja.clone().upcast());
+                if let Some(h) = todos::<Hervidor>(&mundo).pop() {
+                    j.bind_mut().volcar(&h);
+                }
+                self.chequear(
+                    caja.is_queued_for_deletion() && j.bind().en_mano().is_none(),
+                    "REQ-COC-10 el paquete volcado se va de la mano",
+                );
+
+                // REQ-HEL-08: una hamburguesa cocida y enfriada no pierde frescura; una cruda sí.
+                let mut cocida = self.agregar_comida("hamburguesa", lejos + Vector3::new(0.0, 0.0, 0.5));
+                let mut cruda = self.agregar_comida("hamburguesa", lejos + Vector3::new(0.3, 0.0, 0.5));
+                cocida.bind_mut().forzar_avance(8.0);
+                for c in [&mut cocida, &mut cruda] {
+                    c.bind_mut().set_frescura(80.0);
+                    c.bind_mut().fijar_temperatura(20.0);
+                }
+                self.carnes = Some((cocida, cruda));
+
+                // REQ-INT-10: un pan en el suelo, para ponerle la salchicha apuntando.
+                self.pan = Some(self.agregar_comida("pan_pancho", lejos + Vector3::new(-1.0, 0.0, 0.0)));
+                self.esperar(90);
+            }
+            1 => {
+                let dentro = Self::salchichas_en_hervidor(&mundo);
+                self.chequear(
+                    dentro.len() == self.salchichas_hervidor + 12,
+                    &format!(
+                        "REQ-COC-10 las 12 salchichas quedan dentro del hervidor ({} → {})",
+                        self.salchichas_hervidor,
+                        dentro.len()
+                    ),
+                );
+                for mut c in dentro {
+                    c.queue_free();
+                }
+                // CA-INT-03: con una salchicha en la mano apunto al pan y hago clic: pancho.
+                let pan = self.pan.clone().expect("pan");
+                let pos = pan.get_global_position();
+                j.set_global_position(Vector3::new(pos.x, pos.y - 0.03, pos.z + 1.2));
+                j.set_velocity(Vector3::ZERO);
+                let s = self.agregar_comida("salchicha", j.get_global_position() + Vector3::new(0.2, 1.4, -0.4));
+                j.bind_mut().agarrar(s.upcast());
+                j.bind_mut().apuntar_a(pos);
+                j.bind_mut().colocar();
+                self.panchos_antes = todos::<Comida>(&mundo)
+                    .iter()
+                    .filter(|c| c.bind().producto() == "pancho")
+                    .map(|c| c.instance_id())
+                    .collect();
+                self.esperar(30);
+            }
+            _ => {
+                let pan = self.pan.clone().expect("pan");
+                let nuevo = todos::<Comida>(&mundo)
+                    .into_iter()
+                    .find(|c| c.bind().producto() == "pancho" && !self.panchos_antes.contains(&c.instance_id()));
+                let armado = pan.is_queued_for_deletion() || !pan.is_instance_valid();
+                self.chequear(
+                    armado && nuevo.is_some(),
+                    "CA-INT-03 apunto la salchicha al pan, hago clic y se arma el pancho",
+                );
+                if let Some(mut p) = nuevo {
+                    p.queue_free();
+                }
+                if let Some((mut cocida, mut cruda)) = self.carnes.take() {
+                    let (fc, fr) = (
+                        cocida.bind().frescura().map(|f| f.porcentaje).unwrap_or(0.0),
+                        cruda.bind().frescura().map(|f| f.porcentaje).unwrap_or(100.0),
+                    );
+                    self.chequear(
+                        fc == 80.0 && fr < 80.0,
+                        &format!("REQ-HEL-08 la hamburguesa cocida no se pudre (cocida {fc:.2} %, cruda {fr:.2} %)"),
+                    );
+                    cocida.queue_free();
+                    cruda.queue_free();
+                }
+                if let Some(t) = self.jugador_antes.take() {
+                    j.set_global_transform(t);
+                }
+                self.fase_agarre = 3;
+                return;
+            }
+        }
+        self.fase_agarre += 1;
     }
 }
 

@@ -77,6 +77,10 @@ impl DefProducto {
     pub fn admite_aderezo(&self, id: &str) -> bool {
         self.aderezos.iter().any(|a| a == id)
     }
+    /// REQ-COC-10: se cocina entero (no por lados) en el agua, como la salchicha.
+    pub fn va_al_hervidor(&self) -> bool {
+        self.coccion.is_some() && !self.por_lados
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Deserialize)]
@@ -320,6 +324,24 @@ pub(crate) mod tests {
         let m = pan.masa + c.producto("chorizo").unwrap().masa;
         assert!((c.producto("choripan").unwrap().masa - m).abs() < 1e-6, "REQ-ARM-05");
         assert!(c.bloques.iter().any(|b| b.producto == "pan_choripan"));
+    }
+
+    #[test]
+    fn req_coc_10_solo_lo_que_se_cocina_entero_va_al_hervidor() {
+        let c = catalogo_real();
+        let va = |id: &str| c.producto(id).unwrap().va_al_hervidor();
+        assert!(va("salchicha"));
+        for id in ["hamburguesa", "chorizo", "pan_choripan", "pan_pancho", "pancho", "papa_cruda"] {
+            assert!(!va(id), "{id} no va al hervidor");
+        }
+    }
+
+    #[test]
+    fn req_hel_08_las_comidas_listas_no_son_perecederas() {
+        let c = catalogo_real();
+        for r in &c.combinaciones {
+            assert!(!c.producto(&r.resultado).unwrap().perecedero, "{} no se echa a perder", r.resultado);
+        }
     }
 
     #[test]

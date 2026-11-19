@@ -73,6 +73,13 @@ impl Frescura {
         }
     }
 
+    /// REQ-HEL-08: una comida lista (ya sin nada crudo) no se echa a perder.
+    pub fn paso_alimento(&mut self, temp: f32, cruda: bool, dt: f32) {
+        if cruda {
+            self.paso(temp, dt);
+        }
+    }
+
     /// REQ-HEL-04: menor a 40 %: verdosa y el cartel avisa.
     pub fn dudosa(&self) -> bool {
         self.porcentaje < FRESCURA_DUDOSA
@@ -187,6 +194,16 @@ mod tests {
             s += 1.0;
         }
         assert!((400.0..=430.0).contains(&s), "se echó a perder a los {s} s");
+    }
+
+    #[test]
+    fn req_hel_08_cocida_ya_no_se_echa_a_perder() {
+        let mut cruda = Frescura::default();
+        let mut lista = Frescura::default();
+        cruda.paso_alimento(20.0, true, 100.0);
+        lista.paso_alimento(20.0, false, 100_000.0);
+        assert!(cruda.porcentaje < 100.0);
+        assert_eq!(lista.porcentaje, 100.0, "una hamburguesa cocida que se enfría no se pudre");
     }
 
     #[test]

@@ -18,7 +18,7 @@ conserva; el jugador tiene que guardarla y no dejarla al sol.
 - **REQ-HEL-03** Todo alimento perecedero (hamburguesa, chorizo cruda) tiene **frescura** de
   100% a 0%. Mientras su temperatura está entre 8 °C y 60 °C la frescura baja `(T − 8) × 0,02 % por
   segundo`; por debajo de 8 °C no baja, y por encima de 60 °C (bien cocinado) tampoco. La
-  frescura nunca sube. (Sin el tope de 60 °C la carne se echaría a perder cocinándose.)
+  frescura nunca sube; lo cocido ya no la pierde (REQ-HEL-08). (Sin el tope de 60 °C la carne se echaría a perder cocinándose.)
 - **REQ-HEL-04** Frescura menor a 40%: se ve verdosa y el cartel avisa. En 0% está **Echada
   a perder**: definitivo, y se rechaza al entregarla (REQ-CLI-08).
 - **REQ-HEL-05** La comida guardada en la heladera usa su temperatura interior como entorno,
@@ -27,6 +27,9 @@ conserva; el jugador tiene que guardarla y no dejarla al sol.
   guardar en la heladera o en el estante, donde se calientan hasta el ambiente.
 - **REQ-HEL-07** Cocinar no restaura frescura: servir carne con frescura menor a 40%
   descuenta 1 estrella aunque esté bien cocida.
+- **REQ-HEL-08** Las comidas listas no se echan a perder: los armados (pancho, choripán) no son
+  perecederos (el choripán guarda fija la frescura del chorizo) y una carne sin ningún lado
+  crudo deja de perder frescura aunque se enfríe.
 
 ## Criterios de aceptación
 
@@ -34,6 +37,7 @@ conserva; el jugador tiene que guardarla y no dejarla al sol.
   juego sigue con 100%.
 - **CA-HEL-02** La dejo al sol del mediodía: se pone verdosa y al final se echa a perder.
 - **CA-HEL-03** Dejo la puerta abierta: el interior sube y el cartel lo muestra.
+- **CA-HEL-04** Dejo un pancho o una hamburguesa cocida toda la tarde al sol: no se pudren.
 
 ## Fuera de alcance
 
