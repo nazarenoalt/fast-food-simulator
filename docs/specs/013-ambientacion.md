@@ -29,6 +29,11 @@ nubes y un cielo con sol y luna.
 - **REQ-AMB-13** La gente no se atraviesa: cada persona mantiene una distancia personal
   (0,6 m) con las demás y con el jugador. Si alguien viene de frente, ambos se corren hacia
   su derecha para cruzarse; si no hay lugar, frenan.
+- **REQ-AMB-15** La gente se renueva: los peatones (y los clientes cuando se van) llegan y se
+  van solo por el borde del mapa, fuera de la vista desde el carrito; al cruzarlo desaparecen
+  y llegan otros. Nadie aparece ni desaparece en medio de la plaza o la vereda.
+- **REQ-AMB-16** Cada persona nueva se ve distinta: su apariencia (piel, ropa, pelo, gorra) no
+  repite la de nadie que esté en el mapa ni la de las últimas 30 que se fueron.
 
 ### Movimiento
 - **REQ-AMB-08** Autos que circulan por la calle en los dos sentidos (mano derecha), con
@@ -56,5 +61,6 @@ nubes y un cielo con sol y luna.
 
 ## Fuera de alcance
 
+- Gente distinta de día y de noche (ropa y actividades): etapa 5 (SPEC-018).
 - Planificar rutas alrededor de multitudes (solo se esquiva a quien está cerca), semáforos,
   lluvia, interiores de edificios.
