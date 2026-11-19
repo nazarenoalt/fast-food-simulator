@@ -28,15 +28,14 @@ use crate::sonido::Sonido;
 use crate::transito::{Autos, Nubes};
 use carrito_core::tostado::EstadoPan;
 
-#[path = "prueba_humo_pelar.rs"]
-mod pelar; // SPEC-029: pelar y cortar
-// TASK-0358: vender papas en cajita y cartel de cerrado.
-#[path = "prueba_humo_vender.rs"]
-mod vender;
-#[path = "prueba_humo_gente.rs"]
-mod gente_humo; // TASK-0506: la gente se renueva (REQ-AMB-15/16)
 #[path = "prueba_humo_freir.rs"]
 mod freir; // SPEC-029: freír con el colador
+#[path = "prueba_humo_gente.rs"]
+mod gente_humo; // TASK-0506: la gente se renueva (REQ-AMB-15/16)
+#[path = "prueba_humo_pelar.rs"]
+mod pelar; // SPEC-029: pelar y cortar
+#[path = "prueba_humo_vender.rs"]
+mod vender; // TASK-0358: vender papas en cajita y cartel de cerrado
 
 #[derive(GodotClass)]
 #[class(base=Node, init)]
@@ -1382,9 +1381,9 @@ impl INode for PruebaHumo {
                         // Etapa 3.5 en orden; cada chequeo corre hasta terminar y pasa al que sigue.
                         let listo = match self.cadena_papas {
                             0 => self.chequear_papas_y_puerta(),
-                            1 => self.chequear_pelar(),  // SPEC-029: pelar y cortar
-                            2 => self.chequear_freir(),  // SPEC-029: freír con el colador
-                            3 => self.chequear_vender(), // TASK-0358: papas en cajita y cartel
+                            1 => self.chequear_pelar(),            // SPEC-029: pelar y cortar
+                            2 => self.chequear_freir(),            // SPEC-029: freír con el colador
+                            3 => self.chequear_vender(),           // TASK-0358: papas en cajita y cartel
                             4 => self.chequear_gente_se_renueva(), // TASK-0506: REQ-AMB-15/16
                             _ => true,
                         };
