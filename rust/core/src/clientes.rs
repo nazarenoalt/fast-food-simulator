@@ -66,8 +66,8 @@ impl Fila {
     }
 }
 
-/// REQ-CLI-13: el `cartel_cerrado` está colgado (se lee «CERRADO») o descolgado (acostado sobre
-/// el mostrador). Arranca colgado; E lo alterna.
+/// REQ-CLI-13: el `cartel_cerrado` está colgado (se lee «CERRADO») o descolgado (no se ve).
+/// Arranca colgado; el clic con la mano libre o E en su zona lo alterna.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct CartelCerrado {
     pub colgado: bool,
@@ -86,9 +86,26 @@ impl CartelCerrado {
 
     /// Lo que dice el cartel de la mira. REQ-CLI-13
     pub fn accion(&self) -> &'static str {
-        if self.colgado { "[E] Descolgar cartel (abrir)" } else { "[E] Colgar cartel (cerrar)" }
+        if self.colgado {
+            "[Clic/E] Abrir el puesto (sacar el cartel)"
+        } else {
+            "[Clic/E] Cerrar el puesto (colgar el cartel)"
+        }
+    }
+
+    /// REQ-CLI-13: descolgado, el cartel desaparece; su zona de uso queda en el frente.
+    pub fn se_ve(&self) -> bool {
+        self.colgado
     }
 }
+
+/// REQ-CLI-13: zona de uso del cartel (caja que solo ve la mira), relativa al clavo del anclaje
+/// `cartel` (REQ-PAP-07): medidas y centro. Queda en el frente aunque el cartel esté descolgado,
+/// para volver a colgarlo desde la vereda. Cubre el tablero (de 10 a 26 cm abajo del clavo) con
+/// margen y sale 6 cm hacia la vereda, pero no sube más de 8 mm sobre el clavo: la mesada está
+/// 12 mm arriba, así que no asoma sobre el mostrador ni le roba la mira a lo que está apoyado.
+pub const ZONA_CARTEL_MEDIDAS: [f32; 3] = [0.40, 0.29, 0.08];
+pub const ZONA_CARTEL_CENTRO: [f32; 3] = [0.0, -0.137, 0.02];
 
 /// REQ-CLI-12 (y REQ-CLI-03): ¿se suma a la fila un cliente nuevo que llega solo? No si la fila
 /// está llena ni con el cartel de cerrado colgado. Sin cartel (`None`) o descolgado, está
@@ -501,15 +518,48 @@ mod tests {
     }
 
     #[test]
-    fn req_cli_13_el_cartel_arranca_colgado_y_e_lo_alterna() {
+    fn req_cli_13_el_cartel_arranca_colgado_y_se_alterna_desapareciendo() {
         let mut c = CartelCerrado::default();
-        assert!(c.colgado);
-        assert_eq!(c.accion(), "[E] Descolgar cartel (abrir)");
+        assert!(c.colgado && c.se_ve());
+        assert_eq!(c.accion(), "[Clic/E] Abrir el puesto (sacar el cartel)");
+        // Descolgado: abierto y no se ve.
         c.alternar();
-        assert!(!c.colgado);
-        assert_eq!(c.accion(), "[E] Colgar cartel (cerrar)");
+        assert!(!c.colgado && !c.se_ve());
+        assert_eq!(c.accion(), "[Clic/E] Cerrar el puesto (colgar el cartel)");
         c.alternar();
-        assert!(c.colgado);
+        assert!(c.colgado && c.se_ve());
+    }
+
+    #[test]
+    fn req_cli_13_la_zona_del_cartel_se_toca_desde_la_vereda_sin_tapar_el_mostrador() {
+        use crate::datos::tests::catalogo_real;
+        let cat = catalogo_real();
+        let [mx, my, mz] = ZONA_CARTEL_MEDIDAS;
+        let [cx, cy, cz] = ZONA_CARTEL_CENTRO;
+        // Cubre el tablero del cartel (REQ-PAP-07), relativo al clavo.
+        let cartel = cat.accesorios.iter().find(|a| a.id == "cartel_cerrado").unwrap();
+        let tablero = cartel.forma.iter().max_by(|a, b| a.medidas[0].total_cmp(&b.medidas[0])).unwrap();
+        for i in 0..3 {
+            let (m, c) = (ZONA_CARTEL_MEDIDAS[i], ZONA_CARTEL_CENTRO[i]);
+            assert!(tablero.pos[i] - tablero.medidas[i] / 2.0 >= c - m / 2.0, "eje {i}");
+            assert!(tablero.pos[i] + tablero.medidas[i] / 2.0 <= c + m / 2.0, "eje {i}");
+        }
+        assert!(mx >= 0.36 && my >= 0.25, "cómoda de tocar");
+        for b in &cat.bases {
+            let a = b.anclaje("cartel").unwrap();
+            // No asoma sobre la mesada (ni sobre la bandeja, que está apoyada en ella).
+            let arriba = a.pos[1] + cy + my / 2.0;
+            assert!(arriba < b.alto_mostrador, "{}: la zona asoma sobre el mostrador ({arriba})", b.id);
+            assert!(b.entrega[1] >= b.alto_mostrador - 1e-4, "{}: la bandeja está sobre la mesada", b.id);
+            // Sale hacia la vereda, delante del carro.
+            assert!(a.pos[2] + cz + mz / 2.0 > b.profundidad / 2.0, "{}", b.id);
+            // Desde el primer lugar de la fila, con los ojos a 1,65 m (REQ-JUG-05), está a mano
+            // (la mira llega a 2,5 m, REQ-INT-01), con margen.
+            let centro = [a.pos[0] + cx, a.pos[1] + cy, a.pos[2] + cz];
+            let ojos = [b.fila[0], 1.65, b.fila[2]];
+            let d = (0..3).map(|i| (centro[i] - ojos[i]).powi(2)).sum::<f32>().sqrt();
+            assert!(d < 1.5, "{}: lejos de la vereda ({d})", b.id);
+        }
     }
 
     #[test]

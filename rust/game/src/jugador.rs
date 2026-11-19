@@ -426,7 +426,8 @@ impl Jugador {
         self.rayo.as_ref().filter(|r| r.is_colliding()).map(|r| r.get_collision_point())
     }
 
-    fn clic_izquierdo(&mut self) {
+    /// REQ-INT-03, REQ-INT-06 (y REQ-CLI-13): agarrar, colocar o usar el cartel.
+    pub fn clic_izquierdo(&mut self) {
         if self.mano.is_some() {
             // REQ-INT-06: colocar donde apunta la mira.
             self.colocar();
@@ -437,6 +438,8 @@ impl Jugador {
             Some(Objetivo::Comida(c)) => self.agarrar(c.upcast()),
             Some(Objetivo::Paquete(p)) => self.agarrar(p.upcast()),
             Some(Objetivo::Bloque(b)) => self.levantar(b),
+            // REQ-CLI-13: con la mano libre, el clic saca o cuelga el cartel, igual que E.
+            Some(Objetivo::Cartel(mut c)) => c.bind_mut().alternar(),
             _ => {}
         }
     }
@@ -486,13 +489,13 @@ impl Jugador {
     fn destino_colocar(&mut self) -> Option<(Transform3D, Colocacion)> {
         let mano = self.mano.clone().filter(|c| c.is_instance_valid())?;
         let rayo = self.rayo.as_mut()?;
+        // REQ-CLI-13: colocar no ve la zona del cartel de cerrado (es solo para usarlo).
+        rayo.set_collision_mask(1);
         rayo.force_raycast_update();
-        if !rayo.is_colliding() {
-            return None;
-        }
-        let punto = rayo.get_collision_point();
-        let normal = rayo.get_collision_normal();
-        let tocado = rayo.get_collider();
+        let choque =
+            rayo.is_colliding().then(|| (rayo.get_collision_point(), rayo.get_collision_normal(), rayo.get_collider()));
+        rayo.set_collision_mask(1 | formas::CAPA_USABLES);
+        let (punto, normal, tocado) = choque?;
         let v3 = |v: Vector3| [v.x, v.y, v.z];
 
         // REQ-FRE-07: papas sobre un colador van adentro (lleno, se apoyan como siempre).

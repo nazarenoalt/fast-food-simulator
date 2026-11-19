@@ -1,20 +1,17 @@
-//! SPEC-009 · Cartel de cerrado (REQ-CLI-12, REQ-CLI-13): E lo descuelga (queda acostado sobre
-//! el mostrador) o lo vuelve a colgar. La regla (arranca colgado; colgado no llegan clientes
-//! nuevos) es de `carrito_core::clientes`; acá solo se acomoda el dibujo y la colisión de la mira.
+//! SPEC-009 · Cartel de cerrado (REQ-CLI-12, REQ-CLI-13): el clic con la mano libre o E lo saca
+//! (desaparece) o lo vuelve a colgar. La regla (arranca colgado; colgado no llegan clientes
+//! nuevos; dónde queda la zona de uso) es de `carrito_core::clientes`; acá solo se esconde el
+//! dibujo y se pone la colisión de la mira, que no se mueve.
 
-use carrito_core::clientes::CartelCerrado as EstadoCartel;
+use carrito_core::clientes::{CartelCerrado as EstadoCartel, ZONA_CARTEL_CENTRO, ZONA_CARTEL_MEDIDAS};
 use godot::classes::{BoxShape3D, Node3D, StaticBody3D};
 use godot::prelude::*;
 
 use crate::formas;
 
 pub const NOMBRE: &str = "CartelCerrado";
-
-/// Acostado: un cuarto de vuelta sobre el clavo, hacia el vendedor: el tablero (que cuelga hasta
-/// 26 cm abajo del clavo) queda boca abajo sobre la mesada, que está 12 mm arriba del clavo; se
-/// sube lo que mide de grueso (11 mm) más un poquito.
-const GIRO_ACOSTADO: f32 = 90.0;
-const ALTO_ACOSTADO: f32 = 0.024;
+const DIBUJO: &str = "Dibujo";
+const ZONA: &str = "Zona";
 
 #[derive(GodotClass)]
 #[class(base=Node3D, no_init)]
@@ -25,7 +22,7 @@ pub struct CartelCerrado {
 
 #[godot_api]
 impl CartelCerrado {
-    /// REQ-CLI-13: E lo descuelga o lo cuelga.
+    /// REQ-CLI-13: el clic o E lo saca o lo cuelga.
     #[func]
     pub fn alternar(&mut self) {
         self.estado.alternar();
@@ -37,25 +34,28 @@ impl CartelCerrado {
 
 impl CartelCerrado {
     /// Envuelve el dibujo del accesorio (lo que ya colgó de `nodo`: el modelo o sus piezas) para
-    /// girarlo entero sobre el clavo, y le agrega una colisión que solo ve la mira. REQ-CLI-13
+    /// esconderlo entero, y le agrega al lado la zona de uso que solo ve la mira. REQ-CLI-13
     pub fn envolver(nodo: &mut Gd<Node3D>) -> Gd<Self> {
         let hijos: Vec<Gd<Node>> = nodo.get_children().iter_shared().collect();
         let mut cartel = Gd::from_init_fn(|base| Self { base, estado: EstadoCartel::default() });
         cartel.set_name(NOMBRE);
         nodo.add_child(&cartel);
+        let mut dibujo = Node3D::new_alloc();
+        dibujo.set_name(DIBUJO);
+        cartel.add_child(&dibujo);
         for mut h in hijos {
-            h.reparent_ex(&cartel).keep_global_transform(false).done();
+            h.reparent_ex(&dibujo).keep_global_transform(false).done();
         }
-        // El tablero cuelga del clavo (REQ-PAP-07: 0,32 × 0,16, unos 18 cm abajo). La caja sube
-        // un poco por encima de la mesada para que se lo vea desde adentro del carrito.
+        // La zona queda donde cuelga aunque el cartel no se vea, y no asoma sobre la mesada.
         let mut forma = BoxShape3D::new_gd();
-        forma.set_size(Vector3::new(0.34, 0.3, 0.04));
+        forma.set_size(formas::v3(ZONA_CARTEL_MEDIDAS));
         let mut cuerpo = StaticBody3D::new_alloc();
+        cuerpo.set_name(ZONA);
         cuerpo.set_collision_layer(formas::CAPA_USABLES);
         cuerpo.set_collision_mask(0);
         cuerpo.add_child(&formas::nodo_colision(
             forma.upcast(),
-            Transform3D::new(Basis::IDENTITY, Vector3::new(0.0, -0.11, 0.0)),
+            Transform3D::new(Basis::IDENTITY, formas::v3(ZONA_CARTEL_CENTRO)),
         ));
         cartel.add_child(&cuerpo);
         cartel.bind_mut().acomodar();
@@ -74,14 +74,20 @@ impl CartelCerrado {
         self.estado.accion().to_string()
     }
 
+    /// Se ve el dibujo del cartel (para la prueba de humo). REQ-CLI-13
+    pub fn dibujo_visible(&self) -> bool {
+        self.base().get_node_or_null(DIBUJO).and_then(|n| n.try_cast::<Node3D>().ok()).is_some_and(|d| d.is_visible())
+    }
+
+    /// Centro global de la zona de uso (para la prueba de humo y las fotos). REQ-CLI-13
+    pub fn centro_zona(&self) -> Vector3 {
+        self.base().get_global_transform() * formas::v3(ZONA_CARTEL_CENTRO)
+    }
+
     fn acomodar(&mut self) {
-        let (giro, pos) = if self.estado.colgado {
-            (0.0, Vector3::ZERO)
-        } else {
-            (GIRO_ACOSTADO, Vector3::new(0.0, ALTO_ACOSTADO, 0.0))
-        };
-        let mut yo = self.to_gd();
-        yo.set_rotation_degrees(Vector3::new(giro, 0.0, 0.0));
-        yo.set_position(pos);
+        let se_ve = self.estado.se_ve();
+        if let Some(mut d) = self.base().get_node_or_null(DIBUJO).and_then(|n| n.try_cast::<Node3D>().ok()) {
+            d.set_visible(se_ve);
+        }
     }
 }
