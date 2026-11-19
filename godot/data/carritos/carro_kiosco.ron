@@ -16,6 +16,14 @@
     pallet: Some((-0.6, 0.0, -1.4)), // REQ-CAR-11: atrás, lejos de la puerta y del porche (sin pisar el cordón)
     puerta: Some(100.0), // REQ-CAR-11: se abre 100° (hacia afuera)...
     puerta_abierta: true, // ...y arranca abierta (REQ-CAR-13: E la cierra)
+    // REQ-LOG-05, REQ-LOG-06: lugares del logo (los 5 óvalos de "Lo de Tito" del cartel corrido, que brilla).
+    logos: [
+        (lugar: "Óvalos", pos: (-1.35, 2.409, 1.052), rot_y: 0, tam: (0.86, 0.4), brilla: true),
+        (lugar: "Óvalos", pos: (1.35, 2.409, 1.052), rot_y: 0, tam: (0.86, 0.4), brilla: true),
+        (lugar: "Óvalos", pos: (0.0, 2.409, -1.052), rot_y: 180, tam: (0.86, 0.4), brilla: true),
+        (lugar: "Óvalos", pos: (-1.802, 2.409, -0.625), rot_y: -90, tam: (0.82, 0.4), brilla: true),
+        (lugar: "Óvalos", pos: (1.802, 2.409, -0.725), rot_y: 90, tam: (0.62, 0.4), brilla: true),
+    ],
     anclajes: [
         (id: "mostrador_izq", pos: (-0.57, 1.05, 0.55), categorias: [Cocina, Equipamiento]),
         (id: "mostrador_centro", pos: (0.0, 1.05, 0.55), categorias: [Cocina, Equipamiento, Decoracion]),

@@ -122,7 +122,10 @@ impl INode3D for Gente {
             self.nuevo_cliente(false);
         }
         // REQ-CLI-11: tecla de prueba.
-        if godot::classes::Input::singleton().is_action_just_pressed("traer_cliente") && !self.fila.llena() {
+        if godot::classes::Input::singleton().is_action_just_pressed("traer_cliente")
+            && !self.fila.llena()
+            && !crate::armado::escribiendo()
+        {
             self.nuevo_cliente(false);
         }
 

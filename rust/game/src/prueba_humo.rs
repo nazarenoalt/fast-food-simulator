@@ -61,6 +61,8 @@ pub struct PruebaHumo {
     /// SPEC-027: fase de la prueba de ampliaciones y lo que se mide entre cuadros.
     fase_amp: u32,
     bloque_cajon: Option<(Gd<BloqueStock>, Vector3)>,
+    /// SPEC-028: fase de la prueba del logo.
+    fase_logo: u32,
     /// SPEC-002 (etapa 2.5): fase de la prueba de agarre y lo que se mide entre cuadros.
     fase_agarre: u32,
     salchichas_hervidor: usize,
@@ -357,6 +359,112 @@ impl PruebaHumo {
             _ => return true,
         }
         self.fase_amp += 1;
+        false
+    }
+
+    /// SPEC-028 sobre el carrito del jugador (el food truck, después de chequear_ampliaciones):
+    /// pongo, rechazo, apago y saco el logo, con lugares de la base y de accesorios. Se llama en
+    /// varios cuadros; devuelve true al terminar.
+    fn chequear_logo(&mut self) -> bool {
+        use carrito_core::tienda::Origen;
+        use godot::classes::base_material_3d::{Feature, TextureParam};
+        let mundo = self.mundo();
+        let Some(mut m) = todos::<ModoArmado>(&mundo).pop() else { return true };
+        let carrito = todos::<Carrito>(&mundo).into_iter().next().expect("carrito");
+        let calcos = |c: &Gd<Carrito>| c.bind().calcomanias();
+        let cuantas = |c: &Gd<Carrito>, lugar: &str| calcos(c).iter().filter(|(l, _)| l == lugar).count();
+        let material = |c: &Gd<Carrito>, lugar: &str| {
+            calcos(c)
+                .into_iter()
+                .find(|(l, _)| l == lugar)
+                .and_then(|(_, mi)| mi.get_material_override())
+                .and_then(|m| m.try_cast::<StandardMaterial3D>().ok())
+        };
+        match self.fase_logo {
+            0 => {
+                let lugares = m.bind_mut().lugares_logo();
+                self.chequear(
+                    lugares == ["Costados", "Atrás"],
+                    &format!("REQ-LOG-06 el food truck tiene Costados y Atrás ({lugares:?})"),
+                );
+                self.chequear(calcos(&carrito).is_empty(), "REQ-LOG-09 sin logo no hay calcomanías");
+                let r = m.bind_mut().poner_logo("estrella", "Panchos El Tano");
+                self.chequear(
+                    r.is_ok() && cuantas(&carrito, "Costados") == 2 && cuantas(&carrito, "Atrás") == 1,
+                    "CA-LOG-01 pongo la estrella con \"Panchos El Tano\": 2 calcomanías a los costados y 1 atrás",
+                );
+                let largo = m.bind_mut().poner_logo("estrella", "abcdefghijklmnopqrs");
+                let arroba = m.bind_mut().poner_logo("estrella", "Panchos @ Tano");
+                let texto = carrito.bind().logo().map(|l| l.texto);
+                self.chequear(
+                    largo.is_err() && arroba.is_err() && texto.as_deref() == Some("Panchos El Tano"),
+                    "CA-LOG-02 19 letras o un @ se rechazan y queda el texto anterior",
+                );
+                m.bind_mut().alternar_lugar_logo("Costados");
+                self.chequear(
+                    cuantas(&carrito, "Costados") == 0 && cuantas(&carrito, "Atrás") == 1,
+                    "CA-LOG-03 apago los costados: queda el de atrás",
+                );
+                m.bind_mut().elegir("cartel_techo", "cartel_luminoso", Origen::Tienda);
+                let brilla = |m: Option<Gd<StandardMaterial3D>>| m.is_some_and(|m| m.get_feature(Feature::EMISSION));
+                self.chequear(
+                    cuantas(&carrito, "Cartel luminoso") == 1
+                        && brilla(material(&carrito, "Cartel luminoso"))
+                        && !brilla(material(&carrito, "Atrás")),
+                    "REQ-LOG-06 / CA-LOG-04 el cartel luminoso lleva el logo y brilla de noche; el de atrás no",
+                );
+                self.esperar(5);
+            }
+            1 => {
+                // REQ-LOG-02: la imagen se dibujó (fondo azul y letras crema). Sin pantalla
+                // (--headless) Godot no dibuja: ahí no se mira.
+                let con_pantalla = godot::classes::DisplayServer::singleton().get_name() != "headless";
+                let img = material(&carrito, "Atrás")
+                    .filter(|_| con_pantalla)
+                    .and_then(|m| m.get_texture(TextureParam::ALBEDO))
+                    .and_then(|t| t.get_image());
+                match img.filter(|i| !i.is_empty()) {
+                    Some(img) => {
+                        let d = crate::datos::catalogo().diseno("estrella").expect("estrella").clone();
+                        let (mut fondo, mut letras) = (0, 0);
+                        for y in (0..img.get_height()).step_by(2) {
+                            for x in (0..img.get_width()).step_by(2) {
+                                let c = img.get_pixel(x, y);
+                                fondo += parecido(c, d.fondo) as u32;
+                                letras += parecido(c, d.texto) as u32;
+                            }
+                        }
+                        self.chequear(
+                            fondo > 200 && letras > 20,
+                            &format!(
+                                "REQ-LOG-02 la calcomanía dibuja el logo ({fondo} px de fondo, {letras} de letras)"
+                            ),
+                        );
+                    }
+                    None => godot_print!("  (sin pantalla: no se mira la imagen del logo)"),
+                }
+                m.bind_mut().guardar("cartel_techo");
+                let lugares = m.bind_mut().lugares_logo();
+                self.chequear(
+                    !lugares.iter().any(|l| l == "Cartel luminoso") && cuantas(&carrito, "Cartel luminoso") == 0,
+                    "CA-LOG-03 saco el cartel luminoso: su lugar desaparece",
+                );
+                m.bind_mut().alternar_lugar_logo("Costados");
+                m.bind_mut().cambiar_base("carro_kiosco");
+                self.chequear(
+                    cuantas(&carrito, "Óvalos") == 5,
+                    "REQ-LOG-08 cambio al kiosco: el logo va a sus 5 óvalos",
+                );
+                m.bind_mut().sacar_logo();
+                self.chequear(calcos(&carrito).is_empty(), "REQ-LOG-09 saco el logo: no queda ninguna calcomanía");
+                m.bind_mut().cambiar_base("food_truck");
+                m.bind_mut().cerrar_panel();
+                self.fase_logo = 99; // listo: no se repite
+                return true;
+            }
+            _ => return true,
+        }
+        self.fase_logo += 1;
         false
     }
 
@@ -1250,6 +1358,8 @@ impl INode for PruebaHumo {
                     }
                     if !self.chequear_ampliaciones() {
                         self.paso -= 1; // SPEC-027: se repite este paso hasta terminar
+                    } else if !self.chequear_logo() {
+                        self.paso -= 1; // SPEC-028: se repite este paso hasta terminar
                     } else if self.chequear_papas_y_puerta() {
                         self.terminar();
                     } else {
@@ -1376,11 +1486,12 @@ impl PruebaHumo {
                 self.esperar(30);
             }
             _ => {
-                let pan = self.pan.clone().expect("pan");
                 let nuevo = todos::<Comida>(&mundo)
                     .into_iter()
                     .find(|c| c.bind().producto() == "pancho" && !self.panchos_antes.contains(&c.instance_id()));
-                let armado = pan.is_queued_for_deletion() || !pan.is_instance_valid();
+                // El pan ya se borró al armarse el pancho: se mira sin clonarlo (clonar un objeto
+                // borrado hace caer el juego con los controles estrictos de godot-rust).
+                let armado = self.pan.as_ref().is_none_or(|p| !p.is_instance_valid() || p.is_queued_for_deletion());
                 self.chequear(
                     armado && nuevo.is_some(),
                     "CA-INT-03 apunto la salchicha al pan, hago clic y se arma el pancho",

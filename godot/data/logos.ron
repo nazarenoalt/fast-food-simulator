@@ -1,0 +1,62 @@
+// Diseños del logo del carrito (SPEC-028, REQ-LOG-01). Solo colores de la paleta
+// (tools/arte/paleta.json, guía de arte 4.5). Las figuras están en godot/logos/<figura>.png
+// (las dibuja tools/logos/figuras.py). Marcos: de afuera hacia adentro.
+//   Amarillo (0.98, 0.8, 0.102)     RojoAcento (0.851, 0.122, 0.102)  AzulAcento (0.102, 0.451, 0.8)
+//   BlancoCrema (0.949, 0.949, 0.902) Acero (0.82, 0.831, 0.851)      PlasticoNegro (0.102, 0.102, 0.102)
+//   Madera (0.549, 0.361, 0.2)      Pizarra (0.078, 0.102, 0.078)
+[
+    (
+        id: "ovalo",
+        nombre: "Óvalo",
+        fondo: (0.82, 0.831, 0.851),
+        marcos: [(0.102, 0.451, 0.8), (0.949, 0.949, 0.902)],
+        forma: Ovalo(relleno: (0.851, 0.122, 0.102)),
+        texto: (0.98, 0.8, 0.102),
+        sombra: Some((0.102, 0.451, 0.8)),
+    ),
+    (
+        id: "filete",
+        nombre: "Filete",
+        fondo: (0.98, 0.8, 0.102),
+        marcos: [(0.851, 0.122, 0.102), (0.102, 0.451, 0.8)],
+        texto: (0.851, 0.122, 0.102),
+        sombra: Some((0.949, 0.949, 0.902)),
+        mayusculas: true,
+        guardas: [(0.102, 0.451, 0.8), (0.851, 0.122, 0.102), (0.949, 0.949, 0.902)],
+    ),
+    (
+        id: "pancho",
+        nombre: "Pancho",
+        fondo: (0.949, 0.949, 0.902),
+        marcos: [(0.98, 0.8, 0.102)],
+        figura: Some("pancho"),
+        texto: (0.851, 0.122, 0.102),
+        sombra: Some((0.98, 0.8, 0.102)),
+    ),
+    (
+        id: "hamburguesa",
+        nombre: "Hamburguesa",
+        fondo: (0.851, 0.122, 0.102),
+        marcos: [(0.98, 0.8, 0.102)],
+        figura: Some("hamburguesa"),
+        texto: (0.98, 0.8, 0.102),
+        sombra: Some((0.102, 0.102, 0.102)),
+    ),
+    (
+        id: "estrella",
+        nombre: "Estrella",
+        fondo: (0.102, 0.451, 0.8),
+        marcos: [(0.98, 0.8, 0.102)],
+        figura: Some("estrella"),
+        texto: (0.949, 0.949, 0.902),
+        sombra: Some((0.102, 0.102, 0.102)),
+    ),
+    (
+        id: "pizarron",
+        nombre: "Pizarrón",
+        fondo: (0.078, 0.102, 0.078),
+        marcos: [(0.549, 0.361, 0.2), (0.549, 0.361, 0.2)],
+        texto: (0.949, 0.949, 0.902),
+        subrayado: Some((0.98, 0.8, 0.102)),
+    ),
+]

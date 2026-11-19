@@ -6,6 +6,7 @@ use std::fmt;
 use serde::Deserialize;
 
 use crate::forma::Pieza;
+use crate::logo::{Logo, LugarLogo};
 
 /// REQ-CAR-04
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord, Deserialize)]
@@ -80,6 +81,9 @@ pub struct BaseCarrito {
     /// REQ-CAR-11: si la puerta arranca abierta (si no, cerrada).
     #[serde(default)]
     pub puerta_abierta: bool,
+    /// REQ-LOG-05: lugares de la base donde va el logo.
+    #[serde(default)]
+    pub logos: Vec<LugarLogo>,
 }
 
 impl BaseCarrito {
@@ -191,6 +195,9 @@ pub struct Accesorio {
     /// REQ-AMP-11: categorías con las que no puede estar en el mismo carrito.
     #[serde(default)]
     pub choca_con: Vec<Categoria>,
+    /// REQ-LOG-05: lugares del accesorio donde va el logo.
+    #[serde(default)]
+    pub logos: Vec<LugarLogo>,
 }
 
 impl Accesorio {
@@ -212,6 +219,9 @@ pub struct ConfigCarrito {
     /// anclaje con depósito → bloque en cada lugar
     #[serde(default)]
     pub stock: BTreeMap<String, Vec<Option<String>>>,
+    /// REQ-LOG-10: logo de arranque (se revisa al cargar el catálogo).
+    #[serde(default)]
+    pub logo: Option<Logo>,
 }
 
 /// REQ-CAR-08: errores con el detalle exacto.
@@ -302,6 +312,8 @@ pub struct CarritoArmado {
     pub base: BaseCarrito,
     pub color: [f32; 3],
     pub colocados: Vec<Colocado>,
+    /// REQ-LOG-08
+    pub logo: Option<Logo>,
 }
 
 /// REQ-CAR-07, REQ-CAR-08
@@ -372,7 +384,8 @@ pub fn armar(
         colocado.stock = stock;
     }
 
-    Ok(CarritoArmado { base: base.clone(), color: config.color.unwrap_or(base.color), colocados })
+    let color = config.color.unwrap_or(base.color);
+    Ok(CarritoArmado { base: base.clone(), color, colocados, logo: config.logo.clone() })
 }
 
 #[cfg(test)]
@@ -386,6 +399,7 @@ mod tests {
             color: None,
             accesorios: acc.iter().map(|(a, b)| (a.to_string(), b.to_string())).collect(),
             stock: BTreeMap::new(),
+            logo: None,
         }
     }
 

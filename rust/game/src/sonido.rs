@@ -75,7 +75,7 @@ impl INode for Sonido {
 
     fn process(&mut self, delta: f64) {
         // REQ-SON-01: M silencia o reactiva todo.
-        if Input::singleton().is_action_just_pressed("silenciar") {
+        if Input::singleton().is_action_just_pressed("silenciar") && !crate::armado::escribiendo() {
             self.alternar_silencio();
         }
         if self.detenido {

@@ -278,12 +278,17 @@ impl Jugador {
         // REQ-JUG-04: gravedad del proyecto; salto solo apoyado.
         if !self.base().is_on_floor() {
             v.y -= self.gravedad * dt;
-        } else if input.is_action_just_pressed("saltar") {
+        } else if input.is_action_just_pressed("saltar") && !armado::escribiendo() {
             v.y = VEL_SALTO;
         }
 
         // REQ-JUG-01: WASD relativo a hacia dónde mira; REQ-JUG-03: correr con Shift.
-        let ejes = input.get_vector("izquierda", "derecha", "adelante", "atras");
+        // REQ-LOG-07: mientras se escribe el nombre del puesto, las teclas no lo mueven.
+        let ejes = if armado::escribiendo() {
+            Vector2::ZERO
+        } else {
+            input.get_vector("izquierda", "derecha", "adelante", "atras")
+        };
         let basis = self.base().get_global_transform().basis;
         let mut dir = basis * Vector3::new(ejes.x, 0.0, ejes.y);
         dir.y = 0.0;

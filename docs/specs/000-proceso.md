@@ -62,6 +62,7 @@ Estado: Borrador | Aprobada | Implementada
 | MOD | 025 Modelos 3D |
 | PAP | 026 Papas fritas |
 | AMP | 027 Ampliaciones del carrito |
+| LOG | 028 Logo del carrito |
 
 ## Convenciones de código
 

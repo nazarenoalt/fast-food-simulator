@@ -130,12 +130,20 @@ pub struct Armado {
     /// anclaje → accesorio
     pub accesorios: BTreeMap<String, String>,
     pub inventario: Inventario,
+    /// REQ-LOG-07: el logo del puesto (SPEC-028).
+    pub logo: Option<crate::logo::Logo>,
 }
 
 impl Armado {
     pub fn desde_config(cfg: &ConfigCarrito, bases: &[BaseCarrito]) -> Self {
         let color = cfg.color.or_else(|| bases.iter().find(|b| b.id == cfg.base).map(|b| b.color)).unwrap_or([1.0; 3]);
-        Self { base: cfg.base.clone(), color, accesorios: cfg.accesorios.clone(), inventario: Inventario::default() }
+        Self {
+            base: cfg.base.clone(),
+            color,
+            accesorios: cfg.accesorios.clone(),
+            inventario: Inventario::default(),
+            logo: cfg.logo.clone(),
+        }
     }
 
     /// Config para volver a armar el carrito (sin stock: los bloques viven en los nodos).
@@ -145,6 +153,7 @@ impl Armado {
             color: Some(self.color),
             accesorios: self.accesorios.clone(),
             stock: BTreeMap::new(),
+            logo: self.logo.clone(),
         }
     }
 

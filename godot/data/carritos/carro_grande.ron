@@ -9,6 +9,11 @@
     entrega: (0.5, 1.0, 0.4), // REQ-CAR-10: bandeja de entrega
     fila: (0.5, 0.0, 1.45), // REQ-CAR-10: primer lugar de la fila (sigue hacia +X)
     puerta: Some(105.0), // REQ-CAR-11/13: puerta del lugar de la garrafa; arranca cerrada, E la abre
+    // REQ-LOG-05, REQ-LOG-06: lugares del logo (los dos costados del cuerpo (x ±1,70), abajo de la mesada).
+    logos: [
+        (lugar: "Costados", pos: (1.702, 0.62, 0.0), rot_y: 90, tam: (1.0, 0.45)),
+        (lugar: "Costados", pos: (-1.702, 0.62, 0.0), rot_y: -90, tam: (1.0, 0.45)),
+    ],
     anclajes: [
         (id: "mostrador_izq", pos: (-1.1, 1.0, 0.1), categorias: [Cocina, Equipamiento]),
         (id: "mostrador_centro", pos: (0.0, 1.0, 0.1), categorias: [Cocina, Equipamiento, Decoracion]),

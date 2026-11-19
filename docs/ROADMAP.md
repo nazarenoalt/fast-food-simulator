@@ -62,7 +62,7 @@ Cada etapa abre con sus specs (SPEC-000) y cierra con docs al día. Formato en [
 | 0404 | Cambiar estilos y colores | 006, 017 | ✅ |
 | 0405 | Bases nuevas (food truck y tráiler), alacenas bajo mesada, toldos y guirnaldas; precios en escala pancho = $10 | 027, 010 | ✅ |
 | 0406 | Carro con interior caminable (escalón y puerta del food truck y el tráiler) | 027, 001 | ✅ |
-| 0407 | Logo del carrito: elegir entre varios diseños y escribirle tu texto | 006 | ⬜ |
+| 0407 | Logo del carrito: elegir entre varios diseños, escribirle tu texto y elegir dónde se ve (gratis) | 028 | ✅ |
 
 ## Etapa 5 · Plaza con rutinas (`feat (mundo)`) · PR TASK-0500
 | ID | Tarea | Spec | Estado |

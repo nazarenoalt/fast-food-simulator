@@ -8,8 +8,9 @@ use carrito_core::carrito::{
 };
 use carrito_core::clientes::SEPARACION_FILA;
 use carrito_core::forma::TipoPieza;
+use carrito_core::logo::Logo;
 use godot::classes::base_material_3d::BillboardMode;
-use godot::classes::{Area3D, BoxShape3D, INode3D, Label3D, Node3D};
+use godot::classes::{Area3D, BoxShape3D, INode3D, Label3D, MeshInstance3D, Node3D};
 use godot::prelude::*;
 
 use crate::aderecera;
@@ -23,7 +24,7 @@ use crate::luz::LuzNocturna;
 use crate::parrilla::Parrilla;
 use crate::plancha::Plancha;
 use crate::puerta::PuertaCarrito;
-use crate::{formas, modelos};
+use crate::{formas, logo, modelos};
 
 const ACERO: [f32; 3] = [0.82, 0.83, 0.85];
 pub const GRUPO: &str = "carrito";
@@ -47,6 +48,9 @@ pub struct Carrito {
     /// Si está, se usa en lugar de la config del jugador (la prueba de humo arma así un
     /// segundo carrito).
     config_forzada: Option<ConfigCarrito>,
+    /// REQ-LOG-08: el logo del puesto y sus calcomanías (lugar → nodo).
+    logo: Option<Logo>,
+    calcomanias: Vec<(String, Gd<MeshInstance3D>)>,
 }
 
 impl Carrito {
@@ -403,6 +407,47 @@ impl Carrito {
         b.anclajes.iter().map(|a| (a.id.clone(), t * formas::v3(a.pos))).collect()
     }
 
+    // ── Logo (SPEC-028) ────────────────────────────────────────────
+
+    pub fn logo(&self) -> Option<Logo> {
+        self.logo.clone()
+    }
+
+    /// REQ-LOG-07, REQ-LOG-09: pone, cambia o saca (None) el logo, al instante.
+    pub fn poner_logo(&mut self, logo: Option<Logo>) {
+        self.logo = logo;
+        self.rehacer_logo();
+    }
+
+    /// Calcomanías del logo que se ven ahora: (lugar, nodo). Para la prueba de humo.
+    pub fn calcomanias(&self) -> Vec<(String, Gd<MeshInstance3D>)> {
+        self.calcomanias.iter().filter(|(_, n)| n.is_instance_valid() && !n.is_queued_for_deletion()).cloned().collect()
+    }
+
+    /// REQ-LOG-05, REQ-LOG-08: una calcomanía por lugar prendido de la base y de los accesorios
+    /// puestos. Se rehacen todas en cada cambio (son pocas).
+    fn rehacer_logo(&mut self) {
+        for (_, mut n) in self.calcomanias.drain(..) {
+            if n.is_instance_valid() {
+                n.queue_free();
+            }
+        }
+        let Some(l) = self.logo.clone() else { return }; // REQ-LOG-09: sin logo, como antes
+        let Some(d) = catalogo().diseno(&l.diseno).cloned() else { return };
+        let mut lugares: Vec<(Gd<Node3D>, carrito_core::logo::LugarLogo)> = Vec::new();
+        if let (Some(r), Some(b)) = (&self.raiz_base, &self.base_def) {
+            lugares.extend(b.logos.iter().map(|x| (r.clone(), x.clone())));
+        }
+        for (acc, nodo) in self.puestos.values() {
+            lugares.extend(acc.logos.iter().map(|x| (nodo.clone(), x.clone())));
+        }
+        for (mut padre, lugar) in lugares.into_iter().filter(|(_, x)| l.prendido(&x.lugar)) {
+            let c = logo::calcomania(&lugar, &d, &l.texto);
+            padre.add_child(&c);
+            self.calcomanias.push((lugar.lugar, c));
+        }
+    }
+
     /// REQ-TIE-05: el depósito de ese anclaje tiene algún bloque.
     pub fn deposito_con_bloques(&self, anclaje: &str) -> bool {
         let Some((acc, nodo)) = self.puestos.get(anclaje) else { return false };
@@ -422,10 +467,16 @@ impl Carrito {
         let Some(a) = self.anclaje_def(anclaje) else { return };
         self.construir_accesorio(&Colocado { anclaje: a, accesorio: accesorio.clone(), stock: Vec::new() });
         self.actualizar_funciones();
+        self.rehacer_logo(); // REQ-LOG-08
     }
 
     /// REQ-TIE-05: saca el accesorio del anclaje (queda guardado en el inventario).
     pub fn quitar(&mut self, anclaje: &str) {
+        self.quitar_sin_logo(anclaje);
+        self.rehacer_logo(); // REQ-LOG-08
+    }
+
+    fn quitar_sin_logo(&mut self, anclaje: &str) {
         if let Some((_, mut nodo)) = self.puestos.remove(anclaje) {
             nodo.queue_free();
         }
@@ -473,11 +524,12 @@ impl Carrito {
                         Self::ubicar(nodo, &a);
                     }
                 }
-                _ => self.quitar(&anc),
+                _ => self.quitar_sin_logo(&anc),
             }
         }
         self.pintar(armado.color);
         self.actualizar_funciones();
+        self.rehacer_logo(); // REQ-LOG-08: los lugares de la base nueva
     }
 
     /// REQ-CAR-08: muestra el error arriba del carrito, en rojo, además de la consola.
@@ -512,6 +564,8 @@ impl INode3D for Carrito {
                 self.construir_bandeja(&armado.base);
                 self.base_def = Some(armado.base.clone());
                 self.construir_accesorios(&armado);
+                self.logo = armado.logo.clone(); // REQ-LOG-10
+                self.rehacer_logo();
             }
             Err(e) => {
                 // Se dibuja al menos la base (si existe) para que se vea dónde está el problema.

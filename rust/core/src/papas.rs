@@ -182,6 +182,7 @@ mod tests {
             &[],
             &leer("carrito_jugador.ron"),
             &leer("aderezos.ron"),
+            &leer("logos.ron"),
         )
         .unwrap_err();
         assert!(e.mensaje.contains("fantasma") && e.mensaje.contains("\"x\""), "{}", e.mensaje);
