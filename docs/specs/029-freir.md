@@ -13,7 +13,7 @@ aceite caliente con el colador y se vendan en cajita. Usa el modelo de calor de 
 ### Pelar y cortar
 - **REQ-FRE-01** Pelar: con el `pelapapas` en la mano y la mira en una `papa_cruda` apoyada
   (nadie la sostiene), cada E es una pasada; a la 3.ª la papa pasa a `papa_pelada` en el mismo
-  lugar. El cartel muestra el avance («[E] Pelar papa (1/3)»).
+  lugar. El cartel muestra la pasada que viene: «[E] Pelar papa (1/3)», (2/3), (3/3).
 - **REQ-FRE-02** Cortar: igual con el `cuchillo` sobre una `papa_pelada`, 4 pasadas: sale una
   `papa_cortada` (una porción de bastones, la de una cajita).
 - **REQ-FRE-03** La herramienta, las pasadas y el resultado salen de los datos del producto.

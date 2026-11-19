@@ -75,6 +75,7 @@ Cada etapa abre con sus specs (SPEC-000) y cierra con docs al día. Formato en [
 | 0504 | Clientes habituales que recuerdan la atención | 018 | ⬜ |
 | 0505 | Eventos: feria y partido | 019 | ⬜ |
 | 0506 | La gente se renueva: entra y sale por el borde del mapa y no se repite | 013 | ✅ |
+| 0508 | Los autos entran y salen fuera de la vista y se renuevan | 013 | 🔄 |
 | 0507 | Gente distinta de día y de noche (ropa y actividades) | 018 | ⬜ |
 
 ## Etapa 6a · Precios y cobro (`feat (economia)`) · PR TASK-0600

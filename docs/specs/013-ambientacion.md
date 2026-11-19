@@ -39,6 +39,8 @@ nubes y un cielo con sol y luna.
 - **REQ-AMB-08** Autos que circulan por la calle en los dos sentidos (mano derecha), con
   velocidades distintas. Frenan si hay un auto, un peatón o el jugador adelante en su carril.
   Hay dos sendas peatonales para cruzar a la vereda de enfrente.
+- **REQ-AMB-17** Los autos entran y salen de la calle fuera de la vista desde el carrito:
+  nadie ve un auto aparecer o desaparecer. El que vuelve a entrar es otro (otro color).
 - **REQ-AMB-09** Los autos tienen faros y luces traseras que se prenden de noche.
 - **REQ-AMB-10** Palomas en la plaza que picotean el piso y salen volando si el jugador se
   acerca a menos de 3,5 m; después vuelven a bajar en otro lugar.

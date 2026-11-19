@@ -51,8 +51,8 @@ y se van) y juzgan lo que les diste.
 - **REQ-CLI-12** Con el `cartel_cerrado` (REQ-PAP-07) colgado no se suman clientes nuevos a la
   fila; los que ya están se quedan y se atienden. Sin cartel, o descolgado, está abierto. La
   tecla C trae clientes igual.
-- **REQ-CLI-13** Clic con la mano libre o E en el frente del carrito, donde cuelga el cartel
-  (se hace desde la vereda): colgado, lo saca y desaparece (abierto); sin cartel a la vista, lo
+- **REQ-CLI-13** Clic con la mano libre, o E con o sin algo en la mano, en el frente del
+  carrito, donde cuelga el cartel (se hace desde la vereda): colgado, lo saca y desaparece (abierto); sin cartel a la vista, lo
   vuelve a colgar (cerrado). Arranca colgado. Sin `cartel_cerrado` puesto no se puede cerrar.
 
 ## Criterios de aceptación
