@@ -105,6 +105,11 @@ impl Peaton {
         &self.ap
     }
 
+    /// Si pasea un perro (REQ-RUT-11: de 22 a 24 nadie lo pasea).
+    pub fn con_perro(&self) -> bool {
+        self.con_perro
+    }
+
     #[allow(dead_code)] // BASE-ETAPA-5: lo usan las tareas en paralelo; se saca al juntar.
     /// Lo que está haciendo ahora.
     pub fn accion_actual(&self) -> Option<&Accion> {
