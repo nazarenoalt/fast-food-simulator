@@ -80,6 +80,20 @@ llevan a cualquier lado; dejalos en un lugar libre y se vuelven a guardar.
   desaparece y abrís. Para cerrar, lo mismo en ese lugar: lo volvés a colgar. Ojo: recién puesto en
   el modo armado arranca colgado.
 - Cada cliente pide un plato del menú; solo piden lo que tu carrito puede cocinar.
+
+## La plaza durante la semana
+- **Cada hora tiene su gente** ([SPEC-018](specs/018-rutinas.md)): corredores y gente que va
+  al trabajo a la mañana, jubilados en los bancos, oficinistas al mediodía (apurados: tienen
+  menos paciencia), familias con chicos a la tarde y grupos de amigos a la noche, con campera.
+  Los horarios y quién llega están en `godot/data/agenda.ron`.
+- **La semana** ([SPEC-019](specs/019-eventos.md)): la partida arranca un viernes; el día se
+  ve al lado de la hora. Sábados y domingos hay **feria** de 10 a 18 (más gente y más
+  clientes). Miércoles y domingos **juega el equipo** a las 21: antes hay camisetas, durante
+  el partido la plaza se vacía y a las 23 el festejo llena la fila. Aviso a las 7:00.
+- **Habituales** ([SPEC-030](specs/030-habituales.md)): si atendés muy bien a alguien, puede
+  volver todos los días a la misma hora, con su nombre en el globo, a pedir "lo de siempre".
+  Si lo atendés mal, deja de venir. Todavía no se guardan al cerrar el juego.
+
 ## Sonido
 El juego suena con ambiente que cambia con la hora (pájaros de día, grillos de noche, murmullo
 de la plaza) y con cada acción. Los archivos van en `godot/audio/` (`.ogg`) y se declaran en
