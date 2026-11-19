@@ -147,11 +147,13 @@ pub fn generar_pedido(azar: &mut Azar, menu: &[ItemMenu], disponibles: &[String]
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Paciencia {
     pub restante: f32,
+    /// Con cuánta empezó (REQ-RUT-04, REQ-HAB-06: el perfil y los habituales la cambian).
+    pub total: f32,
 }
 
 impl Default for Paciencia {
     fn default() -> Self {
-        Self { restante: PACIENCIA_S }
+        Self { restante: PACIENCIA_S, total: PACIENCIA_S }
     }
 }
 
@@ -163,6 +165,12 @@ pub enum Animo {
 }
 
 impl Paciencia {
+    /// REQ-RUT-04, REQ-HAB-06: la paciencia de REQ-CLI-06 multiplicada por `factor`.
+    pub fn con_factor(factor: f32) -> Self {
+        let total = PACIENCIA_S * factor.max(0.1);
+        Self { restante: total, total }
+    }
+
     /// Avanza `dt` segundos. Mientras está en la fila sin haber pedido baja a mitad de
     /// velocidad. Devuelve `true` si se agotó.
     pub fn paso(&mut self, dt: f32, ya_pidio: bool) -> bool {
@@ -175,7 +183,7 @@ impl Paciencia {
     }
     /// Cuánto de la paciencia ya gastó (0 a 1).
     pub fn usada(&self) -> f32 {
-        1.0 - self.restante / PACIENCIA_S
+        1.0 - self.restante / self.total
     }
     /// REQ-CLI-05: verde, amarillo, rojo.
     pub fn animo(&self) -> Animo {
@@ -211,14 +219,21 @@ pub enum Rechazo {
 }
 
 impl Rechazo {
-    pub fn frase(self) -> &'static str {
-        match self {
-            Rechazo::OtroProducto => "¡Esto no es lo que pedí!",
-            Rechazo::Crudo => "¡Está cruda!",
-            Rechazo::Quemado => "¡Está quemada!",
-            Rechazo::PanBlando => "¡El pan está blando!",
-            Rechazo::PanQuemado => "¡El pan está quemado!",
-            Rechazo::EchadaAPerder => "¡Esto está echado a perder!",
+    /// REQ-CLI-08: dice por qué, concordando con lo que se entregó (`producto` es su id).
+    pub fn frase(self, producto: &str) -> &'static str {
+        match (self, producto) {
+            (Rechazo::OtroProducto, _) => "¡Esto no es lo que pedí!",
+            (Rechazo::Crudo, "pancho") => "¡La salchicha está cruda!",
+            (Rechazo::Crudo, "choripan") => "¡El chorizo está crudo!",
+            (Rechazo::Crudo, "papas_en_cajita") => "¡Están crudas!",
+            (Rechazo::Crudo, _) => "¡Está cruda!",
+            (Rechazo::Quemado, "pancho") => "¡La salchicha está quemada!",
+            (Rechazo::Quemado, "choripan") => "¡El chorizo está quemado!",
+            (Rechazo::Quemado, "papas_en_cajita") => "¡Están quemadas!",
+            (Rechazo::Quemado, _) => "¡Está quemada!",
+            (Rechazo::PanBlando, _) => "¡El pan está blando!",
+            (Rechazo::PanQuemado, _) => "¡El pan está quemado!",
+            (Rechazo::EchadaAPerder, _) => "¡Esto está echado a perder!",
         }
     }
 }
@@ -471,6 +486,23 @@ mod tests {
             frescura: None,
             aderezos: ad.iter().map(|s| s.to_string()).collect(),
         }
+    }
+
+    #[test]
+    fn req_cli_08_la_frase_concuerda() {
+        assert_eq!(Rechazo::Crudo.frase("papas_en_cajita"), "¡Están crudas!");
+        assert_eq!(Rechazo::Crudo.frase("choripan"), "¡El chorizo está crudo!");
+        assert_eq!(Rechazo::Quemado.frase("pancho"), "¡La salchicha está quemada!");
+        assert_eq!(Rechazo::Crudo.frase("hamburguesa"), "¡Está cruda!");
+    }
+
+    #[test]
+    fn req_rut_04_paciencia_con_factor() {
+        let mut p = Paciencia::con_factor(0.8);
+        assert_eq!(p.restante, 80.0);
+        p.paso(40.0, true);
+        assert!((p.usada() - 0.5).abs() < 1e-5);
+        assert_eq!(Paciencia::default().total, PACIENCIA_S);
     }
 
     #[test]

@@ -14,6 +14,7 @@ use crate::formas;
 pub const GRUPO: &str = "peatones";
 
 #[derive(Debug, Clone)]
+#[allow(dead_code)] // BASE-ETAPA-5: lo usan las tareas en paralelo; se saca al juntar.
 pub enum Accion {
     Caminar(Vec<Vector3>),
     /// REQ-AMB-05
@@ -23,6 +24,16 @@ pub enum Accion {
     },
     Charlar {
         mirar: Vector3,
+        segundos: f32,
+    },
+    /// Quedarse parado (mirando a un punto, si se da): frente a un puesto, esperando al grupo
+    /// o en el cordón (REQ-EVE-06, REQ-RUT-08, REQ-AMB-18).
+    Esperar {
+        mirar: Option<Vector3>,
+        segundos: f32,
+    },
+    /// Saltar con los brazos arriba (festejo, REQ-EVE-09).
+    Saltar {
         segundos: f32,
     },
     /// Ir al lugar de la fila que indique `Gente` y quedarse ahí (SPEC-009).
@@ -88,9 +99,53 @@ impl Peaton {
         })
     }
 
+    /// Cómo se ve (REQ-HAB-01: un habitual vuelve con la misma).
+    #[allow(dead_code)] // BASE-ETAPA-5: lo usan las tareas en paralelo; se saca al juntar.
+    pub fn apariencia(&self) -> &Apariencia {
+        &self.ap
+    }
+
+    #[allow(dead_code)] // BASE-ETAPA-5: lo usan las tareas en paralelo; se saca al juntar.
+    /// Lo que está haciendo ahora.
+    pub fn accion_actual(&self) -> Option<&Accion> {
+        self.actual.as_ref()
+    }
+
+    #[allow(dead_code)] // BASE-ETAPA-5: lo usan las tareas en paralelo; se saca al juntar.
+    /// Cuántas acciones le quedan después de la actual.
+    pub fn acciones_pendientes(&self) -> usize {
+        self.acciones.len()
+    }
+
+    #[allow(dead_code)] // BASE-ETAPA-5: lo usan las tareas en paralelo; se saca al juntar.
+    pub fn velocidad(&self) -> f32 {
+        self.vel
+    }
+
+    #[allow(dead_code)] // BASE-ETAPA-5: lo usan las tareas en paralelo; se saca al juntar.
+    /// Cambia la velocidad de marcha (m/s), por ejemplo para alcanzar o esperar al grupo.
+    pub fn set_velocidad(&mut self, v: f32) {
+        self.vel = v.max(0.0);
+    }
+
     /// REQ-AMB-13: `Gente` avisa, cada cuadro, quién anda cerca.
     pub fn set_vecinos(&mut self, v: Vec<[f32; 2]>) {
         self.vecinos = v;
+    }
+
+    #[allow(dead_code)] // BASE-ETAPA-5: lo usan las tareas en paralelo; se saca al juntar.
+    /// Hace `accion` ya y después sigue con lo que estaba haciendo (si caminaba, retoma el
+    /// camino desde donde iba). Para pararse frente a un puesto o esperar en el cordón.
+    pub fn intercalar(&mut self, accion: Accion) {
+        if let Some(actual) = self.actual.take() {
+            let resto = match actual {
+                Accion::Caminar(ruta) => Accion::Caminar(ruta[self.paso_ruta.min(ruta.len())..].to_vec()),
+                otra => otra,
+            };
+            self.acciones.push_front(resto);
+        }
+        self.acciones.push_front(accion);
+        self.levantarse();
     }
 
     pub fn reemplazar_acciones(&mut self, acciones: Vec<Accion>) {
@@ -260,13 +315,18 @@ impl Peaton {
                 [0.0, -largo_brazo * 0.25, 0.0],
                 ap.remera,
             );
+            // REQ-RUT-10: con manga larga el antebrazo va del color de la ropa y se ve la mano.
+            let antebrazo = if ap.manga_larga { ap.remera } else { ap.piel };
             parte(
                 &mut piv,
                 TipoPieza::Caja,
                 [0.05 * h, largo_brazo * 0.5, 0.055 * h],
                 [0.0, -largo_brazo * 0.75, 0.0],
-                ap.piel,
+                antebrazo,
             );
+            if ap.manga_larga {
+                parte(&mut piv, TipoPieza::Caja, [0.045 * h, 0.05 * h, 0.05 * h], [0.0, -largo_brazo, 0.0], ap.piel);
+            }
             cuerpo.add_child(&piv);
             self.brazos.push(piv);
         }
@@ -364,6 +424,7 @@ impl Peaton {
     fn animar(&mut self, moviendo: bool, dt: f32) {
         let sentado = matches!(self.actual, Some(Accion::Sentarse { .. }));
         let charlando = matches!(self.actual, Some(Accion::Charlar { .. }));
+        let saltando = matches!(self.actual, Some(Accion::Saltar { .. }));
         let amplitud = if moviendo { if self.vel > 2.0 { 0.9 } else { 0.55 } } else { 0.0 };
         let s = self.fase.sin() * amplitud;
         for (i, p) in self.piernas.iter_mut().enumerate() {
@@ -391,11 +452,17 @@ impl Peaton {
             if sentado {
                 a = -0.3;
             }
+            if saltando {
+                // REQ-EVE-09: brazos arriba, agitándolos.
+                a = -2.8 + (self.gesto * 9.0 + i as f32).sin() * 0.25;
+            }
             b.set_rotation(Vector3::new(a, 0.0, 0.0));
         }
         if let Some(c) = &mut self.cuerpo {
             let y = if sentado {
                 0.47 - 0.47 * self.ap.altura
+            } else if saltando {
+                (self.t_accion * 6.5).sin().abs() * 0.22
             } else if moviendo {
                 (self.fase * 2.0).sin().abs() * 0.02
             } else {
@@ -474,6 +541,18 @@ impl INode3D for Peaton {
             Some(Accion::Charlar { mirar, segundos }) => {
                 let d = mirar - self.base().get_global_position();
                 self.mirar_hacia(Vector3::new(d.x, 0.0, d.z), dt);
+                self.t_accion += dt;
+                terminada = self.t_accion >= segundos;
+            }
+            Some(Accion::Esperar { mirar, segundos }) => {
+                if let Some(m) = mirar {
+                    let d = m - self.base().get_global_position();
+                    self.mirar_hacia(Vector3::new(d.x, 0.0, d.z), dt);
+                }
+                self.t_accion += dt;
+                terminada = self.t_accion >= segundos;
+            }
+            Some(Accion::Saltar { segundos }) => {
                 self.t_accion += dt;
                 terminada = self.t_accion >= segundos;
             }

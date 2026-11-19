@@ -1,0 +1,7 @@
+// SPEC-030 · Nombres para los clientes habituales (REQ-HAB-01).
+(
+    nombres: [
+        "Marta", "Carlos", "Rosa", "Hugo", "Norma", "Raúl", "Silvia", "Jorge",
+        "Graciela", "Óscar", "Mirta", "Rubén", "Lucía", "Tomás", "Valeria", "Facundo",
+    ],
+)

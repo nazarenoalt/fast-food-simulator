@@ -2,7 +2,6 @@
 
 use crate::azar::Azar;
 
-pub const VEL_TROTE: f32 = 2.8;
 /// REQ-AMB-13
 pub const DISTANCIA_PERSONAL: f32 = 0.6;
 const VISION: f32 = 1.8;
@@ -47,47 +46,14 @@ pub fn esquivar(pos: [f32; 2], dir: [f32; 2], otros: &[[f32; 2]]) -> ([f32; 2], 
     ([r[0] / largo, r[1] / largo], freno.max(0.25))
 }
 
-/// REQ-AMB-04: cuánta gente anda por la plaza según la hora (0–24).
-pub fn cantidad_objetivo(hora: f32) -> usize {
-    match hora.rem_euclid(24.0) {
-        h if h < 6.0 => 3,
-        h if h < 8.0 => 12,
-        h if h < 21.0 => 26,
-        _ => 14,
-    }
-}
-
-/// REQ-AMB-05
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+/// REQ-AMB-05: actividades. Quién hace cuál lo decide su perfil (REQ-RUT-02, `agenda.ron`).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, serde::Deserialize)]
 pub enum Plan {
     Pasear,
     Sentarse,
     Charlar,
     Trotar,
     PasearPerro,
-}
-
-pub fn elegir_plan(azar: &mut Azar) -> Plan {
-    match azar.real() {
-        r if r < 0.40 => Plan::Pasear,
-        r if r < 0.62 => Plan::Sentarse,
-        r if r < 0.77 => Plan::Charlar,
-        r if r < 0.87 => Plan::Trotar,
-        _ => Plan::PasearPerro,
-    }
-}
-
-/// Segundos que se queda sentado o charlando.
-pub fn duracion_quieto(azar: &mut Azar, plan: Plan) -> f32 {
-    match plan {
-        Plan::Sentarse => azar.rango(20.0, 70.0),
-        Plan::Charlar => azar.rango(25.0, 80.0),
-        _ => 0.0,
-    }
-}
-
-pub fn velocidad(azar: &mut Azar, plan: Plan) -> f32 {
-    if plan == Plan::Trotar { VEL_TROTE + azar.rango(-0.3, 0.4) } else { azar.rango(1.05, 1.5) }
 }
 
 /// REQ-AMB-06, REQ-AMB-16
@@ -100,10 +66,13 @@ pub struct Apariencia {
     pub altura: f32,
     /// Color de la gorra, si lleva.
     pub gorra: Option<[f32; 3]>,
+    /// REQ-RUT-10: campera o buzo de manga larga (el brazo va del color de la remera hasta
+    /// la muñeca).
+    pub manga_larga: bool,
 }
 
 impl Apariencia {
-    /// REQ-AMB-16: en cuántos rasgos (piel, remera, pantalón, pelo, gorra) se diferencian.
+    /// REQ-AMB-16: en cuántos rasgos (piel, remera, pantalón, pelo, gorra o manga) se diferencian.
     /// La altura no cuenta: de lejos no se distingue.
     pub fn diferencias(&self, otra: &Apariencia) -> usize {
         [
@@ -111,7 +80,7 @@ impl Apariencia {
             self.remera != otra.remera,
             self.pantalon != otra.pantalon,
             self.pelo != otra.pelo,
-            self.gorra != otra.gorra,
+            self.gorra != otra.gorra || self.manga_larga != otra.manga_larga,
         ]
         .iter()
         .filter(|d| **d)
@@ -179,15 +148,54 @@ const CHANCE_GORRA: f32 = 0.3;
 /// Combinaciones de rasgos distintas que existen (sin contar la altura). REQ-AMB-16
 pub const COMBINACIONES: usize = PIELES.len() * ROPA.len() * PANTALONES.len() * PELOS.len() * (GORRAS.len() + 1);
 
+/// REQ-AMB-06, REQ-RUT-10: de dónde se elige la ropa de alguien (cada perfil y hora tiene la
+/// suya, ver `vestimenta`). La variedad de REQ-AMB-16 vale dentro de la paleta.
+#[derive(Debug, Clone, PartialEq)]
+pub struct Paleta {
+    pub pieles: Vec<[f32; 3]>,
+    pub remeras: Vec<[f32; 3]>,
+    pub pantalones: Vec<[f32; 3]>,
+    pub pelos: Vec<[f32; 3]>,
+    pub gorras: Vec<[f32; 3]>,
+    pub chance_gorra: f32,
+    /// Metros, mínimo y máximo.
+    pub altura: [f32; 2],
+    /// Chance de manga larga (REQ-RUT-10).
+    pub manga_larga: f32,
+}
+
+impl Paleta {
+    /// La paleta de siempre (REQ-AMB-06): todo variado, manga corta.
+    pub fn comun() -> Self {
+        Self {
+            pieles: PIELES.to_vec(),
+            remeras: ROPA.to_vec(),
+            pantalones: PANTALONES.to_vec(),
+            pelos: PELOS.to_vec(),
+            gorras: GORRAS.to_vec(),
+            chance_gorra: CHANCE_GORRA,
+            altura: [1.55, 1.9],
+            manga_larga: 0.0,
+        }
+    }
+}
+
 /// REQ-AMB-06: una apariencia al azar (sin memoria; ver `Variedad`).
 pub fn apariencia(azar: &mut Azar) -> Apariencia {
+    apariencia_de(azar, &Paleta::comun())
+}
+
+/// REQ-AMB-06, REQ-RUT-10: una apariencia al azar de una paleta.
+pub fn apariencia_de(azar: &mut Azar, p: &Paleta) -> Apariencia {
+    let uno = |azar: &mut Azar, v: &[[f32; 3]]| *azar.elegir(v).unwrap_or(&[0.5, 0.5, 0.5]);
     Apariencia {
-        piel: *azar.elegir(&PIELES).unwrap(),
-        remera: *azar.elegir(&ROPA).unwrap(),
-        pantalon: *azar.elegir(&PANTALONES).unwrap(),
-        pelo: *azar.elegir(&PELOS).unwrap(),
-        altura: azar.rango(1.55, 1.9),
-        gorra: if azar.chance(CHANCE_GORRA) { azar.elegir(&GORRAS).copied() } else { None },
+        piel: uno(azar, &p.pieles),
+        remera: uno(azar, &p.remeras),
+        pantalon: uno(azar, &p.pantalones),
+        pelo: uno(azar, &p.pelos),
+        altura: azar.rango(p.altura[0], p.altura[1]),
+        gorra: if !p.gorras.is_empty() && azar.chance(p.chance_gorra) { azar.elegir(&p.gorras).copied() } else { None },
+        manga_larga: azar.chance(p.manga_larga),
     }
 }
 
@@ -217,9 +225,14 @@ impl Variedad {
     /// Apariencia para la persona `id` que llega: no repite a nadie presente ni a las últimas
     /// `MEMORIA_IDAS` que se fueron, y en lo posible se diferencia en dos rasgos o más.
     pub fn nueva(&mut self, azar: &mut Azar, id: u64) -> Apariencia {
+        self.nueva_con(azar, id, &Paleta::comun())
+    }
+
+    /// Como `nueva`, eligiendo de una paleta (REQ-RUT-10).
+    pub fn nueva_con(&mut self, azar: &mut Azar, id: u64, paleta: &Paleta) -> Apariencia {
         let mut mejor: Option<(usize, Apariencia)> = None;
         for _ in 0..INTENTOS {
-            let a = apariencia(azar);
+            let a = apariencia_de(azar, paleta);
             let d = self.minimo_de_diferencias(&a);
             if mejor.as_ref().is_none_or(|(m, _)| d > *m) {
                 mejor = Some((d, a));
@@ -231,8 +244,8 @@ impl Variedad {
         let (d, mut a) = mejor.expect("al menos un intento");
         if d == 0 {
             // Muy improbable (hay muchas más combinaciones que recordadas): se recorre la
-            // paleta de remeras hasta encontrar una que no repita.
-            for r in ROPA {
+            // paleta de remeras (y si no alcanza, la de siempre) hasta encontrar una que no repita.
+            for r in paleta.remeras.iter().chain(ROPA.iter()).copied() {
                 a.remera = r;
                 if self.minimo_de_diferencias(&a) > 0 {
                     break;
@@ -241,6 +254,12 @@ impl Variedad {
         }
         self.presentes.push((id, a.clone()));
         a
+    }
+
+    /// REQ-HAB-01: alguien que vuelve con la apariencia que ya tenía (un habitual): se anota
+    /// como presente pero no se compara con nadie.
+    pub fn vuelve(&mut self, id: u64, a: Apariencia) {
+        self.presentes.push((id, a));
     }
 
     /// La persona `id` se fue del mapa.
@@ -276,22 +295,6 @@ impl Variedad {
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    #[test]
-    fn req_amb_04_mas_gente_de_dia() {
-        assert!(cantidad_objetivo(3.0) < 5);
-        assert!(cantidad_objetivo(13.0) > 20);
-        assert!(cantidad_objetivo(22.0) < cantidad_objetivo(13.0));
-    }
-
-    #[test]
-    fn req_amb_05_todas_las_actividades() {
-        let mut a = Azar::new(5);
-        let planes: std::collections::HashSet<_> = (0..500).map(|_| format!("{:?}", elegir_plan(&mut a))).collect();
-        assert_eq!(planes.len(), 5);
-        assert!(duracion_quieto(&mut a, Plan::Sentarse) >= 20.0);
-        assert!(velocidad(&mut a, Plan::Trotar) > velocidad(&mut a, Plan::Pasear));
-    }
 
     #[test]
     fn req_amb_13_sin_nadie_cerca_sigue_igual() {

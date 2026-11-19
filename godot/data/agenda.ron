@@ -1,0 +1,28 @@
+// SPEC-018 · Agenda de la plaza (REQ-RUT-01, REQ-RUT-02).
+// perfiles: velocidad en m/s (mín, máx), paciencia (factor de REQ-CLI-06), grupo (cuántos llegan
+// juntos, mín y máx), planes (actividad, peso) y quieto (segundos sentado o charlando).
+// franjas: horas [desde, hasta), gente en la plaza y perfiles que llegan (perfil, peso).
+(
+    perfiles: [
+        (perfil: Paseante, velocidad: (1.05, 1.5), planes: [(Pasear, 5.0), (Sentarse, 3.0), (Charlar, 2.0)], quieto: Some((20.0, 70.0))),
+        (perfil: Corredor, velocidad: (2.5, 3.2), planes: [(Trotar, 1.0)]),
+        (perfil: Paseador, velocidad: (1.0, 1.35), planes: [(PasearPerro, 1.0)]),
+        (perfil: AlTrabajo, velocidad: (1.5, 1.8), planes: [(Pasear, 1.0)]),
+        (perfil: Jubilado, velocidad: (0.8, 1.1), paciencia: 1.2, planes: [(Sentarse, 6.0), (Pasear, 3.0), (Charlar, 1.0)], quieto: Some((40.0, 120.0))),
+        (perfil: Oficinista, velocidad: (1.4, 1.7), paciencia: 0.8, grupo: (1, 3), planes: [(Sentarse, 6.0), (Pasear, 3.0)], quieto: Some((25.0, 60.0))),
+        (perfil: Familia, velocidad: (0.9, 1.2), grupo: (2, 4), planes: [(Pasear, 6.0), (Sentarse, 3.0)], quieto: Some((25.0, 60.0))),
+        (perfil: Adolescente, velocidad: (1.1, 1.5), grupo: (2, 3), planes: [(Pasear, 4.0), (Charlar, 4.0), (Sentarse, 2.0)], quieto: Some((30.0, 80.0))),
+        (perfil: Nocturno, velocidad: (1.0, 1.4), grupo: (3, 4), planes: [(Charlar, 8.0), (Pasear, 2.0)], quieto: Some((30.0, 90.0))),
+        (perfil: Pareja, velocidad: (0.9, 1.3), grupo: (2, 2), planes: [(Pasear, 5.0), (Sentarse, 5.0)], quieto: Some((30.0, 80.0))),
+        (perfil: Trasnochado, velocidad: (0.8, 1.2), planes: [(Pasear, 1.0)]),
+    ],
+    franjas: [
+        (desde: 0.0, hasta: 6.0, gente: 3, perfiles: [(Trasnochado, 5.0), (Paseador, 3.0), (Nocturno, 1.0)]),
+        (desde: 6.0, hasta: 9.0, gente: 12, perfiles: [(AlTrabajo, 5.0), (Corredor, 4.0), (Paseador, 3.0), (Paseante, 1.0)]),
+        (desde: 9.0, hasta: 12.0, gente: 18, perfiles: [(Jubilado, 5.0), (Paseante, 4.0), (Paseador, 2.0), (Corredor, 1.0)]),
+        (desde: 12.0, hasta: 14.0, gente: 28, perfiles: [(Oficinista, 7.0), (Paseante, 2.0), (Jubilado, 1.0)]),
+        (desde: 14.0, hasta: 16.0, gente: 16, perfiles: [(Jubilado, 4.0), (Paseante, 4.0), (Adolescente, 2.0), (Paseador, 1.0)]),
+        (desde: 16.0, hasta: 20.0, gente: 28, perfiles: [(Familia, 6.0), (Adolescente, 2.0), (Corredor, 1.5), (Paseante, 1.5), (Pareja, 1.0)]),
+        (desde: 20.0, hasta: 24.0, gente: 20, perfiles: [(Nocturno, 6.0), (Pareja, 3.0), (Paseante, 1.0), (Paseador, 1.0)]),
+    ],
+)
