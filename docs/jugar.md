@@ -76,7 +76,7 @@ llevan a cualquier lado; dejalos en un lugar libre y se vuelven a guardar.
   a una cajita vacía y hacé clic: se arman las papas en cajita ($8, ketchup o mayonesa).
   Solo las piden si tu carrito tiene freidora.
 - **Cartel de cerrado:** colgado, no llegan clientes nuevos (los de la fila se quedan). Desde la
-  vereda, apuntá al frente del carrito, donde cuelga, y hacé clic (con la mano libre) o E: lo sacás,
+  vereda, apuntá al frente del carrito, donde cuelga, y hacé clic (con la mano libre) o E (aunque tengas algo en la mano): lo sacás,
   desaparece y abrís. Para cerrar, lo mismo en ese lugar: lo volvés a colgar. Ojo: recién puesto en
   el modo armado arranca colgado.
 - Cada cliente pide un plato del menú; solo piden lo que tu carrito puede cocinar.

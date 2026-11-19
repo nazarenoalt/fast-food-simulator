@@ -89,7 +89,7 @@ impl PruebaHumo {
                 j.bind_mut().usar();
                 let cartel = preparar::cartel(Some("pelapapas"), &papa);
                 self.chequear(
-                    papa.bind().pasadas == 1 && cartel.contains("[E] Pelar papa (1/3)"),
+                    papa.bind().pasadas == 1 && cartel.contains("[E] Pelar papa (2/3)"),
                     &format!("REQ-FRE-01 una E con el pelapapas es una pasada (\"{cartel}\")"),
                 );
                 // REQ-FRE-03: la corro un poco sobre la tabla; la pasada queda en la papa.
@@ -147,7 +147,7 @@ impl PruebaHumo {
                     j.bind_mut().usar();
                 }
                 let cartel = preparar::cartel(Some("cuchillo"), &pelada);
-                let tres = pelada.bind().pasadas == 3 && cartel.contains("[E] Cortar papa (3/4)");
+                let tres = pelada.bind().pasadas == 3 && cartel.contains("[E] Cortar papa (4/4)");
                 j.bind_mut().usar();
                 self.chequear(
                     mira && tres && pelada.is_queued_for_deletion(),

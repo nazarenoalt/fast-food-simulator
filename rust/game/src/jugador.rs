@@ -700,6 +700,11 @@ impl Jugador {
     pub fn usar(&mut self) {
         let yo = self.to_gd();
         if self.mano.is_some() {
+            // REQ-CLI-13: E saca o cuelga el cartel también con algo en la mano.
+            if let Some(Objetivo::Cartel(mut c)) = self.objetivo() {
+                c.bind_mut().alternar();
+                return;
+            }
             // REQ-COC-10: un paquete sobre el hervidor se vuelca en el agua.
             if self.paquete_en_mano().is_some() {
                 if let Some(Objetivo::Hervidor(h)) = self.objetivo() {
@@ -872,6 +877,9 @@ impl Jugador {
                 if let Some(Objetivo::Comida(o)) = &objetivo {
                     t += &preparar::cartel(Some(c.producto()), o); // REQ-FRE-01..03
                 }
+                if let Some(Objetivo::Cartel(k)) = &objetivo {
+                    t += &format!(" · {}", k.bind().cartel().replace("[Clic/E]", "[E]")); // REQ-CLI-13
+                }
                 t
             } else if let Ok(p) = m.try_cast::<Paquete>() {
                 let p = p.bind();
@@ -882,6 +890,9 @@ impl Jugador {
                 {
                     let nombre = catalogo().producto(&p.def().producto).map(|d| d.nombre.clone()).unwrap_or_default();
                     t += &format!(" · [E] Echar al agua ({} × {nombre})", p.restantes());
+                }
+                if let Some(Objetivo::Cartel(k)) = &objetivo {
+                    t += &format!(" · {}", k.bind().cartel().replace("[Clic/E]", "[E]")); // REQ-CLI-13
                 }
                 t
             } else {

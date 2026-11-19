@@ -45,12 +45,12 @@ impl Preparacion {
         if hechas >= self.pasadas { Pasada::Lista(self.resultado.clone()) } else { Pasada::Avanza(hechas) }
     }
 
-    /// REQ-FRE-01, REQ-FRE-03: cartel al mirar el producto: el avance con la herramienta
-    /// («[E] Pelar papa (1/3)») o cuál hace falta («Necesitás el pelapapas»).
+    /// REQ-FRE-01, REQ-FRE-03: cartel al mirar el producto: la pasada que viene con la
+    /// herramienta («[E] Pelar papa (1/3)», 2/3, 3/3) o cuál hace falta («Necesitás el pelapapas»).
     /// `nombre_herramienta` es el nombre para mostrar de la herramienta.
     pub fn cartel(&self, hechas: u32, en_mano: Option<&str>, nombre_herramienta: &str) -> String {
         if self.tiene_herramienta(en_mano) {
-            format!("[E] {} ({hechas}/{})", self.accion, self.pasadas)
+            format!("[E] {} ({}/{})", self.accion, hechas + 1, self.pasadas)
         } else {
             format!("Necesitás el {nombre_herramienta}")
         }
@@ -101,9 +101,9 @@ mod tests {
     fn req_fre_01_tres_pasadas_de_pelapapas_pelan_la_papa() {
         let p = prep("papa_cruda");
         let mut hechas = 0;
-        assert_eq!(p.cartel(hechas, Some("pelapapas"), "pelapapas"), "[E] Pelar papa (0/3)");
-        assert_eq!(apretar(&p, &mut hechas, Some("pelapapas"), 1), Pasada::Avanza(1));
         assert_eq!(p.cartel(hechas, Some("pelapapas"), "pelapapas"), "[E] Pelar papa (1/3)");
+        assert_eq!(apretar(&p, &mut hechas, Some("pelapapas"), 1), Pasada::Avanza(1));
+        assert_eq!(p.cartel(hechas, Some("pelapapas"), "pelapapas"), "[E] Pelar papa (2/3)");
         assert_eq!(apretar(&p, &mut hechas, Some("pelapapas"), 1), Pasada::Avanza(2));
         assert_eq!(apretar(&p, &mut hechas, Some("pelapapas"), 1), Pasada::Lista("papa_pelada".into()));
     }
@@ -119,7 +119,7 @@ mod tests {
         let p = prep("papa_pelada");
         let mut hechas = 0;
         assert_eq!(apretar(&p, &mut hechas, Some("cuchillo"), 3), Pasada::Avanza(3));
-        assert_eq!(p.cartel(hechas, Some("cuchillo"), "cuchillo"), "[E] Cortar papa (3/4)");
+        assert_eq!(p.cartel(hechas, Some("cuchillo"), "cuchillo"), "[E] Cortar papa (4/4)");
         assert_eq!(apretar(&p, &mut hechas, Some("cuchillo"), 1), Pasada::Lista("papa_cortada".into()));
         // Lo que sale ya no se prepara más (se fríe: REQ-FRE-09).
         let cat = catalogo_real();

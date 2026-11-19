@@ -223,6 +223,14 @@ impl PruebaHumo {
                 pan.set_global_position(parado + Vector3::new(0.0, 1.2, 0.0));
                 j.bind_mut().agarrar(pan.clone().upcast());
                 j.bind_mut().apuntar_a(zona);
+                // REQ-CLI-13: con algo en la mano, E igual lo saca y lo vuelve a colgar.
+                j.bind_mut().usar();
+                let sacado_e = !cartel.bind().colgado() && j.bind().en_mano().is_some();
+                j.bind_mut().usar();
+                self.chequear(
+                    sacado_e && cartel.bind().colgado(),
+                    "REQ-CLI-13 con algo en la mano, E saca el cartel y lo vuelve a colgar",
+                );
                 j.bind_mut().clic_izquierdo();
                 self.chequear(
                     cartel.bind().colgado() && j.bind().en_mano().is_none(),
