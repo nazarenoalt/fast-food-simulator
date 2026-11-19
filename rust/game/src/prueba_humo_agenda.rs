@@ -18,8 +18,10 @@ impl PruebaHumo {
         };
         match self.fase5 {
             0 => {
-                // Se guarda la hora para dejarla como estaba.
-                self.notas5 = vec![dn.bind().hora() as f64 * 60.0];
+                // Se guardan día y hora para dejarlos como estaban; un lunes (día 4), sin
+                // eventos (SPEC-019).
+                self.notas5 = vec![dn.bind().hora() as f64 * 60.0, dn.bind().dia() as f64];
+                dn.bind_mut().set_dia(4);
                 dn.bind_mut().set_minuto(11.0 * 60.0 + 30.0);
                 self.fase5 = 1;
                 false
@@ -64,6 +66,8 @@ impl PruebaHumo {
                     );
                 }
                 let minuto = self.notas5.first().copied().unwrap_or(17.0 * 60.0);
+                let dia = self.notas5.get(1).copied().unwrap_or(1.0);
+                dn.bind_mut().set_dia(dia as u32);
                 dn.bind_mut().set_minuto(minuto);
                 true
             }
