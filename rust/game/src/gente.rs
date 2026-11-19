@@ -324,6 +324,17 @@ impl Gente {
         p
     }
 
+    /// Asientos de la red que nadie ocupa y se pueden usar a esta hora (REQ-RUT-11).
+    fn asientos_libres(&self) -> Vec<usize> {
+        let ocupados: Vec<usize> = self.asientos.values().copied().collect();
+        self.red
+            .de_tipo(|t| matches!(t, TipoNodo::Asiento { .. }))
+            .into_iter()
+            .filter(|a| !ocupados.contains(a))
+            .filter(|a| vestimenta::asiento_permitido(self.red.pos[*a], self.hora))
+            .collect()
+    }
+
     /// REQ-RUT-02, REQ-RUT-11: la actividad de alguien de ese perfil a esta hora.
     fn plan_para(&mut self, perfil: Perfil) -> Plan {
         for _ in 0..12 {
@@ -342,20 +353,18 @@ impl Gente {
         if self.planear_grupo(perfil, desde_salida) {
             return;
         }
-        let plan = self.plan_para(perfil);
+        let mut plan = self.plan_para(perfil);
+        // Si no hay banco libre (o permitido a esta hora), pasea: así no se pierde gente de la
+        // agenda que prefiere sentarse (oficinistas, jubilados).
+        let libres = self.asientos_libres();
+        if plan == Plan::Sentarse && libres.is_empty() {
+            plan = Plan::Pasear;
+        }
         let inicio = if desde_salida { self.salida_al_azar() } else { self.al_azar(|t| *t == TipoNodo::Paso) };
         let salida = self.salida_al_azar();
         let c = self.azar.rango(-0.4, 0.4);
         match plan {
             Plan::Sentarse => {
-                let ocupados: Vec<usize> = self.asientos.values().copied().collect();
-                let libres: Vec<usize> = self
-                    .red
-                    .de_tipo(|t| matches!(t, TipoNodo::Asiento { .. }))
-                    .into_iter()
-                    .filter(|a| !ocupados.contains(a))
-                    .filter(|a| vestimenta::asiento_permitido(self.red.pos[*a], self.hora)) // REQ-RUT-11
-                    .collect();
                 let Some(&asiento) = self.azar.elegir(&libres) else { return };
                 let TipoNodo::Asiento { rot_y } = self.red.tipo[asiento] else { return };
                 let mut ida = self.ruta(inicio, asiento, c);

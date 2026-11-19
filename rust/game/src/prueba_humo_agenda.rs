@@ -2,6 +2,8 @@
 
 use carrito_core::rutinas::Perfil;
 
+use godot::prelude::Gd;
+
 use super::{PruebaHumo, todos};
 use crate::dia_noche::DiaNoche;
 use crate::gente::Gente;
@@ -37,22 +39,20 @@ impl PruebaHumo {
                     objetivo == 28,
                     &format!("REQ-RUT-03 a las 11:30 ya se espera la gente del mediodía ({objetivo})"),
                 );
-                let ids = gente.bind_mut().probar_paseantes(20);
-                let ofi = ids.iter().filter(|id| gente.bind().perfil_de(**id) == Some(Perfil::Oficinista)).count();
+                let (mas, cuantos) = mas_comun(&gente, 30);
                 self.chequear(
-                    ofi * 2 > ids.len(),
-                    &format!("REQ-RUT-01 a las 11:30 llegan sobre todo oficinistas ({ofi} de {})", ids.len()),
+                    mas == Some(Perfil::Oficinista),
+                    &format!("REQ-RUT-01 a las 11:30 los que más llegan son oficinistas ({mas:?}: {cuantos:?})"),
                 );
                 dn.bind_mut().set_minuto(17.0 * 60.0 + 30.0);
                 self.fase5 = 3;
                 false
             }
             4 => {
-                let ids = gente.bind_mut().probar_paseantes(20);
-                let fam = ids.iter().filter(|id| gente.bind().perfil_de(**id) == Some(Perfil::Familia)).count();
+                let (mas, cuantos) = mas_comun(&gente, 30);
                 self.chequear(
-                    fam * 3 > ids.len(),
-                    &format!("REQ-RUT-01 a las 17:30 llegan sobre todo familias ({fam} de {})", ids.len()),
+                    mas == Some(Perfil::Familia),
+                    &format!("REQ-RUT-01 a las 17:30 los que más llegan son familias ({mas:?}: {cuantos:?})"),
                 );
                 // REQ-RUT-04: un cliente con la paciencia de su perfil.
                 if gente.bind().largo_fila() == 0 {
@@ -74,4 +74,20 @@ impl PruebaHumo {
             _ => true,
         }
     }
+}
+
+/// Hace llegar `n` personas de la agenda y devuelve el perfil más común y la cuenta por perfil.
+fn mas_comun(gente: &Gd<Gente>, n: usize) -> (Option<Perfil>, Vec<(Perfil, usize)>) {
+    let mut gente = gente.clone();
+    let ids = gente.bind_mut().probar_paseantes(n);
+    let mut cuenta: Vec<(Perfil, usize)> = Vec::new();
+    for id in ids {
+        let Some(p) = gente.bind().perfil_de(id) else { continue };
+        match cuenta.iter_mut().find(|(q, _)| *q == p) {
+            Some((_, c)) => *c += 1,
+            None => cuenta.push((p, 1)),
+        }
+    }
+    cuenta.sort_by(|a, b| b.1.cmp(&a.1));
+    (cuenta.first().map(|(p, _)| *p), cuenta)
 }
