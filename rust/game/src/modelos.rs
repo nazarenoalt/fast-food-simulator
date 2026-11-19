@@ -6,7 +6,7 @@ use std::collections::HashMap;
 
 use carrito_core::datos::DefProducto;
 use carrito_core::modelos::{self as reglas, ruta_glb};
-use godot::classes::base_material_3d::{Feature, TextureParam};
+use godot::classes::base_material_3d::{EmissionOperator, Feature, TextureParam};
 use godot::classes::{MeshInstance3D, Node, Node3D, PackedScene, ResourceLoader, StandardMaterial3D};
 use godot::prelude::*;
 
@@ -166,11 +166,14 @@ pub fn luces_de_noche(raiz: &Gd<Node3D>) {
             let energia = if m.get_feature(Feature::EMISSION) {
                 m.get_emission_energy_multiplier().max(1.0)
             } else {
-                // Un cartel sin brillo propio: de noche brilla con su mismo dibujo.
+                // Un cartel sin brillo propio: de noche brilla con su mismo dibujo (REQ-MOD-07).
                 let albedo = m.get_albedo();
                 m.set_emission(albedo);
                 if let Some(t) = m.get_texture(TextureParam::ALBEDO) {
                     m.set_texture(TextureParam::EMISSION, &t);
+                    // Color × dibujo, como el albedo. Con el operador por defecto (sumar) brillaría
+                    // color + dibujo: casi blanco, con los colores lavados.
+                    m.set_emission_operator(EmissionOperator::MULTIPLY);
                 }
                 0.8
             };
