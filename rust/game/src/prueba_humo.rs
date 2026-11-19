@@ -28,6 +28,9 @@ use crate::sonido::Sonido;
 use crate::transito::{Autos, Nubes};
 use carrito_core::tostado::EstadoPan;
 
+#[path = "prueba_humo_freir.rs"]
+mod freir; // SPEC-029
+
 #[derive(GodotClass)]
 #[class(base=Node, init)]
 pub struct PruebaHumo {
@@ -68,6 +71,10 @@ pub struct PruebaHumo {
     salchichas_hervidor: usize,
     carnes: Option<(Gd<Comida>, Gd<Comida>)>,
     jugador_antes: Option<Transform3D>,
+    /// SPEC-029: fase de la prueba de freír, la papa y los cuadros que lleva en el aceite.
+    fase_freir: u32,
+    papa_freir: Option<Gd<Comida>>,
+    cuadros_freir: u32,
 }
 
 /// Material (de la primera superficie) de la pieza `nombre` de un modelo. SPEC-025
@@ -521,7 +528,7 @@ impl PruebaHumo {
                 let coladores = suelta("colador_freidora");
                 let adentro = coladores.iter().all(|x| {
                     let p = x.get_global_position() - base;
-                    (p.x + 1.1).abs() < 0.3 && p.y > 1.12 && p.y < 1.2 && (p.z - 0.045).abs() < 0.1
+                    (p.x + 1.1).abs() < 0.3 && p.y > 1.2 && p.y < 1.3 && (p.z - 0.045).abs() < 0.1
                 });
                 self.chequear(
                     coladores.len() == 2 && adentro,
@@ -1360,8 +1367,10 @@ impl INode for PruebaHumo {
                         self.paso -= 1; // SPEC-027: se repite este paso hasta terminar
                     } else if !self.chequear_logo() {
                         self.paso -= 1; // SPEC-028: se repite este paso hasta terminar
-                    } else if self.chequear_papas_y_puerta() {
-                        self.terminar();
+                    } else if self.fase_freir == 0 && !self.chequear_papas_y_puerta() {
+                        self.paso -= 1; // se repite este paso hasta terminar
+                    } else if self.chequear_freir() {
+                        self.terminar(); // SPEC-029
                     } else {
                         self.paso -= 1; // se repite este paso hasta terminar
                     }

@@ -224,8 +224,19 @@
             masa: 0.15,
             colision: Caja(medidas: (0.084, 0.031, 0.045)),
             forma: [
-                (tipo: Caja, medidas: (0.084, 0.031, 0.045), color: (0.9, 0.78, 0.42)),
+                (tipo: Caja, medidas: (0.084, 0.031, 0.045), color: (0.9, 0.78, 0.42), tinte_coccion: true),
             ],
+            // REQ-FRE-09: en aceite a 180 °C, Cocida a ~83 s, Pasada a ~159 s, Quemada a ~215 s.
+            // Mismo perfil cortadas y fritas (REQ-FRE-10): siguen cocinándose igual.
+            coccion: Some((
+                k: 0.05, t_min: 100, velocidad: 0.001, punto: 4, pasado: 10,
+                t_quemado: 170, segundos_quemado: 160,
+                color_crudo: (0.9, 0.78, 0.42),
+                color_cocido: (0.89, 0.65, 0.23),
+                color_pasado: (0.55, 0.32, 0.12),
+                color_quemado: (0.12, 0.08, 0.05),
+            )),
+            al_cocerse: Some("papas_fritas"), // REQ-FRE-10
         ),
         (
             id: "papas_fritas",
@@ -234,8 +245,18 @@
             masa: 0.12,
             colision: Caja(medidas: (0.09, 0.034, 0.05)),
             forma: [
-                (tipo: Caja, medidas: (0.09, 0.034, 0.05), color: (0.89, 0.65, 0.23)),
+                (tipo: Caja, medidas: (0.09, 0.034, 0.05), color: (0.89, 0.65, 0.23), tinte_coccion: true),
             ],
+            // REQ-FRE-09: en aceite a 180 °C, Cocida a ~83 s, Pasada a ~159 s, Quemada a ~215 s.
+            // Mismo perfil cortadas y fritas (REQ-FRE-10): siguen cocinándose igual.
+            coccion: Some((
+                k: 0.05, t_min: 100, velocidad: 0.001, punto: 4, pasado: 10,
+                t_quemado: 170, segundos_quemado: 160,
+                color_crudo: (0.9, 0.78, 0.42),
+                color_cocido: (0.89, 0.65, 0.23),
+                color_pasado: (0.55, 0.32, 0.12),
+                color_quemado: (0.12, 0.08, 0.05),
+            )),
         ),
         (
             id: "cajita_papas",

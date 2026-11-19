@@ -36,6 +36,9 @@ pub struct DefProducto {
     pub forma: Vec<Pieza>,
     #[serde(default)]
     pub coccion: Option<PerfilCoccion>,
+    /// REQ-FRE-10: en qué producto se convierte al quedar Cocido (la papa cortada, en fritas).
+    #[serde(default)]
+    pub al_cocerse: Option<String>,
     /// REQ-PLA-04: se cocina por lados (hamburguesa): cada lado tiene su propio estado.
     #[serde(default)]
     pub por_lados: bool,

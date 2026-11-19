@@ -63,10 +63,12 @@
             (tipo: Caja, medidas: (0.26, 0.24, 0.36), pos: (0, 0.12, -0.055), color: (0.82, 0.83, 0.85), metal: true),
             (tipo: Caja, medidas: (0.26, 0.33, 0.11), pos: (0, 0.165, 0.18), color: (0.82, 0.83, 0.85), metal: true),
         ],
-        // REQ-FRE-04: interior de la cuba (0,206 × 0,31 del modelo); alto del aceite a medir.
+        // REQ-FRE-04: cuba y aceite medidos del modelo (pieza_aceite: piso a 0,1055 m, nivel a
+        // 0,19 m). REQ-FRE-08: el colador arranca arriba, con el canasto encima del aceite
+        // (el punto_colador del modelo, a 0,153 m, es el canasto apoyado en el piso: bajado).
         funcion: Some(Freidora(
-            cubas: [(centro: (0, 0.06, -0.055), interior: (0.206, 0.12, 0.31))],
-            objetos: [(producto: "colador_freidora", pos: (0, 0.153, -0.055))],
+            cubas: [(centro: (0, 0.1055, -0.055), interior: (0.205, 0.0845, 0.309))],
+            objetos: [(producto: "colador_freidora", pos: (0, 0.245, -0.055))],
         )),
     ),
     (
@@ -81,12 +83,12 @@
         ],
         funcion: Some(Freidora(
             cubas: [
-                (centro: (-0.1305, 0.06, -0.055), interior: (0.206, 0.12, 0.31)),
-                (centro: (0.1305, 0.06, -0.055), interior: (0.206, 0.12, 0.31)),
+                (centro: (-0.1305, 0.1055, -0.055), interior: (0.205, 0.0845, 0.309)),
+                (centro: (0.1305, 0.1055, -0.055), interior: (0.205, 0.0845, 0.309)),
             ],
             objetos: [
-                (producto: "colador_freidora", pos: (-0.1305, 0.153, -0.055)),
-                (producto: "colador_freidora", pos: (0.1305, 0.153, -0.055)),
+                (producto: "colador_freidora", pos: (-0.1305, 0.245, -0.055)),
+                (producto: "colador_freidora", pos: (0.1305, 0.245, -0.055)),
             ],
         )),
     ),

@@ -190,6 +190,11 @@ pub fn visual_producto(def: &DefProducto) -> (Gd<Node3D>, Tintes, [Tintes; 2]) {
         for pieza in buscar_prefijos(&m, reglas::PIEZAS_COCCION) {
             tintes.extend(materiales_propios(&pieza).into_iter().map(|(_, mat)| mat));
         }
+        // REQ-FRE-09: un modelo de una sola pieza que se cocina entero (las papas) toma todo
+        // el color de la cocción.
+        if tintes.is_empty() && def.coccion.is_some() && !def.por_lados {
+            tintes.extend(materiales_propios(&m).into_iter().map(|(_, mat)| mat));
+        }
         return (m, tintes, [Vec::new(), Vec::new()]);
     }
     let mut nodo = Node3D::new_alloc();
