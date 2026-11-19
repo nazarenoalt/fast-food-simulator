@@ -22,11 +22,18 @@ pub struct BloqueStock {
 impl BloqueStock {
     pub fn crear(def: DefBloque) -> Gd<Self> {
         let temp = temp_inicial(&def);
-        Self::crear_con_temp(def, temp)
+        let restantes = def.capacidad();
+        Self::crear_con(def, restantes, temp)
     }
 
-    pub fn crear_con_temp(def: DefBloque, temp: f32) -> Gd<Self> {
-        Gd::from_init_fn(|base| Self { base, bloque: Bloque::lleno(def), unidades: Vec::new(), temp })
+    /// Un bloque con `restantes` unidades a `temp` °C (de un paquete que se guarda). REQ-PRO-06
+    pub fn crear_con(def: DefBloque, restantes: u32, temp: f32) -> Gd<Self> {
+        let bloque = Bloque::con_restantes(def, restantes);
+        Gd::from_init_fn(|base| Self { base, bloque, unidades: Vec::new(), temp })
+    }
+
+    pub fn def(&self) -> &DefBloque {
+        &self.bloque.def
     }
 
     /// REQ-HEL-06
@@ -55,7 +62,7 @@ impl BloqueStock {
     pub fn cartel(&self) -> String {
         let nombre = catalogo().producto(&self.bloque.def.producto).map(|p| p.nombre.as_str()).unwrap_or("?");
         format!(
-            "[E] Sacar {nombre} ({}/{}) — {}",
+            "[E] Sacar {nombre} ({}/{}) · [Clic] Agarrar el paquete — {}",
             self.bloque.restantes,
             self.bloque.def.capacidad(),
             self.bloque.def.nombre

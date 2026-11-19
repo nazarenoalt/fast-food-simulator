@@ -36,6 +36,9 @@ tiempo, y que el jugador lo vea.
   toma como temperatura de entorno la temperatura del agua.
 - **REQ-COC-09** Se enciende/apaga con E. Una luz piloto roja indica que está encendido y el
   cartel muestra la temperatura del agua.
+- **REQ-COC-10** Con un paquete en la mano de algo que se cocina entero (no por lados, como la
+  salchicha), E sobre el hervidor vuelca todas sus unidades al agua: acostadas en filas a lo
+  largo de la cuba (en capas si no entran), con la temperatura del paquete. El paquete se va.
 
 ## Criterios de aceptación
 

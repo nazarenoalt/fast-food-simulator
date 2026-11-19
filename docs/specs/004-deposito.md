@@ -24,7 +24,10 @@ mira el estante y sabe qué le falta sin abrir menús.
 - **REQ-DEP-07** Un depósito tiene un número fijo de lugares para bloques (definido por su
   accesorio). No se puede poner un bloque en un lugar ocupado.
 - **REQ-DEP-08** Al mirar un bloque el cartel dice qué es y cuántas unidades quedan
-  (ej. "[E] Sacar pan de pancho (7/12)").
+  (ej. "[E] Sacar pan de pancho (7/12) · [Clic] Agarrar el paquete").
+- **REQ-DEP-09** Clic sobre un bloque del depósito (o de la heladera) lo levanta: pasa a ser un
+  paquete en la mano (SPEC-011) con sus unidades restantes y su temperatura, y el lugar queda
+  libre. Así se mueven a gusto bolsas de papas, cajas y bolsas.
 
 ## Criterios de aceptación
 

@@ -12,17 +12,20 @@ use godot::prelude::*;
 use crate::aderecera::Pomo;
 use crate::armado;
 use crate::bloque_stock::BloqueStock;
-use crate::comida::Comida;
+use crate::comida::{self, Comida};
+use crate::datos::catalogo;
 use crate::formas;
 use crate::heladera::Heladera;
 use crate::hervidor::Hervidor;
 use crate::hud::{self, Hud};
+use crate::lugar_deposito::{self, LugarDeposito};
 use crate::paquete::Paquete;
 use crate::parrilla::Parrilla;
 use crate::plancha::Plancha;
 use crate::puerta::PuertaCarrito;
 use crate::sonido;
 use crate::tienda;
+use carrito_core::agarre;
 use carrito_core::deposito::Empaque;
 use carrito_core::sonido::ids;
 
@@ -35,9 +38,11 @@ const ALTO_OJOS: f32 = 1.65; // REQ-JUG-05
 /// REQ-JUG-09: escalón más alto que se sube caminando.
 const ESCALON_MAX: f32 = 0.30;
 const ALCANCE: f32 = 2.5; // REQ-INT-01
-const DIST_MANO: f32 = 1.0; // REQ-INT-03
-const RESORTE: f32 = 12.0; // REQ-INT-04
-const VEL_MAX_MANO: f32 = 8.0; // REQ-INT-04
+const RESORTE: f32 = 20.0; // REQ-INT-04
+const VEL_MAX_MANO: f32 = 12.0; // REQ-INT-04
+/// REQ-INT-04: qué tan rápido gira hacia el giro de la cámara (1/s) y tope (rad/s).
+const RESORTE_GIRO: f32 = 15.0;
+const GIRO_MAX_MANO: f32 = 20.0;
 const DIST_TRABADO: f32 = 1.5; // REQ-INT-05
 const VEL_TIRO: f32 = 4.0; // REQ-INT-06
 const SENSIBILIDAD: f32 = 0.0025;
@@ -57,6 +62,15 @@ pub enum Objetivo {
     Puerta(Gd<PuertaCarrito>),
 }
 
+/// REQ-INT-08/09/10: qué pasa al colocar lo que tenés en la mano donde apunta la mira.
+enum Colocacion {
+    Apoyar,
+    Pared,
+    /// Sobre una base de armado (nombre de la base).
+    Armar(String),
+    Guardar,
+}
+
 #[derive(GodotClass)]
 #[class(base=CharacterBody3D)]
 pub struct Jugador {
@@ -66,6 +80,10 @@ pub struct Jugador {
     /// Lo que tiene en la mano: comida o paquete (REQ-INT-03).
     mano: Option<Gd<RigidBody3D>>,
     segundos_en_mano: f32,
+    /// REQ-INT-03: lo agarrado estaba dado vuelta (se respeta al sostenerlo y al colocarlo).
+    volteado: bool,
+    /// REQ-INT-09: rayo de la cámara a un lugar del depósito (para ver que no haya nada en medio).
+    rayo_lugar: Option<Gd<RayCast3D>>,
     pitch: f32,
     gravedad: f32,
     /// Metros caminados desde el último paso que sonó. REQ-SON-08
@@ -101,7 +119,18 @@ impl ICharacterBody3D for Jugador {
     fn init(base: Base<CharacterBody3D>) -> Self {
         // Arranca mirando un poco hacia abajo, para ver el mostrador.
         let pitch = -18f32.to_radians();
-        Self { base, camara: None, rayo: None, mano: None, segundos_en_mano: 0.0, pitch, gravedad: 9.8, paso_m: 0.0 }
+        Self {
+            base,
+            camara: None,
+            rayo: None,
+            mano: None,
+            segundos_en_mano: 0.0,
+            volteado: false,
+            rayo_lugar: None,
+            pitch,
+            gravedad: 9.8,
+            paso_m: 0.0,
+        }
     }
 
     fn ready(&mut self) {
@@ -144,9 +173,14 @@ impl ICharacterBody3D for Jugador {
         let yo = self.to_gd();
         rayo.add_exception(&yo);
         camara.add_child(&rayo);
+        let mut rayo_lugar = RayCast3D::new_alloc();
+        rayo_lugar.add_exception(&yo);
+        rayo_lugar.set_enabled(false);
+        camara.add_child(&rayo_lugar);
 
         self.camara = Some(camara);
         self.rayo = Some(rayo);
+        self.rayo_lugar = Some(rayo_lugar);
         Input::singleton().set_mouse_mode(MouseMode::CAPTURED);
     }
 
@@ -300,6 +334,24 @@ impl Jugador {
         }
     }
 
+    /// Solo para pruebas: gira el cuerpo y la cámara para que la mira apunte a `punto`.
+    pub fn apuntar_a(&mut self, punto: Vector3) {
+        let ojos = self.base().get_global_position() + Vector3::new(0.0, ALTO_OJOS, 0.0);
+        let d = punto - ojos;
+        let horizontal = Vector2::new(d.x, d.z).length();
+        self.base_mut().set_global_rotation(Vector3::new(0.0, (-d.x).atan2(-d.z), 0.0));
+        self.pitch = d.y.atan2(horizontal).clamp(-85f32.to_radians(), 85f32.to_radians());
+        let p = self.pitch;
+        if let Some(c) = &mut self.camara {
+            c.set_rotation(Vector3::new(p, 0.0, 0.0));
+        }
+    }
+
+    /// Lo que tiene en la mano (para pruebas).
+    pub fn en_mano(&self) -> Option<Gd<RigidBody3D>> {
+        self.mano.clone().filter(|c| c.is_instance_valid())
+    }
+
     /// REQ-INT-01
     pub fn objetivo(&mut self) -> Option<Objetivo> {
         let rayo = self.rayo.as_mut()?;
@@ -354,16 +406,157 @@ impl Jugador {
 
     fn clic_izquierdo(&mut self) {
         if self.mano.is_some() {
-            // REQ-INT-06: soltar.
-            self.soltar();
+            // REQ-INT-06: colocar donde apunta la mira.
+            self.colocar();
             return;
         }
-        // REQ-INT-03, REQ-PRO-05: agarrar comida o paquetes.
+        // REQ-INT-03, REQ-PRO-05: agarrar comida o paquetes; REQ-DEP-09: o levantar un bloque.
         match self.objetivo() {
             Some(Objetivo::Comida(c)) => self.agarrar(c.upcast()),
             Some(Objetivo::Paquete(p)) => self.agarrar(p.upcast()),
+            Some(Objetivo::Bloque(b)) => self.levantar(b),
             _ => {}
         }
+    }
+
+    /// REQ-DEP-09: el bloque del depósito pasa a ser un paquete en la mano, con lo que le queda.
+    pub fn levantar(&mut self, mut bloque: Gd<BloqueStock>) {
+        if bloque.is_queued_for_deletion() {
+            return;
+        }
+        let (def, restantes, temp) = {
+            let b = bloque.bind();
+            (b.def().clone(), b.restantes(), b.temperatura())
+        };
+        let alto = def.tamano()[1];
+        let t = bloque.get_global_transform();
+        // El bloque se dibuja con la base en su origen; el paquete está centrado.
+        let t = Transform3D::new(t.basis.orthonormalized(), t.origin + t.basis.col_b().normalized() * (alto / 2.0));
+        bloque.queue_free();
+        let mut p = Paquete::crear_con(def, restantes, temp);
+        if let Some(mut padre) = self.base().get_parent() {
+            padre.add_child(&p);
+        }
+        p.set_global_transform(t);
+        self.agarrar(p.upcast());
+    }
+
+    /// REQ-INT-03, REQ-INT-09: (media altura, medio ancho, media medida mayor) de lo agarrable.
+    fn medidas(cuerpo: &Gd<RigidBody3D>) -> (f32, f32, f32) {
+        if let Ok(c) = cuerpo.clone().try_cast::<Comida>() {
+            return c.bind().medidas();
+        }
+        if let Ok(p) = cuerpo.clone().try_cast::<Paquete>() {
+            let [x, y, z] = p.bind().def().tamano();
+            return (y / 2.0, x.max(z) / 2.0, x.max(y).max(z) / 2.0);
+        }
+        (0.05, 0.05, 0.05)
+    }
+
+    /// Giro con el que queda lo colocado: derecho, mirando hacia donde mira el jugador
+    /// (y dado vuelta si lo estaba). REQ-INT-09
+    fn giro_colocado(&self) -> Basis {
+        let giro = self.base().get_global_transform().basis.orthonormalized();
+        if self.volteado { giro * Basis::from_axis_angle(Vector3::RIGHT, std::f32::consts::PI) } else { giro }
+    }
+
+    /// REQ-INT-09, REQ-INT-10: dónde y cómo quedaría lo que tenés en la mano si hacés clic.
+    fn destino_colocar(&mut self) -> Option<(Transform3D, Colocacion)> {
+        let mano = self.mano.clone().filter(|c| c.is_instance_valid())?;
+        let rayo = self.rayo.as_mut()?;
+        rayo.force_raycast_update();
+        if !rayo.is_colliding() {
+            return None;
+        }
+        let punto = rayo.get_collision_point();
+        let normal = rayo.get_collision_normal();
+        let tocado = rayo.get_collider();
+        let v3 = |v: Vector3| [v.x, v.y, v.z];
+
+        // REQ-INT-10: un agregado sobre su base va a la zona de encastre.
+        if let Ok(comida) = mano.clone().try_cast::<Comida>()
+            && let Some(base) = tocado.and_then(|o| o.try_cast::<Comida>().ok())
+        {
+            let producto = comida.bind().producto().to_string();
+            if let Some(pos) = base.bind().encastre_para(&producto) {
+                let t = Transform3D::new(base.get_global_transform().basis.orthonormalized(), pos);
+                return Some((t, Colocacion::Armar(base.bind().nombre().to_string())));
+            }
+        }
+        let (media_altura, medio_ancho, _) = Self::medidas(&mano);
+
+        // REQ-INT-09: un paquete cerca de un lugar libre (y a la vista) va centrado ahí.
+        if mano.clone().try_cast::<Paquete>().is_ok() {
+            let libres: Vec<Gd<LugarDeposito>> = self
+                .base()
+                .get_tree()
+                .get_nodes_in_group(lugar_deposito::GRUPO)
+                .iter_shared()
+                .filter_map(|n| n.try_cast::<LugarDeposito>().ok())
+                .filter(|l| !l.bind().ocupado())
+                .collect();
+            let posiciones: Vec<[f32; 3]> = libres.iter().map(|l| v3(l.get_global_position())).collect();
+            if let Some(i) = agarre::lugar_cercano(v3(punto), &posiciones)
+                && self.a_la_vista(&libres[i])
+            {
+                let tl = libres[i].get_global_transform();
+                let b = tl.basis.orthonormalized();
+                let t = Transform3D::new(b, tl.origin + b.col_b() * (media_altura + agarre::HOLGURA));
+                return Some((t, Colocacion::Guardar));
+            }
+        }
+
+        let c = agarre::centro_colocado(v3(punto), v3(normal), media_altura, medio_ancho);
+        let como = if agarre::es_apoyo(v3(normal)) { Colocacion::Apoyar } else { Colocacion::Pared };
+        Some((Transform3D::new(self.giro_colocado(), Vector3::new(c[0], c[1], c[2])), como))
+    }
+
+    /// REQ-INT-09: no hay nada entre los ojos y el lugar (una puerta cerrada, un cajón).
+    fn a_la_vista(&mut self, lugar: &Gd<LugarDeposito>) -> bool {
+        let destino = lugar.bind().centro_zona();
+        let (Some(camara), Some(rayo)) = (&self.camara, &mut self.rayo_lugar) else { return false };
+        let local = camara.get_global_transform().affine_inverse() * destino;
+        rayo.set_target_position(local);
+        rayo.force_raycast_update();
+        !rayo.is_colliding() || rayo.get_collision_point().distance_to(destino) < 0.15
+    }
+
+    /// REQ-INT-06, REQ-INT-09, REQ-INT-10: deja lo de la mano donde apunta la mira (o lo suelta).
+    pub fn colocar(&mut self) {
+        let destino = self.destino_colocar();
+        let Some(mut c) = self.soltar() else { return };
+        if let Some((t, _)) = destino {
+            c.set_global_transform(t);
+            c.set_linear_velocity(Vector3::ZERO);
+            c.set_angular_velocity(Vector3::ZERO);
+        }
+    }
+
+    /// REQ-COC-10: vuelca todas las unidades del paquete de la mano en el agua del hervidor.
+    pub fn volcar(&mut self, hervidor: &Gd<Hervidor>) {
+        let Some(paquete) = self.mano.clone().and_then(|m| m.try_cast::<Paquete>().ok()) else { return };
+        let (producto, n, temp) = {
+            let p = paquete.bind();
+            (p.def().producto.clone(), p.restantes(), p.temp)
+        };
+        let yo = self.to_gd();
+        if !Comida::va_al_hervidor(&producto) {
+            hud::avisar(&yo, "Eso no se cocina en el agua");
+            return;
+        }
+        let Some(mut padre) = self.base().get_parent() else { return };
+        let Some(def) = catalogo().producto(&producto) else { return };
+        let (media_altura, medio_ancho, _) = comida::medidas_de(def);
+        for t in hervidor.bind().lugares_volcado(n, medio_ancho * 2.0, media_altura * 2.0) {
+            let mut c = Comida::crear(&producto);
+            c.bind_mut().fijar_temperatura(temp);
+            padre.add_child(&c);
+            c.set_global_transform(t);
+        }
+        if let Some(mut p) = self.soltar_en_silencio() {
+            p.queue_free();
+        }
+        sonido::sonar_en(&yo, ids::SOLTAR, hervidor.get_global_position());
     }
 
     fn marcar(cuerpo: &Gd<RigidBody3D>, sostenido: bool) {
@@ -377,7 +570,14 @@ impl Jugador {
     pub fn agarrar(&mut self, mut c: Gd<RigidBody3D>) {
         Self::marcar(&c, true);
         c.set_gravity_scale(0.0);
+        // REQ-INT-03: no choca con el jugador (va pegado a la cámara).
+        let yo = self.to_gd().upcast::<Node>();
+        c.add_collision_exception_with(&yo);
+        self.volteado = c.get_global_transform().basis.col_b().y < 0.0;
         if let Some(r) = &mut self.rayo {
+            r.add_exception(&c);
+        }
+        if let Some(r) = &mut self.rayo_lugar {
             r.add_exception(&c);
         }
         self.segundos_en_mano = 0.0;
@@ -400,7 +600,12 @@ impl Jugador {
         }
         Self::marcar(&c, false);
         c.set_gravity_scale(1.0);
+        let yo = self.to_gd().upcast::<Node>();
+        c.remove_collision_exception_with(&yo);
         if let Some(r) = &mut self.rayo {
+            r.remove_exception(&c);
+        }
+        if let Some(r) = &mut self.rayo_lugar {
             r.remove_exception(&c);
         }
         Some(c)
@@ -408,9 +613,21 @@ impl Jugador {
 
     /// REQ-INT-06: tirar hacia adelante.
     fn tirar(&mut self) {
-        let adelante = self.adelante();
+        // REQ-INT-06: hacia donde apunta la mira (lo de la mano está corrido a la derecha).
+        let mut direccion = self.adelante();
+        if let (Some(rayo), Some(c)) = (&mut self.rayo, &self.mano)
+            && c.is_instance_valid()
+        {
+            rayo.force_raycast_update();
+            if rayo.is_colliding() {
+                let d = rayo.get_collision_point() - c.get_global_position();
+                if d.length() > 0.05 {
+                    direccion = d.normalized();
+                }
+            }
+        }
         if let Some(mut c) = self.soltar_en_silencio() {
-            c.set_linear_velocity(adelante * VEL_TIRO);
+            c.set_linear_velocity(direccion * VEL_TIRO);
             // REQ-SON-08
             sonido::sonar(&self.to_gd(), ids::TIRAR);
         }
@@ -418,6 +635,10 @@ impl Jugador {
 
     fn adelante(&self) -> Vector3 {
         self.camara.as_ref().map(|c| -c.get_global_transform().basis.col_c()).unwrap_or(Vector3::FORWARD)
+    }
+
+    fn paquete_en_mano(&self) -> Option<Gd<Paquete>> {
+        self.mano.as_ref().filter(|c| c.is_instance_valid()).and_then(|c| c.clone().try_cast::<Paquete>().ok())
     }
 
     fn comida_en_mano(&self) -> Option<Gd<Comida>> {
@@ -428,7 +649,14 @@ impl Jugador {
     pub fn usar(&mut self) {
         let yo = self.to_gd();
         if self.mano.is_some() {
-            // Con algo en la mano, solo se usan los pomos de aderezo (SPEC-012).
+            // REQ-COC-10: un paquete sobre el hervidor se vuelca en el agua.
+            if self.paquete_en_mano().is_some() {
+                if let Some(Objetivo::Hervidor(h)) = self.objetivo() {
+                    self.volcar(&h);
+                }
+                return;
+            }
+            // Con comida en la mano: pomos de aderezo (SPEC-012) y carbón en la parrilla.
             let Some(mut comida) = self.comida_en_mano() else { return };
             // REQ-PAR-01: una bolsa de carbón en la mano se vuelca en la parrilla.
             let carbon = comida.bind().carbon();
@@ -507,8 +735,11 @@ impl Jugador {
         }
         let Some(camara) = &self.camara else { return };
         let t = camara.get_global_transform();
-        let destino = t.origin - t.basis.col_c() * DIST_MANO;
         let mut c = c.clone();
+        // REQ-INT-03: abajo a la derecha de la vista, cerca.
+        let (_, _, medio) = Self::medidas(&c);
+        let [x, y, z] = agarre::punto_mano(medio);
+        let destino = t * Vector3::new(x, y, z);
         let diferencia = destino - c.get_global_position();
 
         self.segundos_en_mano += dt;
@@ -521,18 +752,42 @@ impl Jugador {
             v = v.normalized() * VEL_MAX_MANO;
         }
         c.set_linear_velocity(v);
-        let giro = c.get_angular_velocity();
-        c.set_angular_velocity(giro * 0.8);
+        // REQ-INT-04: el giro va hacia el de la cámara (dado vuelta si lo estaba), como resorte.
+        let mut objetivo = t.basis.orthonormalized();
+        if self.volteado {
+            objetivo = objetivo * Basis::from_axis_angle(Vector3::RIGHT, std::f32::consts::PI);
+        }
+        let actual = c.get_global_transform().basis.orthonormalized().get_quaternion();
+        let mut q = (objetivo.get_quaternion() * actual.inverse()).normalized();
+        if q.w < 0.0 {
+            q = -q; // el camino corto
+        }
+        let angulo = q.get_angle();
+        let w = if angulo > 1e-3 {
+            q.get_axis().normalized() * (angulo * RESORTE_GIRO).min(GIRO_MAX_MANO)
+        } else {
+            Vector3::ZERO
+        };
+        c.set_angular_velocity(w);
     }
 
     /// REQ-INT-02, REQ-INT-08
     fn actualizar_cartel(&mut self) {
         let en_mano = self.mano.clone().filter(|c| c.is_instance_valid() && !c.is_queued_for_deletion());
+        // REQ-INT-08: qué hace el clic con lo que tenés en la mano, ahí donde apuntás.
+        let clic = match en_mano.as_ref().and_then(|_| self.destino_colocar()) {
+            None => "[Clic] Soltar".to_string(),
+            Some((_, Colocacion::Apoyar)) => "[Clic] Apoyar acá".to_string(),
+            Some((_, Colocacion::Pared)) => "[Clic] Dejar acá".to_string(),
+            Some((_, Colocacion::Armar(base))) => format!("[Clic] Poner en el {base}"),
+            Some((_, Colocacion::Guardar)) => "[Clic] Guardar en el estante".to_string(),
+        };
+        let mano_ocupada = en_mano.is_some();
         let objetivo = self.objetivo();
         let texto = if let Some(m) = en_mano {
             if let Ok(c) = m.clone().try_cast::<Comida>() {
                 let c = c.bind();
-                let mut t = format!("{}\n[Clic] Soltar · [Clic der.] Tirar", c.descripcion());
+                let mut t = format!("{}\n{} · [Clic der.] Tirar", c.descripcion(), clic);
                 if let (Some(_), Some(Objetivo::Parrilla(_))) = (c.carbon(), &objetivo) {
                     t += " · [E] Cargar carbón en la parrilla";
                 }
@@ -546,10 +801,16 @@ impl Jugador {
                 }
                 t
             } else if let Ok(p) = m.try_cast::<Paquete>() {
-                format!(
-                    "{}\nDejalo en un lugar libre del estante · [Clic] Soltar · [Clic der.] Tirar",
-                    p.bind().descripcion()
-                )
+                let p = p.bind();
+                let mut t = format!("{}\n{} · [Clic der.] Tirar", p.descripcion(), clic);
+                // REQ-COC-10
+                if let Some(Objetivo::Hervidor(_)) = &objetivo
+                    && Comida::va_al_hervidor(&p.def().producto)
+                {
+                    let nombre = catalogo().producto(&p.def().producto).map(|d| d.nombre.clone()).unwrap_or_default();
+                    t += &format!(" · [E] Echar al agua ({} × {nombre})", p.restantes());
+                }
+                t
             } else {
                 String::new()
             }
@@ -578,6 +839,7 @@ impl Jugador {
             && let Ok(mut h) = n.try_cast::<Hud>()
         {
             h.bind_mut().set_cartel(&texto);
+            h.bind_mut().set_mano_ocupada(mano_ocupada); // REQ-INT-01
         }
     }
 }

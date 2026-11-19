@@ -71,6 +71,15 @@ impl Hervidor {
         true
     }
 
+    /// REQ-COC-10: dónde va cada uno de `n` alimentos volcados (acostados a lo largo de la cuba).
+    pub fn lugares_volcado(&self, n: u32, largo: f32, grosor: f32) -> Vec<Transform3D> {
+        let t = self.base().get_global_transform();
+        carrito_core::hervidor::acomodar_volcado(n, self.interior, largo, grosor)
+            .into_iter()
+            .map(|p| Transform3D::new(t.basis.orthonormalized(), t * (formas::v3(p) + Vector3::new(0.0, ESPESOR, 0.0))))
+            .collect()
+    }
+
     /// Solo para pruebas.
     pub fn set_temperatura(&mut self, t: f32) {
         self.agua.temp = t;

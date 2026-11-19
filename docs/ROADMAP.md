@@ -22,10 +22,12 @@ Cada etapa abre con sus specs (SPEC-000) y cierra con docs al día. Formato en [
 | ID | Tarea | Spec | Estado |
 |---|---|---|---|
 | 0251 | Jugarlo y anotar fricciones (hoja de hallazgos en el PR) | — | ⬜ |
-| 0252 | Ajustar sensibilidad, agarre y salto | 001, 002 | ⬜ |
+| 0252 | Ajustar sensibilidad y salto (el agarre, en 0256) | 001 | ⬜ |
 | 0253 | Ajustar tiempos de cocción y paciencia | 003, 009 | ⬜ |
 | 0254 | Ajustar precios y clientes por hora | 009, 010 | ⬜ |
 | 0255 | Rendimiento (FPS) con ciudad y fila llena | 013 | ⬜ |
+| 0256 | Agarre cercano, colocar con la mira (cruz blanca), salchicha al pan apuntando, levantar paquetes del estante y volcarlos al hervidor | 002, 003, 004 | ✅ |
+| 0257 | Las comidas listas no se echan a perder | 016 | ✅ |
 
 ## Etapa 3 · Plancha y parrilla (`feat (cocina)`) · PR TASK-0300
 | ID | Tarea | Spec | Estado |

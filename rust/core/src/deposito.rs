@@ -74,6 +74,12 @@ impl Bloque {
         Self { def, restantes }
     }
 
+    /// Un bloque empezado (ej. un paquete que se levantó del estante). REQ-DEP-09
+    pub fn con_restantes(def: DefBloque, restantes: u32) -> Self {
+        let restantes = restantes.min(def.capacidad());
+        Self { def, restantes }
+    }
+
     pub fn vacio(&self) -> bool {
         self.restantes == 0
     }
@@ -156,6 +162,14 @@ pub(crate) fn bolsa_panes() -> DefBloque {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn req_dep_09_un_bloque_levantado_conserva_sus_unidades() {
+        let b = Bloque::con_restantes(bolsa_panes(), 7);
+        assert_eq!(b.restantes, 7);
+        assert_eq!(b.posiciones_visibles().len(), 7);
+        assert_eq!(Bloque::con_restantes(bolsa_panes(), 99).restantes, 12, "no pasa la capacidad");
+    }
 
     #[test]
     fn req_dep_01_capacidad_por_grilla() {
