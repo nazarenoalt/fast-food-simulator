@@ -1486,11 +1486,12 @@ impl PruebaHumo {
                 self.esperar(30);
             }
             _ => {
-                let pan = self.pan.clone().expect("pan");
                 let nuevo = todos::<Comida>(&mundo)
                     .into_iter()
                     .find(|c| c.bind().producto() == "pancho" && !self.panchos_antes.contains(&c.instance_id()));
-                let armado = pan.is_queued_for_deletion() || !pan.is_instance_valid();
+                // El pan ya se borró al armarse el pancho: se mira sin clonarlo (clonar un objeto
+                // borrado hace caer el juego con los controles estrictos de godot-rust).
+                let armado = self.pan.as_ref().is_none_or(|p| !p.is_instance_valid() || p.is_queued_for_deletion());
                 self.chequear(
                     armado && nuevo.is_some(),
                     "CA-INT-03 apunto la salchicha al pan, hago clic y se arma el pancho",
