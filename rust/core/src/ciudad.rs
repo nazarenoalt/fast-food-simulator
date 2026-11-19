@@ -40,6 +40,13 @@ impl Edificio {
     pub fn alto(&self) -> f32 {
         ALTO_PB + (self.pisos.saturating_sub(1)) as f32 * ALTO_PISO
     }
+
+    /// Planta en el piso: `[x_min, z_min, x_max, z_max]` (las fachadas giran de a 90°).
+    pub fn planta(&self) -> [f32; 4] {
+        let girado = (self.rot_y.abs() - 90.0).abs() < 1.0;
+        let (mx, mz) = if girado { (self.fondo, self.ancho) } else { (self.ancho, self.fondo) };
+        [self.x - mx / 2.0, self.z - mz / 2.0, self.x + mx / 2.0, self.z + mz / 2.0]
+    }
 }
 
 const COLORES_FACHADA: [[f32; 3]; 8] = [

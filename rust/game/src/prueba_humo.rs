@@ -33,6 +33,8 @@ mod pelar; // SPEC-029: pelar y cortar
 // TASK-0358: vender papas en cajita y cartel de cerrado.
 #[path = "prueba_humo_vender.rs"]
 mod vender;
+#[path = "prueba_humo_gente.rs"]
+mod gente_humo; // TASK-0506: la gente se renueva (REQ-AMB-15/16)
 
 #[derive(GodotClass)]
 #[class(base=Node, init)]
@@ -64,7 +66,7 @@ pub struct PruebaHumo {
     /// SPEC-026 / REQ-CAR-13: segundo carrito (carro grande) con lo de las papas.
     carro_papas: Option<Gd<Carrito>>,
     fase_papas: u32,
-    /// Qué chequeo de la etapa 3.5 corre en el paso 31 (papas y puerta, pelar, vender).
+    /// Qué chequeo corre al final del paso 31 (papas y puerta, pelar, vender, gente).
     cadena_papas: u32,
     /// SPEC-027: fase de la prueba de ampliaciones y lo que se mide entre cuadros.
     fase_amp: u32,
@@ -1376,12 +1378,13 @@ impl INode for PruebaHumo {
                             0 => self.chequear_papas_y_puerta(),
                             1 => self.chequear_pelar(),  // SPEC-029: pelar y cortar
                             2 => self.chequear_vender(), // TASK-0358: papas en cajita y cartel
+                            3 => self.chequear_gente_se_renueva(), // TASK-0506: REQ-AMB-15/16
                             _ => true,
                         };
                         if listo {
                             self.cadena_papas += 1;
                         }
-                        if self.cadena_papas >= 3 {
+                        if self.cadena_papas >= 4 {
                             self.terminar();
                         } else {
                             self.paso -= 1; // se repite este paso hasta terminar
