@@ -9,8 +9,8 @@ use godot::classes::sub_viewport::UpdateMode;
 use godot::classes::text_server::FontAntialiasing;
 use godot::classes::viewport::DefaultCanvasItemTextureFilter;
 use godot::classes::{
-    FontFile, INode2D, ImageTexture, MeshInstance3D, Node2D, QuadMesh, StandardMaterial3D, SubViewport, Texture2D,
-    ViewportTexture,
+    FontFile, INode2D, ImageTexture, MeshInstance3D, Node2D, QuadMesh, RenderingServer, StandardMaterial3D,
+    SubViewport, Texture2D, ViewportTexture,
 };
 use godot::prelude::*;
 
@@ -99,7 +99,10 @@ impl DibujoLogo {
         let Some(foto) = ImageTexture::create_from_image(&img) else { return };
         if let Some(mut m) = self.destino.take() {
             m.set_texture(TextureParam::ALBEDO, &foto);
-            m.set_flag(Flags::ALBEDO_TEXTURE_FORCE_SRGB, false);
+            // Una textura hecha en el momento: Forward+ ya la lee como sRGB; el modo compatible
+            // (OpenGL) no, y sin esto se ve lavada.
+            let compatible = RenderingServer::singleton().get_current_rendering_method() == "gl_compatibility";
+            m.set_flag(Flags::ALBEDO_TEXTURE_FORCE_SRGB, compatible);
             if m.get_feature(Feature::EMISSION) {
                 m.set_texture(TextureParam::EMISSION, &foto);
             }
