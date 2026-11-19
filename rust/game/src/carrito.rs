@@ -358,7 +358,7 @@ impl Carrito {
                 }
                 None => {}
             }
-            // REQ-CLI-13: el cartel de cerrado se cuelga y se descuelga con E (arranca colgado).
+            // REQ-CLI-13: el cartel de cerrado se saca y se cuelga con el clic o E (arranca colgado).
             if c.accesorio.categoria == Categoria::Cartel {
                 CartelCerrado::envolver(&mut nodo);
             }

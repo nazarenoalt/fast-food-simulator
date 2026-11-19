@@ -15,7 +15,7 @@ use crate::carrito::{self, Carrito};
 use crate::cartel::CartelCerrado;
 use crate::comida::Comida;
 use crate::gente::Gente;
-use crate::jugador::Jugador;
+use crate::jugador::{Jugador, Objetivo};
 use crate::negocio::Negocio;
 use crate::util;
 
@@ -71,9 +71,10 @@ impl PruebaHumo {
                 }
                 let cartel = self.cartel_jugador();
                 let texto = cartel.as_ref().map(|c| c.bind().cartel()).unwrap_or_default();
+                let visible = cartel.as_ref().is_some_and(|c| c.bind().colgado() && c.bind().dibujo_visible());
                 self.chequear(
-                    cartel.as_ref().is_some_and(|c| c.bind().colgado()) && texto == "[E] Descolgar cartel (abrir)",
-                    &format!("REQ-CLI-13 el cartel de cerrado arranca colgado («{texto}»)"),
+                    visible && texto == "[Clic/E] Abrir el puesto (sacar el cartel)",
+                    &format!("REQ-CLI-13 el cartel de cerrado arranca colgado y se ve («{texto}»)"),
                 );
                 // Hay alguien en la fila; con el cartel colgado no entra nadie más.
                 if gente.bind().largo_fila() == 0 {
@@ -173,23 +174,26 @@ impl PruebaHumo {
                         self.vender.saldo_antes
                     ),
                 );
-                // REQ-CLI-13: E sobre el cartel, apuntándolo desde la vereda, lo descuelga.
+                // REQ-CLI-13: E sobre el cartel, apuntándolo desde la vereda, lo saca: desaparece y
+                // su zona de uso queda en el frente.
                 let Some(cartel) = self.cartel_jugador() else { return true };
                 let mut j = todos::<Jugador>(&mundo).pop().expect("jugador");
                 let t = carrito.get_global_transform();
-                let c = cartel.get_global_position();
+                let zona = cartel.bind().centro_zona();
                 let frente = t.basis.col_c().normalized();
-                let mut parado = c + frente * 1.2;
+                let mut parado = cartel.get_global_position() + frente * 1.2;
                 parado.y = t.origin.y + 0.05;
                 j.set_global_position(parado);
                 j.set_velocity(Vector3::ZERO);
-                j.bind_mut().apuntar_a(c + Vector3::new(0.0, -0.15, 0.0));
-                let mira = matches!(j.bind_mut().objetivo(), Some(crate::jugador::Objetivo::Cartel(_)));
+                j.bind_mut().apuntar_a(zona);
+                let mira_cartel = |j: &mut Gd<Jugador>| matches!(j.bind_mut().objetivo(), Some(Objetivo::Cartel(_)));
+                let mira = mira_cartel(&mut j);
                 j.bind_mut().usar();
-                let acostado = !cartel.bind().colgado() && (cartel.get_rotation_degrees().x - 90.0).abs() < 1.0;
+                let sacado = !cartel.bind().colgado() && !cartel.bind().dibujo_visible();
+                let sigue = mira_cartel(&mut j) && cartel.bind().centro_zona().distance_to(zona) < 1e-4;
                 self.chequear(
-                    mira && acostado && cartel.bind().cartel() == "[E] Colgar cartel (cerrar)",
-                    "REQ-CLI-13 con la mira en el cartel, E lo descuelga (queda acostado sobre el mostrador)",
+                    mira && sacado && sigue && cartel.bind().cartel() == "[Clic/E] Cerrar el puesto (colgar el cartel)",
+                    "REQ-CLI-13 con la mira en el cartel, E lo saca: no se ve y su zona sigue en el frente",
                 );
                 // Descolgado está abierto: llega alguien nuevo.
                 let antes = gente.bind().largo_fila();
@@ -198,9 +202,34 @@ impl PruebaHumo {
                     entro && gente.bind().largo_fila() == antes + 1,
                     "REQ-CLI-12 con el cartel descolgado se suman clientes nuevos",
                 );
-                // Otra vez E: colgado. La tecla C trae un cliente igual (REQ-CLI-11).
+                // REQ-CLI-13: el clic con la mano libre alterna igual que E: lo cuelga (se ve), lo
+                // saca, y otra E lo vuelve a colgar.
+                j.bind_mut().clic_izquierdo();
+                let colgado_clic = cartel.bind().colgado() && cartel.bind().dibujo_visible();
+                j.bind_mut().clic_izquierdo();
+                let sacado_clic = !cartel.bind().colgado() && !cartel.bind().dibujo_visible();
+                self.chequear(
+                    colgado_clic && sacado_clic,
+                    "REQ-CLI-13 el clic con la mano libre en la zona lo cuelga y lo vuelve a sacar",
+                );
                 j.bind_mut().usar();
-                self.chequear(cartel.bind().colgado(), "REQ-CLI-13 otra E lo vuelve a colgar");
+                self.chequear(
+                    cartel.bind().colgado() && cartel.bind().dibujo_visible(),
+                    "REQ-CLI-13 otra E lo vuelve a colgar y se ve",
+                );
+                // Con algo en la mano, el clic coloca como siempre (no alterna el cartel).
+                let mut pan = Comida::crear("pan_pancho");
+                mundo.clone().add_child(&pan);
+                pan.set_global_position(parado + Vector3::new(0.0, 1.2, 0.0));
+                j.bind_mut().agarrar(pan.clone().upcast());
+                j.bind_mut().apuntar_a(zona);
+                j.bind_mut().clic_izquierdo();
+                self.chequear(
+                    cartel.bind().colgado() && j.bind().en_mano().is_none(),
+                    "REQ-CLI-13 con algo en la mano, el clic en la zona del cartel coloca y no lo alterna",
+                );
+                pan.queue_free();
+                // La tecla C trae un cliente igual (REQ-CLI-11).
                 self.vender.fila_antes = gente.bind().largo_fila();
                 Input::singleton().action_press("traer_cliente");
                 self.esperar(2);
