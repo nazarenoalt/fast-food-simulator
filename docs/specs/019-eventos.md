@@ -1,6 +1,6 @@
 # SPEC-019 · Eventos de la plaza
 
-Estado: **Aprobada (etapa 5)**
+Estado: **Implementada (etapa 5)**
 
 ## Objetivo
 

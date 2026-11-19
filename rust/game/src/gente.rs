@@ -34,7 +34,6 @@ mod habituales; // TASK-0504: SPEC-030
 pub const GRUPO: &str = "gente";
 const RADIO_CONVERTIR: f32 = 28.0;
 
-#[allow(dead_code)] // BASE-ETAPA-5: lo usan las tareas en paralelo; se saca al juntar.
 struct Cliente {
     peaton: Gd<Peaton>,
     pedido: Option<Pedido>,
@@ -49,7 +48,6 @@ struct Cliente {
 
 #[derive(GodotClass)]
 #[class(base=Node3D)]
-#[allow(dead_code)] // BASE-ETAPA-5: lo usan las tareas en paralelo; se saca al juntar.
 pub struct Gente {
     base: Base<Node3D>,
     red: Red,
@@ -81,7 +79,6 @@ pub struct Gente {
 }
 
 /// De dónde sale la apariencia de alguien que llega.
-#[allow(dead_code)] // BASE-ETAPA-5: lo usan las tareas en paralelo; se saca al juntar.
 enum Origen {
     /// Alguien nuevo, vestido de esta paleta (REQ-RUT-10, REQ-AMB-16).
     Nueva(carrito_core::peatones::Paleta),

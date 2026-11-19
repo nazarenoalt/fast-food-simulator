@@ -70,15 +70,15 @@ Cada etapa abre con sus specs (SPEC-000) y cierra con docs al día. Formato en [
 | ID | Tarea | Spec | Estado |
 |---|---|---|---|
 | 0501 | Escribir specs 018 Rutinas, 019 Eventos y 030 Habituales | 018, 019, 030 | ✅ |
-| 0502 | Agenda por hora para los NPCs | 018 | ⬜ |
-| 0503 | Oficinistas al mediodía, familias a la tarde, salida nocturna | 018 | ⬜ |
-| 0504 | Clientes habituales que recuerdan la atención | 030 | ⬜ |
-| 0505 | Eventos: feria y partido | 019 | ⬜ |
+| 0502 | Agenda por hora para los NPCs | 018 | ✅ |
+| 0503 | Oficinistas al mediodía, familias a la tarde, salida nocturna | 018 | ✅ |
+| 0504 | Clientes habituales que recuerdan la atención | 030 | ✅ |
+| 0505 | Eventos: feria y partido | 019 | ✅ |
 | 0506 | La gente se renueva: entra y sale por el borde del mapa y no se repite | 013 | ✅ |
 | 0508 | Los autos entran y salen fuera de la vista y se renuevan | 013 | ✅ |
-| 0507 | Gente distinta de día y de noche (ropa y actividades) | 018 | ⬜ |
-| 0509 | Los peatones esperan en el cordón si viene un auto (también en las calles laterales) | 013 | ⬜ |
-| 0510 | La frase del rechazo concuerda con lo entregado ("¡Están crudas!") | 009 | ⬜ |
+| 0507 | Gente distinta de día y de noche (ropa y actividades) | 018 | ✅ |
+| 0509 | Los peatones esperan en el cordón si viene un auto (también en las calles laterales) | 013 | ✅ |
+| 0510 | La frase del rechazo concuerda con lo entregado ("¡Están crudas!") | 009 | ✅ |
 
 ## Etapa 6a · Precios y cobro (`feat (economia)`) · PR TASK-0600
 | ID | Tarea | Spec | Estado |

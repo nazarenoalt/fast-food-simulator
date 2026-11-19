@@ -14,7 +14,6 @@ use crate::formas;
 pub const GRUPO: &str = "peatones";
 
 #[derive(Debug, Clone)]
-#[allow(dead_code)] // BASE-ETAPA-5: lo usan las tareas en paralelo; se saca al juntar.
 pub enum Accion {
     Caminar(Vec<Vector3>),
     /// REQ-AMB-05
@@ -100,7 +99,6 @@ impl Peaton {
     }
 
     /// Cómo se ve (REQ-HAB-01: un habitual vuelve con la misma).
-    #[allow(dead_code)] // BASE-ETAPA-5: lo usan las tareas en paralelo; se saca al juntar.
     pub fn apariencia(&self) -> &Apariencia {
         &self.ap
     }
@@ -110,7 +108,6 @@ impl Peaton {
         self.con_perro
     }
 
-    #[allow(dead_code)] // BASE-ETAPA-5: lo usan las tareas en paralelo; se saca al juntar.
     /// Lo que está haciendo ahora.
     pub fn accion_actual(&self) -> Option<&Accion> {
         self.actual.as_ref()
@@ -125,18 +122,15 @@ impl Peaton {
         }
     }
 
-    #[allow(dead_code)] // BASE-ETAPA-5: lo usan las tareas en paralelo; se saca al juntar.
     /// Cuántas acciones le quedan después de la actual.
     pub fn acciones_pendientes(&self) -> usize {
         self.acciones.len()
     }
 
-    #[allow(dead_code)] // BASE-ETAPA-5: lo usan las tareas en paralelo; se saca al juntar.
     pub fn velocidad(&self) -> f32 {
         self.vel
     }
 
-    #[allow(dead_code)] // BASE-ETAPA-5: lo usan las tareas en paralelo; se saca al juntar.
     /// Cambia la velocidad de marcha (m/s), por ejemplo para alcanzar o esperar al grupo.
     pub fn set_velocidad(&mut self, v: f32) {
         self.vel = v.max(0.0);
@@ -147,7 +141,6 @@ impl Peaton {
         self.vecinos = v;
     }
 
-    #[allow(dead_code)] // BASE-ETAPA-5: lo usan las tareas en paralelo; se saca al juntar.
     /// Hace `accion` ya y después sigue con lo que estaba haciendo (si caminaba, retoma el
     /// camino desde donde iba). Para pararse frente a un puesto o esperar en el cordón.
     pub fn intercalar(&mut self, accion: Accion) {

@@ -41,7 +41,8 @@ nubes y un cielo con sol y luna.
   velocidades distintas. Frenan si hay un auto, un peatón o el jugador adelante en su carril.
   Hay dos sendas peatonales para cruzar a la vereda de enfrente.
 - **REQ-AMB-18** Un peatón que va a cruzar una calle (la principal o una lateral) espera en
-  el cordón si viene un auto a menos de 3 s de su paso, y cruza cuando pasó.
+  el cordón si viene un auto a menos de 3 s de su paso, y cruza cuando pasó. Para no
+  trabarse: tras 10 s le alcanza un hueco de 1,5 s (el auto frena, REQ-AMB-08); a los 20 s cruza.
 - **REQ-AMB-17** Los autos entran y salen de la calle fuera de la vista desde el carrito:
   nadie ve un auto aparecer o desaparecer (doblan por calles laterales detrás de los edificios
   del este y del oeste). El que vuelve a entrar es otro (otro color).

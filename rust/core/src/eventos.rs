@@ -321,7 +321,7 @@ mod tests {
     }
 
     #[test]
-    fn req_eve_02_04_partido_miercoles_y_domingo() {
+    fn req_eve_02_04_07_08_09_partido_miercoles_y_domingo() {
         let p = plaza_real();
         let mie = 6;
         let m = p.modificador(mie, 19.0);
