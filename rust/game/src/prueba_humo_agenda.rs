@@ -88,6 +88,6 @@ fn mas_comun(gente: &Gd<Gente>, n: usize) -> (Option<Perfil>, Vec<(Perfil, usize
             None => cuenta.push((p, 1)),
         }
     }
-    cuenta.sort_by(|a, b| b.1.cmp(&a.1));
+    cuenta.sort_by_key(|c| std::cmp::Reverse(c.1));
     (cuenta.first().map(|(p, _)| *p), cuenta)
 }
