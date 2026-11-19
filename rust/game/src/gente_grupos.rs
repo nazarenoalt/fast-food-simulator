@@ -49,6 +49,13 @@ pub(super) struct Estado {
     idos: HashSet<u64>,
 }
 
+impl Estado {
+    /// ¿`id` es un chico de una familia? (REQ-RUT-06)
+    pub(super) fn es_chico(&self, id: u64) -> bool {
+        self.chicos.contains_key(&id)
+    }
+}
+
 /// Cómo arranca cada integrante de un grupo.
 struct Integrante {
     en: usize,
@@ -68,6 +75,12 @@ fn demora(fila: usize) -> Option<Accion> {
 }
 
 impl Gente {
+    /// ¿`id` va en un grupo o es un chico de una familia? (Para que otras tareas no le
+    /// cambien las acciones: los grupos se esperan y los chicos se siguen por sus acciones.)
+    pub(super) fn en_grupo(&self, id: u64) -> bool {
+        self.est_grupos.chicos.contains_key(&id) || self.est_grupos.grupos.iter().any(|g| g.ids.contains(&id))
+    }
+
     /// Si `perfil` llega en grupo o tiene un comportamiento propio, arma a la gente acá y
     /// devuelve `true`; si no, `Gente` lo arma como un paseante común. REQ-RUT-05 a REQ-RUT-09
     pub(super) fn planear_grupo(&mut self, perfil: Perfil, desde_salida: bool) -> bool {

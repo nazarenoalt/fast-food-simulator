@@ -445,7 +445,11 @@ impl Gente {
             .iter()
             .filter(|p| {
                 let b = p.bind();
-                !self.clientes.contains_key(&b.id) && !b.ocupado_quieto() && !self.asientos.contains_key(&b.id)
+                // Un chico no viene solo a comprar (REQ-RUT-06).
+                !self.clientes.contains_key(&b.id)
+                    && !b.ocupado_quieto()
+                    && !self.asientos.contains_key(&b.id)
+                    && !self.est_grupos.es_chico(b.id)
             })
             .map(|p| (p.clone(), p.get_global_position().distance_to(destino)))
             .filter(|(_, d)| *d < RADIO_CONVERTIR)

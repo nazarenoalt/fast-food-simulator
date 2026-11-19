@@ -178,11 +178,12 @@ impl Gente {
             let b = p.bind();
             let id = b.id;
             let caminando = matches!(b.accion_actual(), Some(Accion::Caminar(_)));
-            // Los que trotan o van a la fila siguen de largo.
+            // Los que trotan, van a la fila o van en grupo (REQ-RUT-08) siguen de largo.
             if !caminando
                 || b.velocidad() > 2.0
                 || self.clientes.contains_key(&id)
                 || self.est_eventos.vieron_puestos.contains(&id)
+                || self.en_grupo(id)
             {
                 continue;
             }
