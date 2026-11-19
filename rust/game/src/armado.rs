@@ -6,27 +6,38 @@ use std::cell::Cell;
 
 use carrito_core::carrito::armar;
 use carrito_core::economia::plata;
+use carrito_core::logo::LARGO_MAX;
 use carrito_core::tienda::{Armado, Origen, PALETA};
 use godot::builtin::Side;
 use godot::classes::base_material_3d::{Flags, ShadingMode, Transparency};
 use godot::classes::control::{LayoutPreset, SizeFlags};
 use godot::classes::input::MouseMode;
 use godot::classes::{
-    Button, CanvasLayer, GridContainer, HSeparator, ICanvasLayer, Input, InputEvent, InputEventMouseButton, Label,
-    MeshInstance3D, Node3D, PanelContainer, ScrollContainer, SphereMesh, StandardMaterial3D, VBoxContainer,
+    Button, CanvasLayer, CheckBox, Engine, GridContainer, HSeparator, ICanvasLayer, Input, InputEvent,
+    InputEventMouseButton, Label, LineEdit, MeshInstance3D, Node3D, PanelContainer, ScrollContainer, SphereMesh,
+    StandardMaterial3D, VBoxContainer,
 };
-use godot::global::MouseButton;
+use godot::global::{HorizontalAlignment, MouseButton, VerticalAlignment};
 use godot::prelude::*;
 
 use crate::carrito::{self, Carrito};
 use crate::datos::catalogo;
 use crate::hud::{self, Hud};
+use crate::logo;
 use crate::negocio::{self, Negocio};
 use crate::util;
 
 thread_local! {
     static ACTIVO: Cell<bool> = const { Cell::new(false) };
     static MENU: Cell<bool> = const { Cell::new(false) };
+    static ESCRIBIENDO: Cell<bool> = const { Cell::new(false) };
+    /// Cuadro en que el cuadro de texto perdió el foco (Tab lo saca en el mismo cuadro).
+    static SOLTO_EN: Cell<u64> = const { Cell::new(u64::MAX) };
+}
+
+/// REQ-LOG-07: se está escribiendo el nombre del puesto: las teclas no son del juego.
+pub fn escribiendo() -> bool {
+    ESCRIBIENDO.with(|e| e.get()) || SOLTO_EN.with(|s| s.get()) == Engine::singleton().get_process_frames()
 }
 
 /// REQ-TIE-01: en el modo armado el jugador no agarra ni usa nada.
@@ -66,6 +77,9 @@ pub struct ModoArmado {
     moviendo: Option<String>,
     panel: Option<Gd<PanelContainer>>,
     lista: Option<Gd<VBoxContainer>>,
+    /// REQ-LOG-07: diseño marcado en el panel del logo y el cuadro del texto.
+    diseno_elegido: Option<String>,
+    campo: Option<Gd<LineEdit>>,
 }
 
 fn nombre_acc(id: &str) -> String {
@@ -107,6 +121,7 @@ impl ModoArmado {
                 color: c.color(),
                 accesorios: c.accesorios_puestos(),
                 inventario: Default::default(),
+                logo: c.logo(),
             });
         }
         self.estado.as_mut()
@@ -125,7 +140,7 @@ impl ModoArmado {
             self.estado();
             self.crear_marcas();
             self.avisar(
-                "Modo armado: mirá un lugar del carrito y hacé clic. Tab: color, bases e inventario. B: salir.",
+                "Modo armado: mirá un lugar del carrito y hacé clic. Tab: color, logo, bases e inventario. B: salir.",
             );
         } else {
             self.poner_cartel("");
@@ -260,6 +275,8 @@ impl ModoArmado {
         if let Some(p) = &mut self.panel {
             p.set_visible(false);
         }
+        ESCRIBIENDO.with(|e| e.set(false));
+        self.campo = None;
         if menu_abierto() {
             MENU.with(|m| m.set(false));
             Input::singleton().set_mouse_mode(MouseMode::CAPTURED);
@@ -351,6 +368,18 @@ impl ModoArmado {
         lista.add_child(&colores);
         lista.add_child(&HSeparator::new_alloc());
 
+        // REQ-LOG-07
+        let texto_logo = match &estado.logo {
+            Some(l) => {
+                let d = cat.diseno(&l.diseno).map(|d| d.nombre.clone()).unwrap_or_default();
+                format!("Logo: {d} · \"{}\"", l.texto)
+            }
+            None => "Logo: sin logo".to_string(),
+        };
+        lista.add_child(&etiqueta(&texto_logo, 16));
+        self.boton(&mut lista, "Elegir logo y nombre del puesto (gratis)", |m| m.abrir_panel_logo());
+        lista.add_child(&HSeparator::new_alloc());
+
         // REQ-TIE-10
         lista.add_child(&etiqueta("Bases:", 16));
         for b in &cat.bases {
@@ -403,7 +432,154 @@ impl ModoArmado {
         self.boton(&mut lista, "Cerrar (Tab)", |m| m.cerrar_panel());
     }
 
+    /// REQ-LOG-07: el logo del puesto (gratis): diseño con su muestra, texto, lugares y sacar.
+    fn abrir_panel_logo(&mut self) {
+        let Some(estado) = self.estado().cloned() else { return };
+        let cat = catalogo();
+        let Some(mut lista) = self.abrir_panel("Logo del puesto (gratis)") else { return };
+        let actual = estado.logo.clone();
+        let elegido = self
+            .diseno_elegido
+            .clone()
+            .or_else(|| actual.as_ref().map(|l| l.diseno.clone()))
+            .or_else(|| cat.logos.first().map(|d| d.id.clone()))
+            .unwrap_or_default();
+        self.diseno_elegido = Some(elegido.clone());
+
+        lista.add_child(&etiqueta("Diseño:", 16));
+        let mut grilla = GridContainer::new_alloc();
+        grilla.set_columns(2);
+        let muestra = actual.as_ref().map(|l| l.texto.clone()).unwrap_or_else(|| "Tu puesto".to_string());
+        for d in &cat.logos {
+            let mut b = Button::new_alloc();
+            b.set_text(&if d.id == elegido { format!("▶ {} ◀", d.nombre) } else { d.nombre.clone() });
+            b.set_icon_alignment(HorizontalAlignment::CENTER);
+            b.set_vertical_icon_alignment(VerticalAlignment::TOP);
+            let (vp, tex) = logo::imagen(d, &muestra, 180.0, 60.0);
+            b.add_child(&vp);
+            b.set_button_icon(&tex);
+            let (yo, id) = (self.to_gd(), d.id.clone());
+            b.signals().pressed().connect(move || {
+                let mut m = yo.clone();
+                m.bind_mut().elegir_diseno(&id);
+            });
+            grilla.add_child(&b);
+        }
+        lista.add_child(&grilla);
+
+        lista.add_child(&etiqueta(&format!("Nombre del puesto (hasta {LARGO_MAX} letras, Enter aplica):"), 16));
+        let mut campo = LineEdit::new_alloc();
+        campo.set_max_length(LARGO_MAX as i32);
+        campo.set_placeholder("Ej.: Panchos El Tano");
+        if let Some(l) = &actual {
+            campo.set_text(&l.texto);
+        }
+        let yo = self.to_gd();
+        campo.signals().text_submitted().connect(move |_| {
+            let mut m = yo.clone();
+            m.bind_mut().aplicar_logo();
+        });
+        campo.signals().focus_entered().connect(|| ESCRIBIENDO.with(|e| e.set(true)));
+        campo.signals().focus_exited().connect(|| {
+            ESCRIBIENDO.with(|e| e.set(false));
+            SOLTO_EN.with(|s| s.set(Engine::singleton().get_process_frames()));
+        });
+        lista.add_child(&campo);
+        self.campo = Some(campo);
+        self.boton(&mut lista, "Aplicar", |m| m.aplicar_logo());
+        lista.add_child(&HSeparator::new_alloc());
+
+        lista.add_child(&etiqueta("Dónde se ve:", 16));
+        for lugar in estado.lugares_logo(cat) {
+            let mut caja = CheckBox::new_alloc();
+            caja.set_text(&lugar);
+            caja.set_pressed_no_signal(actual.as_ref().is_none_or(|l| l.prendido(&lugar)));
+            caja.set_disabled(actual.is_none());
+            let yo = self.to_gd();
+            caja.signals().toggled().connect(move |_| {
+                let mut m = yo.clone();
+                m.bind_mut().alternar_lugar_logo(&lugar);
+            });
+            lista.add_child(&caja);
+        }
+        if actual.is_some() {
+            self.boton(&mut lista, "Sacar logo", |m| m.sacar_logo());
+        } else {
+            lista.add_child(&etiqueta("Aplicá un logo para elegir dónde se ve.", 14));
+        }
+        lista.add_child(&HSeparator::new_alloc());
+        self.boton(&mut lista, "Volver", |m| m.abrir_panel_carrito());
+    }
+
     // ── Acciones ──────────────────────────────────────────────────
+
+    /// REQ-LOG-07: marca un diseño; si ya hay logo o texto escrito, lo aplica al instante.
+    fn elegir_diseno(&mut self, id: &str) {
+        self.diseno_elegido = Some(id.to_string());
+        let hay_texto = self.campo.as_ref().is_some_and(|c| !c.get_text().to_string().trim().is_empty());
+        if hay_texto {
+            self.aplicar_logo();
+        } else {
+            self.abrir_panel_logo();
+        }
+    }
+
+    /// REQ-LOG-07, REQ-LOG-03: aplica el diseño marcado con el texto del cuadro.
+    fn aplicar_logo(&mut self) {
+        let texto = self.campo.as_ref().map(|c| c.get_text().to_string()).unwrap_or_default();
+        let diseno = self.diseno_elegido.clone().unwrap_or_default();
+        match self.poner_logo(&diseno, &texto) {
+            Ok(()) => self.avisar("Listo: tu logo ya se ve en el carrito"),
+            Err(e) => self.avisar(&e),
+        }
+        ESCRIBIENDO.with(|e| e.set(false));
+        self.abrir_panel_logo();
+    }
+
+    /// REQ-LOG-07, REQ-LOG-08 (también para la prueba de humo).
+    pub(crate) fn poner_logo(&mut self, diseno: &str, texto: &str) -> Result<(), String> {
+        let cat = catalogo();
+        let Some(e) = self.estado() else { return Err("No hay carrito".into()) };
+        e.poner_logo(diseno, texto, cat).map_err(|e| e.to_string())?;
+        let logo = e.logo.clone();
+        if let Some(mut c) = self.carrito() {
+            c.bind_mut().poner_logo(logo);
+        }
+        Ok(())
+    }
+
+    /// REQ-LOG-07: prende o apaga un lugar del logo.
+    pub(crate) fn alternar_lugar_logo(&mut self, lugar: &str) {
+        let Some(e) = self.estado() else { return };
+        match e.alternar_lugar(lugar) {
+            Ok(_) => {
+                let logo = e.logo.clone();
+                if let Some(mut c) = self.carrito() {
+                    c.bind_mut().poner_logo(logo);
+                }
+            }
+            Err(err) => self.avisar(&err.to_string()),
+        }
+    }
+
+    /// REQ-LOG-07, REQ-LOG-09
+    pub(crate) fn sacar_logo(&mut self) {
+        if let Some(e) = self.estado() {
+            e.sacar_logo();
+        }
+        if let Some(mut c) = self.carrito() {
+            c.bind_mut().poner_logo(None);
+        }
+        self.avisar("Sacaste el logo");
+        if menu_abierto() {
+            self.abrir_panel_logo();
+        }
+    }
+
+    /// REQ-LOG-07: lugares del carrito actual (para la prueba de humo).
+    pub(crate) fn lugares_logo(&mut self) -> Vec<String> {
+        self.estado().map(|e| e.lugares_logo(catalogo())).unwrap_or_default()
+    }
 
     /// REQ-TIE-02, REQ-TIE-03
     pub(crate) fn elegir(&mut self, anclaje: &str, acc: &str, origen: Origen) {
@@ -572,6 +748,7 @@ impl ICanvasLayer for ModoArmado {
     fn ready(&mut self) {
         ACTIVO.with(|a| a.set(false));
         MENU.with(|m| m.set(false));
+        ESCRIBIENDO.with(|e| e.set(false));
         self.base_mut().set_layer(6);
         let mut panel = PanelContainer::new_alloc();
         panel.set_anchors_preset(LayoutPreset::CENTER_RIGHT);
@@ -593,14 +770,16 @@ impl ICanvasLayer for ModoArmado {
 
     fn process(&mut self, _delta: f64) {
         let input = Input::singleton();
-        if input.is_action_just_pressed("armado") {
+        // REQ-LOG-07: mientras se escribe el nombre, B y Tab son letras, no atajos.
+        let teclas = !escribiendo();
+        if teclas && input.is_action_just_pressed("armado") {
             self.alternar();
         }
         if !activo() {
             return;
         }
         // REQ-TIE-07
-        if input.is_action_just_pressed("tienda") && self.moviendo.is_none() {
+        if teclas && input.is_action_just_pressed("tienda") && self.moviendo.is_none() {
             if menu_abierto() {
                 self.cerrar_panel();
             } else {

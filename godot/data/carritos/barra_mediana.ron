@@ -8,6 +8,11 @@
     precio: 1920,
     entrega: (0.3, 0.95, 0.25), // REQ-CAR-10: bandeja de entrega
     fila: (0.3, 0.0, 1.05), // REQ-CAR-10: primer lugar de la fila (sigue hacia +X)
+    // REQ-LOG-05, REQ-LOG-06: lugares del logo (los dos costados del cuerpo (x ±1,20), abajo de la mesada).
+    logos: [
+        (lugar: "Costados", pos: (1.202, 0.585, 0.0), rot_y: 90, tam: (0.7, 0.34)),
+        (lugar: "Costados", pos: (-1.202, 0.585, 0.0), rot_y: -90, tam: (0.7, 0.34)),
+    ],
     anclajes: [
         (id: "mostrador_izq", pos: (-0.75, 0.95, 0.0), categorias: [Cocina, Equipamiento]),
         (id: "mostrador_centro", pos: (0.0, 0.95, 0.0), categorias: [Cocina, Equipamiento, Decoracion]),

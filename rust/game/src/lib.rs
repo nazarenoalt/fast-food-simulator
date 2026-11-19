@@ -17,6 +17,7 @@ mod heladera; // SPEC-016
 mod hervidor; // SPEC-003
 mod hud;
 mod jugador; // SPEC-001/002
+mod logo; // SPEC-028
 mod lugar_deposito; // SPEC-004/011
 mod luz; // SPEC-006/007
 mod modelos; // SPEC-025

@@ -34,6 +34,7 @@ pub fn catalogo() -> &'static Catalogo {
             &bases,
             &leer("res://data/carrito_jugador.ron"),
             &leer("res://data/aderezos.ron"),
+            &leer("res://data/logos.ron"),
         ) {
             Ok(c) => c,
             Err(e) => {

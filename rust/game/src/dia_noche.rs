@@ -110,7 +110,7 @@ impl INode for DiaNoche {
 
     fn process(&mut self, delta: f64) {
         // REQ-DIA-07
-        if Input::singleton().is_action_just_pressed("tiempo_rapido") {
+        if Input::singleton().is_action_just_pressed("tiempo_rapido") && !crate::armado::escribiendo() {
             self.reloj.alternar_rapido();
         }
         // REQ-DIA-01, REQ-DIA-02

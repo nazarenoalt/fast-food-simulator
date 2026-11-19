@@ -338,6 +338,10 @@
         categoria: Techo, // REQ-AMP-09
         precio: 220,
         bases: Some(["barra_chica"]), // REQ-TIE-11
+        // REQ-LOG-05, REQ-LOG-06: el logo tapa el cartel fijo.
+        logos: [
+            (lugar: "Marquesina", pos: (0.0, 2.28, 0.654), rot_y: 0, tam: (1.2, 0.2), brilla: true),
+        ],
     ),
     (
         id: "marquesina_mediano",
@@ -346,6 +350,10 @@
         categoria: Techo, // REQ-AMP-09
         precio: 280,
         bases: Some(["barra_mediana"]), // REQ-TIE-11
+        // REQ-LOG-05, REQ-LOG-06: el logo tapa el cartel fijo.
+        logos: [
+            (lugar: "Marquesina", pos: (0.0, 2.28, 0.704), rot_y: 0, tam: (1.8, 0.2), brilla: true),
+        ],
     ),
     (
         id: "marquesina_grande",
@@ -354,6 +362,10 @@
         categoria: Techo, // REQ-AMP-09
         precio: 360,
         bases: Some(["carro_grande"]), // REQ-TIE-11
+        // REQ-LOG-05, REQ-LOG-06: el logo tapa el cartel fijo.
+        logos: [
+            (lugar: "Marquesina", pos: (0.0, 2.28, 1.004), rot_y: 0, tam: (2.4, 0.2), brilla: true),
+        ],
     ),
     // ── Más decoración y mobiliario (REQ-TIE-12, REQ-TIE-13). Precios provisorios ──
     (
@@ -383,6 +395,10 @@
         nombre: "Cartel luminoso",
         categoria: Decoracion,
         precio: 60,
+        // REQ-LOG-05, REQ-LOG-06: el logo tapa el cartel fijo.
+        logos: [
+            (lugar: "Cartel luminoso", pos: (0.0, 0.175, 0.04), rot_y: 0, tam: (0.7, 0.16), brilla: true),
+        ],
     ),
     (
         id: "pizarra_grande",

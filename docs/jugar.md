@@ -11,7 +11,7 @@
 | Clic derecho | Tirar lo que tenés en la mano |
 | E | Usar: prender el hervidor, la plancha o la parrilla, abrir y cerrar la heladera, la puerta del carrito (carro grande, kiosco, food truck y tráiler) o las puertas y cajones de las alacenas, dar vuelta una hamburguesa, un chorizo o un pan, sacar del depósito, poner aderezo (con la comida en la mano), recargar un pomo (con el repuesto en la mano), echar carbón en la parrilla (con la bolsa en la mano) |
 | Tab | Panel del proveedor (comprar mercadería) |
-| B | Modo armado: poner, mover, guardar y vender accesorios; con Tab adentro, color, bases e inventario ([SPEC-017](specs/017-tienda.md), [SPEC-027](specs/027-ampliaciones.md)) |
+| B | Modo armado: poner, mover, guardar y vender accesorios; con Tab adentro, color, logo, bases e inventario ([SPEC-017](specs/017-tienda.md), [SPEC-027](specs/027-ampliaciones.md), [SPEC-028](specs/028-logo.md)) |
 | T | Tiempo ×30 (para ver el atardecer rápido) |
 | C | Traer un cliente al instante (para probar) |
 | M | Silenciar o reactivar todo el sonido |
@@ -46,6 +46,9 @@ carrito; llevá el paquete a un lugar libre del estante y queda guardado.
 - **Alacenas** en los huecos de abajo de la mesada (bahías): guardan mercadería; puertas y
   cajones se abren con E. **Toldos** en el frente; **guirnaldas** solo con un techo puesto.
 - Hay cosas que no van juntas (la sombrilla con un techo, el toldo con la carpa): el juego avisa.
+- **Logo del puesto** (gratis, Tab en el modo armado → "Elegir logo"): elegí uno de los 6
+  diseños, escribí el nombre (hasta 18 letras, Enter aplica) y marcá dónde se ve: costados,
+  marquesina, cartel luminoso, los óvalos del kiosco. Mientras escribís, el jugador no se mueve.
 
 ## Otros platos
 - **Hamburguesa:** E sobre la plancha para prenderla, apoyá una hamburguesa y dale vuelta con

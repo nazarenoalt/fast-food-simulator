@@ -11,6 +11,7 @@ use crate::carrito::{Accesorio, BaseCarrito, ConfigCarrito};
 use crate::coccion::PerfilCoccion;
 use crate::deposito::DefBloque;
 use crate::forma::Pieza;
+use crate::logo::{DisenoLogo, LugarLogo};
 
 /// Forma de colisión de un producto.
 #[derive(Debug, Clone, PartialEq, Deserialize)]
@@ -95,9 +96,15 @@ pub struct Catalogo {
     pub bases: Vec<BaseCarrito>,
     pub carrito_jugador: ConfigCarrito,
     pub aderezos: Vec<DefAderezo>,
+    /// REQ-LOG-01
+    pub logos: Vec<DisenoLogo>,
 }
 
 impl Catalogo {
+    /// REQ-LOG-01
+    pub fn diseno(&self, id: &str) -> Option<&DisenoLogo> {
+        self.logos.iter().find(|d| d.id == id)
+    }
     pub fn aderezo(&self, id: &str) -> Option<&DefAderezo> {
         self.aderezos.iter().find(|a| a.id == id)
     }
@@ -152,6 +159,7 @@ pub fn cargar_catalogo(
     bases: &[(String, String)],
     carrito_jugador: &str,
     aderezos: &str,
+    logos: &str,
 ) -> Result<Catalogo, ErrorDatos> {
     let p: ArchivoProductos = parsear("productos.ron", productos)?;
     let aderezos: Vec<DefAderezo> = parsear("aderezos.ron", aderezos)?;
@@ -214,14 +222,43 @@ pub fn cargar_catalogo(
             }
         }
     }
+    // REQ-LOG-01, REQ-LOG-05: diseños sin repetir y lugares con nombre y tamaño.
+    let logos: Vec<DisenoLogo> = parsear("logos.ron", logos)?;
+    for (i, d) in logos.iter().enumerate() {
+        if logos[i + 1..].iter().any(|o| o.id == d.id) {
+            return Err(error("logos.ron", format!("el diseño \"{}\" está repetido", d.id)));
+        }
+    }
+    let lugar_malo = |l: &LugarLogo| l.lugar.trim().is_empty() || l.tam[0] <= 0.0 || l.tam[1] <= 0.0;
+    for b in &lista_bases {
+        if let Some(l) = b.logos.iter().find(|l| lugar_malo(l)) {
+            return Err(error(&format!("{}.ron", b.id), format!("lugar de logo sin nombre o sin tamaño: {l:?}")));
+        }
+    }
+    for a in &accesorios {
+        if let Some(l) = a.logos.iter().find(|l| lugar_malo(l)) {
+            return Err(error("accesorios.ron", format!("\"{}\": lugar de logo sin nombre o sin tamaño: {l:?}", a.id)));
+        }
+    }
+    // REQ-LOG-10: el logo de arranque, con un diseño que exista y un texto válido.
+    let carrito_jugador: ConfigCarrito = parsear("carrito_jugador.ron", carrito_jugador)?;
+    if let Some(l) = &carrito_jugador.logo {
+        if !logos.iter().any(|d| d.id == l.diseno) {
+            return Err(error("carrito_jugador.ron", format!("no existe el diseño de logo \"{}\"", l.diseno)));
+        }
+        if let Err(e) = crate::logo::validar_texto(&l.texto) {
+            return Err(error("carrito_jugador.ron", format!("logo: {e}")));
+        }
+    }
     Ok(Catalogo {
         productos: p.productos,
         combinaciones: p.combinaciones,
         bloques,
         accesorios,
         bases: lista_bases,
-        carrito_jugador: parsear("carrito_jugador.ron", carrito_jugador)?,
+        carrito_jugador,
         aderezos,
+        logos,
     })
 }
 
@@ -240,6 +277,11 @@ pub(crate) mod tests {
 
     /// Carga los archivos reales del juego.
     pub(crate) fn catalogo_real() -> Catalogo {
+        catalogo_con_jugador(&leer("carrito_jugador.ron")).unwrap_or_else(|e| panic!("{e}"))
+    }
+
+    /// Los archivos reales, con otro `carrito_jugador.ron`.
+    pub(crate) fn catalogo_con_jugador(jugador: &str) -> Result<Catalogo, ErrorDatos> {
         let mut bases = Vec::new();
         for e in std::fs::read_dir(dir_datos().join("carritos")).unwrap() {
             let p = e.unwrap().path();
@@ -253,10 +295,10 @@ pub(crate) mod tests {
             &leer("bloques.ron"),
             &leer("accesorios.ron"),
             &bases,
-            &leer("carrito_jugador.ron"),
+            jugador,
             &leer("aderezos.ron"),
+            &leer("logos.ron"),
         )
-        .unwrap_or_else(|e| panic!("{e}"))
     }
 
     #[test]
@@ -469,7 +511,7 @@ pub(crate) mod tests {
         let prod = leer("productos.ron");
         let bloques = r#"[(id: "x", nombre: "x", producto: "fantasma", grilla: (1,1,1),
             separacion: (0.1,0.1,0.1), empaque: Bolsa, color_empaque: (1,1,1), precio: 1)]"#;
-        let e = cargar_catalogo(&prod, bloques, "[]", &[], "", &leer("aderezos.ron")).unwrap_err();
+        let e = cargar_catalogo(&prod, bloques, "[]", &[], "", &leer("aderezos.ron"), "[]").unwrap_err();
         assert!(e.mensaje.contains("fantasma"));
     }
 }

@@ -16,6 +16,11 @@
     pallet: Some((-0.5, 0.0, -1.8)), // REQ-AMP-02: atrás, lejos de la puerta
     puerta: Some(100.0), // REQ-AMP-01: se abre 100° hacia afuera...
     puerta_abierta: false, // ...y arranca cerrada
+    // REQ-LOG-05, REQ-LOG-06: lugares del logo (lado de la puerta, entre la puerta y la lanza, y atrás (+X)).
+    logos: [
+        (lugar: "Costado", pos: (-0.475, 1.55, -1.002), rot_y: 180, tam: (1.75, 0.8)),
+        (lugar: "Atrás", pos: (1.502, 1.4, 0.0), rot_y: 90, tam: (1.5, 0.75)),
+    ],
     anclajes: [
         (id: "mostrador_izq", pos: (-0.85, 1.45, 0.66), categorias: [Cocina, Equipamiento]),
         (id: "mostrador_centro", pos: (-0.15, 1.45, 0.66), categorias: [Cocina, Equipamiento, Decoracion]),
