@@ -28,6 +28,8 @@ use crate::sonido::Sonido;
 use crate::transito::{Autos, Nubes};
 use carrito_core::tostado::EstadoPan;
 
+#[path = "prueba_humo_autos.rs"]
+mod autos_humo; // TASK-0508: los autos entran y salen fuera de la vista (REQ-AMB-17)
 #[path = "prueba_humo_freir.rs"]
 mod freir; // SPEC-029: freír con el colador
 #[path = "prueba_humo_gente.rs"]
@@ -1388,12 +1390,13 @@ impl INode for PruebaHumo {
                             2 => self.chequear_freir(),            // SPEC-029: freír con el colador
                             3 => self.chequear_vender(),           // TASK-0358: papas en cajita y cartel
                             4 => self.chequear_gente_se_renueva(), // TASK-0506: REQ-AMB-15/16
+                            5 => self.chequear_autos(),            // TASK-0508: REQ-AMB-17
                             _ => true,
                         };
                         if listo {
                             self.cadena_papas += 1;
                         }
-                        if self.cadena_papas >= 5 {
+                        if self.cadena_papas >= 6 {
                             self.terminar();
                         } else {
                             self.paso -= 1; // se repite este paso hasta terminar

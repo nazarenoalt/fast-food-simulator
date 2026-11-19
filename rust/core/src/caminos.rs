@@ -49,6 +49,13 @@ pub fn tapado(ojo: [f32; 2], punto: [f32; 2], edificios: &[Edificio]) -> bool {
     })
 }
 
+/// Desde dónde se mira en el carrito (para los tests): el mostrador y un poco alrededor.
+#[cfg(test)]
+pub(crate) fn ojos_carrito() -> Vec<[f32; 2]> {
+    let [cx, cz] = PUNTO_CARRITO;
+    [-2.5, 0.0, 2.5].iter().flat_map(|&dx| [-1.5, 0.0, 1.5].map(|dz| [cx + dx, cz + dz])).collect()
+}
+
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum TipoNodo {
     Paso,
@@ -305,12 +312,6 @@ mod tests {
         }
     }
 
-    /// Desde dónde se mira en el carrito: el mostrador y un poco alrededor.
-    fn ojos() -> Vec<[f32; 2]> {
-        let [cx, cz] = PUNTO_CARRITO;
-        [-2.5, 0.0, 2.5].iter().flat_map(|&dx| [-1.5, 0.0, 1.5].map(|dz| [cx + dx, cz + dz])).collect()
-    }
-
     #[test]
     fn req_amb_15_tapado_por_edificios() {
         let e = ciudad::edificios();
@@ -339,7 +340,7 @@ mod tests {
                 for k in 0..=10 {
                     let d = largo.min(5.0) * k as f32 / 10.0;
                     let punto = [p[0] + (q[0] - p[0]) / largo * d, p[1] + (q[1] - p[1]) / largo * d];
-                    for ojo in ojos() {
+                    for ojo in ojos_carrito() {
                         assert!(tapado(ojo, punto, &e), "se ve {punto:?} (camino a la salida {p:?}) desde {ojo:?}");
                     }
                 }
