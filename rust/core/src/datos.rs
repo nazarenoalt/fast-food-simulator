@@ -67,6 +67,9 @@ pub struct DefProducto {
     /// REQ-PAR-01: si es una bolsa de carbón, cuántos kg trae.
     #[serde(default)]
     pub carbon: Option<f32>,
+    /// REQ-FRE-03: se prepara a mano (pelar, cortar): herramienta, pasadas y resultado.
+    #[serde(default)]
+    pub preparar: Option<crate::preparar::Preparacion>,
 }
 
 impl DefProducto {
@@ -185,6 +188,8 @@ pub fn cargar_catalogo(
             return Err(error("productos.ron", format!("\"{}\" repone un aderezo inexistente \"{a}\"", prod.id)));
         }
     }
+    // REQ-FRE-03: herramienta y resultado de cada preparación existen.
+    crate::preparar::validar(&p.productos).map_err(|m| error("productos.ron", m))?;
     let bloques: Vec<DefBloque> = parsear("bloques.ron", bloques)?;
     for b in &bloques {
         if !p.productos.iter().any(|x| x.id == b.producto) {

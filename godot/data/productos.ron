@@ -203,6 +203,8 @@
             nombre: "papa sin pelar",
             masa: 0.2,
             colision: Caja(medidas: (0.095, 0.058, 0.068)),
+            // REQ-FRE-01: 3 pasadas de pelapapas y queda pelada.
+            preparar: Some((accion: "Pelar papa", herramienta: "pelapapas", pasadas: 3, resultado: "papa_pelada")),
             forma: [
                 (tipo: Esfera, medidas: (0.034, 0, 0), escala: (1.4, 0.85, 1.0), color: (0.66, 0.47, 0.29)),
             ],
@@ -213,6 +215,8 @@
             nombre: "papa pelada",
             masa: 0.17,
             colision: Caja(medidas: (0.086, 0.052, 0.062)),
+            // REQ-FRE-02: 4 pasadas de cuchillo y sale una porción de bastones.
+            preparar: Some((accion: "Cortar papa", herramienta: "cuchillo", pasadas: 4, resultado: "papa_cortada")),
             forma: [
                 (tipo: Esfera, medidas: (0.031, 0, 0), escala: (1.4, 0.85, 1.0), color: (0.9, 0.78, 0.42)),
             ],

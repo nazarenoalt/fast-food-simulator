@@ -28,6 +28,8 @@ use crate::sonido::Sonido;
 use crate::transito::{Autos, Nubes};
 use carrito_core::tostado::EstadoPan;
 
+#[path = "prueba_humo_pelar.rs"]
+mod pelar; // SPEC-029: pelar y cortar
 // TASK-0358: vender papas en cajita y cartel de cerrado.
 #[path = "prueba_humo_vender.rs"]
 mod vender;
@@ -62,6 +64,8 @@ pub struct PruebaHumo {
     /// SPEC-026 / REQ-CAR-13: segundo carrito (carro grande) con lo de las papas.
     carro_papas: Option<Gd<Carrito>>,
     fase_papas: u32,
+    /// Qué chequeo de la etapa 3.5 corre en el paso 31 (papas y puerta, pelar, vender).
+    cadena_papas: u32,
     /// SPEC-027: fase de la prueba de ampliaciones y lo que se mide entre cuadros.
     fase_amp: u32,
     bloque_cajon: Option<(Gd<BloqueStock>, Vector3)>,
@@ -1366,12 +1370,22 @@ impl INode for PruebaHumo {
                         self.paso -= 1; // SPEC-027: se repite este paso hasta terminar
                     } else if !self.chequear_logo() {
                         self.paso -= 1; // SPEC-028: se repite este paso hasta terminar
-                    } else if self.vender.fase == 0 && !self.chequear_papas_y_puerta() {
-                        self.paso -= 1; // se repite este paso hasta terminar
-                    } else if self.chequear_vender() {
-                        self.terminar(); // TASK-0358: papas en cajita y cartel de cerrado
                     } else {
-                        self.paso -= 1; // se repite este paso hasta terminar
+                        // Etapa 3.5 en orden; cada chequeo corre hasta terminar y pasa al que sigue.
+                        let listo = match self.cadena_papas {
+                            0 => self.chequear_papas_y_puerta(),
+                            1 => self.chequear_pelar(),  // SPEC-029: pelar y cortar
+                            2 => self.chequear_vender(), // TASK-0358: papas en cajita y cartel
+                            _ => true,
+                        };
+                        if listo {
+                            self.cadena_papas += 1;
+                        }
+                        if self.cadena_papas >= 3 {
+                            self.terminar();
+                        } else {
+                            self.paso -= 1; // se repite este paso hasta terminar
+                        }
                     }
                 }
             }
