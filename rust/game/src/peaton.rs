@@ -111,6 +111,15 @@ impl Peaton {
         self.actual.as_ref()
     }
 
+    /// Lo que le falta del camino que va siguiendo, si está caminando (para mirar si va a
+    /// cruzar una calle, REQ-AMB-18).
+    pub fn ruta_pendiente(&self) -> Option<&[Vector3]> {
+        match &self.actual {
+            Some(Accion::Caminar(ruta)) => Some(&ruta[self.paso_ruta.min(ruta.len())..]),
+            _ => None,
+        }
+    }
+
     #[allow(dead_code)] // BASE-ETAPA-5: lo usan las tareas en paralelo; se saca al juntar.
     /// Cuántas acciones le quedan después de la actual.
     pub fn acciones_pendientes(&self) -> usize {
