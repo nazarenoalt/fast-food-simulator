@@ -364,12 +364,26 @@ pub(crate) mod tests {
     #[test]
     fn req_eco_03_precio_del_pancho() {
         let c = catalogo_real();
-        assert_eq!(c.producto("pancho").unwrap().precio, Some(2500.0));
+        assert_eq!(c.producto("pancho").unwrap().precio, Some(10.0));
         let mut menu = c.menu();
         menu.sort();
         assert_eq!(menu, vec!["choripan".to_string(), "hamburguesa".to_string(), "pancho".to_string()]);
-        assert_eq!(c.producto("hamburguesa").unwrap().precio, Some(3500.0));
-        assert_eq!(c.producto("choripan").unwrap().precio, Some(3000.0));
+        assert_eq!(c.producto("hamburguesa").unwrap().precio, Some(14.0));
+        assert_eq!(c.producto("choripan").unwrap().precio, Some(12.0));
+    }
+
+    #[test]
+    fn req_eco_07_precios_en_escala_de_pancho_a_10() {
+        // Todo precio es un entero de pesos (al menos $1): la escala es la del pancho a $10.
+        let c = catalogo_real();
+        let entero = |p: f32| p >= 1.0 && p.fract() == 0.0;
+        assert!(c.productos.iter().filter_map(|p| p.precio).all(entero));
+        assert!(c.bloques.iter().all(|b| entero(b.precio)), "bloques");
+        assert!(c.accesorios.iter().all(|a| entero(a.precio)), "accesorios");
+        assert!(c.bases.iter().all(|b| entero(b.precio)), "bases");
+        // Nada cuesta más que 1000 panchos ni el stock más que 3 panchos.
+        assert!(c.bases.iter().all(|b| b.precio <= 10_000.0));
+        assert!(c.bloques.iter().all(|b| b.precio <= 30.0));
     }
 
     #[test]

@@ -7,7 +7,7 @@
     ancho: 1.6, profundidad: 0.7, alto_mostrador: 0.95,
     color: (0.8, 0.8, 0.82),
     ruedas: true,
-    precio: 250000,
+    precio: 1000,
     entrega: (0.5, 0.95, 0.2), // REQ-CAR-10: bandeja de entrega
     fila: (0.2, 0.0, 1.0), // REQ-CAR-10: primer lugar de la fila (sigue hacia +X)
     anclajes: [

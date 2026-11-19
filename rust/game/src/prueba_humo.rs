@@ -144,7 +144,7 @@ impl PruebaHumo {
         m.bind_mut().elegir("techo", "techo_plano_mediano", Origen::Tienda);
         self.chequear(
             puestos().get("techo").map(String::as_str) == Some("techo_plano_mediano")
-                && (saldo(&neg) - (1_000_000.0 - 45_000.0)).abs() < 0.5,
+                && (saldo(&neg) - (1_000_000.0 - 180.0)).abs() < 0.5,
             "CA-TIE-01 compro un techo plano y la caja baja su precio",
         );
 
@@ -166,7 +166,7 @@ impl PruebaHumo {
         m.bind_mut().guardar("sombra");
         m.bind_mut().vender_accesorio("sombrilla_roja");
         self.chequear(
-            !puestos().contains_key("sombra") && (saldo(&neg) - antes - 9_000.0).abs() < 0.5,
+            !puestos().contains_key("sombra") && (saldo(&neg) - antes - 36.0).abs() < 0.5,
             "CA-TIE-03 guardo la sombrilla y la vendo a la mitad",
         );
 
@@ -200,7 +200,7 @@ impl PruebaHumo {
         m.bind_mut().cambiar_base("barra_mediana");
         self.chequear(
             carrito.bind().base_actual().map(|b| b.id.as_str()) == Some("barra_mediana")
-                && (saldo(&neg) - (antes + 9_000.0 - 950_000.0)).abs() < 0.5,
+                && (saldo(&neg) - (antes + 36.0 - 3800.0)).abs() < 0.5,
             "REQ-TIE-10 vuelvo a la barra mediana guardada, gratis",
         );
         m.bind_mut().cerrar_panel();
@@ -663,7 +663,7 @@ impl INode for PruebaHumo {
                 let negocio = todos::<Negocio>(&mundo).pop().unwrap();
                 let (saldo, ventas) = (negocio.bind().saldo(), negocio.bind().ventas_de_hoy());
                 self.chequear(
-                    saldo >= self.saldo_antes + 2500.0 && ventas == 1,
+                    saldo >= self.saldo_antes + 10.0 && ventas == 1,
                     &format!(
                         "CA-CLI-01 / CA-ECO-01 el cliente pagó (caja {} → {saldo}, ventas {ventas})",
                         self.saldo_antes
@@ -707,19 +707,19 @@ impl INode for PruebaHumo {
                         ),
                     );
                     // CA-ECO-02: sin plata no se compra.
-                    negocio.bind_mut().set_saldo(1000.0);
+                    negocio.bind_mut().set_saldo(4.0);
                     let r = negocio.bind_mut().comprar("bolsa_panes_12");
                     self.chequear(
-                        r.is_err() && negocio.bind().saldo() == 1000.0,
+                        r.is_err() && negocio.bind().saldo() == 4.0,
                         "CA-ECO-02 no se puede comprar sin plata",
                     );
-                    negocio.bind_mut().set_saldo(30_000.0);
+                    negocio.bind_mut().set_saldo(120.0);
                     // CA-PRO-01: compro a las 10:00, llega a las 11:00.
                     let mut dn = todos::<DiaNoche>(&mundo).pop().unwrap();
                     dn.bind_mut().set_minuto(10.0 * 60.0);
                     let r = negocio.bind_mut().comprar("bolsa_panes_12");
                     self.chequear(
-                        r.is_ok() && negocio.bind().saldo() == 30_000.0 - 1800.0,
+                        r.is_ok() && negocio.bind().saldo() == 120.0 - 7.0,
                         &format!("REQ-PRO-02 compra hecha: {r:?}"),
                     );
                     self.paquetes_antes = todos::<Paquete>(&mundo).len();
@@ -879,7 +879,7 @@ impl INode for PruebaHumo {
                 self.chequear(choripanes.len() == 1, &format!("REQ-PAR-07 se armó un choripán ({})", choripanes.len()));
                 if let Some(ch) = choripanes.first() {
                     let ped = carrito_core::clientes::Pedido { producto: "choripan".into(), aderezos: vec![] };
-                    let r = carrito_core::clientes::evaluar(&ped, &ch.bind().entregado(), 3000.0, 0.0);
+                    let r = carrito_core::clientes::evaluar(&ped, &ch.bind().entregado(), 12.0, 0.0);
                     self.chequear(
                         r.is_ok(),
                         &format!("CA-PAR-03 el cliente acepta el choripán ({:?})", ch.bind().detalle()),
@@ -908,7 +908,7 @@ impl INode for PruebaHumo {
                 );
                 self.chequear(b.bind().descripcion().contains("echada a perder"), "REQ-HEL-04 el cartel avisa");
                 let ped = carrito_core::clientes::Pedido { producto: "hamburguesa".into(), aderezos: vec![] };
-                let r = carrito_core::clientes::evaluar(&ped, &b.bind().entregado(), 4000.0, 0.0);
+                let r = carrito_core::clientes::evaluar(&ped, &b.bind().entregado(), 16.0, 0.0);
                 self.chequear(
                     r == Err(carrito_core::clientes::Rechazo::EchadaAPerder),
                     "REQ-HEL-04 el cliente rechaza lo echado a perder",
@@ -917,7 +917,7 @@ impl INode for PruebaHumo {
                 let mut c = a.clone();
                 c.bind_mut().set_frescura(30.0);
                 c.bind_mut().forzar_avance(7.0);
-                let r = carrito_core::clientes::evaluar(&ped, &c.bind().entregado(), 4000.0, 0.0);
+                let r = carrito_core::clientes::evaluar(&ped, &c.bind().entregado(), 16.0, 0.0);
                 self.chequear(
                     r.map(|e| e.estrellas) == Ok(4.0),
                     &format!("REQ-HEL-07 con frescura dudosa descuenta una estrella ({r:?})"),
@@ -997,7 +997,7 @@ impl INode for PruebaHumo {
                 let negocio = todos::<Negocio>(&mundo).pop().unwrap();
                 let saldo = negocio.bind().saldo();
                 self.chequear(
-                    saldo >= self.saldo_antes + 3000.0,
+                    saldo >= self.saldo_antes + 12.0,
                     &format!("CA-CLI-01 el cliente pagó el choripán (caja {} → {saldo})", self.saldo_antes),
                 );
                 // CA-PLA-03: el siguiente pide hamburguesa.
@@ -1046,7 +1046,7 @@ impl INode for PruebaHumo {
                 let negocio = todos::<Negocio>(&mundo).pop().unwrap();
                 let saldo = negocio.bind().saldo();
                 self.chequear(
-                    saldo >= self.saldo_antes + 3500.0,
+                    saldo >= self.saldo_antes + 14.0,
                     &format!("REQ-CLI-04 la hamburguesa cocida se paga (caja {} → {saldo})", self.saldo_antes),
                 );
 

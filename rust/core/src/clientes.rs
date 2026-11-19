@@ -342,8 +342,8 @@ mod tests {
     #[test]
     fn req_cli_08_rechazos() {
         let ped = pedido(&["mostaza"]);
-        assert_eq!(evaluar(&ped, &entregado(Punto::Crudo, &["mostaza"]), 2500.0, 0.0), Err(Rechazo::Crudo));
-        assert_eq!(evaluar(&ped, &entregado(Punto::Quemado, &["mostaza"]), 2500.0, 0.0), Err(Rechazo::Quemado));
+        assert_eq!(evaluar(&ped, &entregado(Punto::Crudo, &["mostaza"]), 10.0, 0.0), Err(Rechazo::Crudo));
+        assert_eq!(evaluar(&ped, &entregado(Punto::Quemado, &["mostaza"]), 10.0, 0.0), Err(Rechazo::Quemado));
         let otro = Entregado {
             producto: "salchicha".into(),
             punto: Some(Punto::Cocido),
@@ -351,7 +351,7 @@ mod tests {
             frescura: None,
             aderezos: vec![],
         };
-        assert_eq!(evaluar(&ped, &otro, 2500.0, 0.0), Err(Rechazo::OtroProducto));
+        assert_eq!(evaluar(&ped, &otro, 10.0, 0.0), Err(Rechazo::OtroProducto));
         let mut pac = Paciencia::default();
         pac.penalizar(PENALIDAD_RECHAZO_S);
         assert_eq!(pac.restante, 80.0);
@@ -367,10 +367,10 @@ mod tests {
             frescura: None,
             aderezos: vec![],
         };
-        assert_eq!(evaluar(&ped, &choripan(Punto::Cocido, EstadoPan::Blando), 3000.0, 0.0), Err(Rechazo::PanBlando));
-        assert_eq!(evaluar(&ped, &choripan(Punto::Cocido, EstadoPan::Quemado), 3000.0, 0.0), Err(Rechazo::PanQuemado));
-        assert_eq!(evaluar(&ped, &choripan(Punto::Crudo, EstadoPan::Tostado), 3000.0, 0.0), Err(Rechazo::Crudo));
-        assert_eq!(evaluar(&ped, &choripan(Punto::Quemado, EstadoPan::Tostado), 3000.0, 0.0), Err(Rechazo::Quemado));
+        assert_eq!(evaluar(&ped, &choripan(Punto::Cocido, EstadoPan::Blando), 12.0, 0.0), Err(Rechazo::PanBlando));
+        assert_eq!(evaluar(&ped, &choripan(Punto::Cocido, EstadoPan::Quemado), 12.0, 0.0), Err(Rechazo::PanQuemado));
+        assert_eq!(evaluar(&ped, &choripan(Punto::Crudo, EstadoPan::Tostado), 12.0, 0.0), Err(Rechazo::Crudo));
+        assert_eq!(evaluar(&ped, &choripan(Punto::Quemado, EstadoPan::Tostado), 12.0, 0.0), Err(Rechazo::Quemado));
     }
 
     #[test]
@@ -383,35 +383,35 @@ mod tests {
             frescura: None,
             aderezos: vec![],
         };
-        assert!(evaluar(&ped, &e, 3000.0, 0.0).is_ok());
+        assert!(evaluar(&ped, &e, 12.0, 0.0).is_ok());
     }
 
     #[test]
     fn req_cli_08_estrellas() {
         let ped = pedido(&["mostaza", "ketchup"]);
-        let perfecto = evaluar(&ped, &entregado(Punto::Cocido, &["ketchup", "mostaza"]), 2500.0, 0.0).unwrap();
+        let perfecto = evaluar(&ped, &entregado(Punto::Cocido, &["ketchup", "mostaza"]), 10.0, 0.0).unwrap();
         assert_eq!(perfecto.estrellas, 5.0);
-        let falta = evaluar(&ped, &entregado(Punto::Cocido, &["mostaza"]), 2500.0, 0.0).unwrap();
+        let falta = evaluar(&ped, &entregado(Punto::Cocido, &["mostaza"]), 10.0, 0.0).unwrap();
         assert_eq!(falta.estrellas, 4.0);
-        let sobra = evaluar(&ped, &entregado(Punto::Cocido, &["mostaza", "ketchup", "mayonesa"]), 2500.0, 0.0).unwrap();
+        let sobra = evaluar(&ped, &entregado(Punto::Cocido, &["mostaza", "ketchup", "mayonesa"]), 10.0, 0.0).unwrap();
         assert_eq!(sobra.estrellas, 4.5);
-        let pasado = evaluar(&ped, &entregado(Punto::Pasado, &["mostaza", "ketchup"]), 2500.0, 0.0).unwrap();
+        let pasado = evaluar(&ped, &entregado(Punto::Pasado, &["mostaza", "ketchup"]), 10.0, 0.0).unwrap();
         assert_eq!(pasado.estrellas, 3.5);
-        let lento = evaluar(&ped, &entregado(Punto::Cocido, &["mostaza", "ketchup"]), 2500.0, 1.0).unwrap();
+        let lento = evaluar(&ped, &entregado(Punto::Cocido, &["mostaza", "ketchup"]), 10.0, 1.0).unwrap();
         assert_eq!(lento.estrellas, 3.5);
-        let todo_mal = evaluar(&ped, &entregado(Punto::Pasado, &["mayonesa"]), 2500.0, 1.0).unwrap();
+        let todo_mal = evaluar(&ped, &entregado(Punto::Pasado, &["mayonesa"]), 10.0, 1.0).unwrap();
         assert_eq!(todo_mal.estrellas, 1.0);
     }
 
     #[test]
     fn req_cli_09_pago_y_propina() {
         let ped = pedido(&[]);
-        let e5 = evaluar(&ped, &entregado(Punto::Cocido, &[]), 2500.0, 0.0).unwrap();
-        assert_eq!((e5.pago, e5.propina), (2500.0, 500.0));
-        let e3 = evaluar(&ped, &entregado(Punto::Pasado, &[]), 2500.0, 0.0).unwrap();
+        let e5 = evaluar(&ped, &entregado(Punto::Cocido, &[]), 10.0, 0.0).unwrap();
+        assert_eq!((e5.pago, e5.propina), (10.0, 2.0));
+        let e3 = evaluar(&ped, &entregado(Punto::Pasado, &[]), 10.0, 0.0).unwrap();
         assert_eq!(e3.estrellas, 3.5);
-        assert!((e3.propina - 125.0).abs() < 1e-3);
-        let e_baja = evaluar(&ped, &entregado(Punto::Pasado, &["x"]), 2500.0, 0.5).unwrap();
+        assert!((e3.propina - 0.5).abs() < 1e-3);
+        let e_baja = evaluar(&ped, &entregado(Punto::Pasado, &["x"]), 10.0, 0.5).unwrap();
         assert_eq!(e_baja.propina, 0.0);
     }
 

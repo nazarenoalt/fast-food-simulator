@@ -36,7 +36,7 @@
             id: "hamburguesa",
             nombre: "hamburguesa",
             masa: 0.12,
-            precio: Some(3500), // REQ-ECO-03
+            precio: Some(14), // REQ-ECO-03
             requiere: Some("Plancha"), // REQ-CLI-04
             por_lados: true, // REQ-PLA-04
             perecedero: true, // REQ-HEL-03
@@ -101,7 +101,7 @@
             id: "choripan",
             nombre: "choripán",
             masa: 0.18,
-            precio: Some(3000), // REQ-ECO-03
+            precio: Some(12), // REQ-ECO-03
             aderezos: ["chimichurri", "mostaza"], // REQ-ADE-07
             requiere: Some("Parrilla"), // REQ-CLI-04
             colision: Caja(medidas: (0.2, 0.07, 0.065)),
@@ -116,7 +116,7 @@
             altura_aderezos: Some(0.0152), // REQ-MOD-12: la salchicha va hundida en el pan
             nombre: "pancho",
             masa: 0.09,
-            precio: Some(2500), // REQ-ECO-03
+            precio: Some(10), // REQ-ECO-03
             aderezos: ["mostaza", "ketchup", "mayonesa", "papas_pay"], // REQ-ADE-07
             requiere: Some("Hervidor"), // REQ-CLI-04
             colision: Caja(medidas: (0.17, 0.045, 0.055)), // REQ-MOD-12: mide lo mismo que el pan

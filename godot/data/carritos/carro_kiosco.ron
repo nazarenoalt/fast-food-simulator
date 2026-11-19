@@ -9,7 +9,7 @@
     ancho: 3.2, profundidad: 1.7, alto_mostrador: 1.05,
     color: (0.78, 0.13, 0.1),
     ruedas: true,
-    precio: 900000,
+    precio: 3600,
     entrega: (0.0, 1.05, 0.97), // REQ-CAR-10: en la repisa de afuera, en el medio de la ventana
     fila: (0.0, 0.0, 1.5), // REQ-CAR-10: frente a la ventana (sigue hacia +X)
     jugador: Some((0.0, 0.16, -0.05)), // REQ-CAR-11: adentro, detrás de la ventana
