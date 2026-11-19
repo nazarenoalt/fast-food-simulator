@@ -3,7 +3,7 @@
 //! válido, acomodo, lugares) viven en `carrito_core::logo`.
 
 use carrito_core::logo::{self as reglas, DisenoLogo, FormaLogo, LugarLogo, Rect};
-use godot::classes::base_material_3d::{Feature, Flags, TextureFilter, TextureParam};
+use godot::classes::base_material_3d::{EmissionOperator, Feature, Flags, TextureFilter, TextureParam};
 use godot::classes::geometry_instance_3d::ShadowCastingSetting;
 use godot::classes::sub_viewport::UpdateMode;
 use godot::classes::text_server::FontAntialiasing;
@@ -252,6 +252,9 @@ pub fn calcomania(l: &LugarLogo, d: &DisenoLogo, texto: &str) -> Gd<MeshInstance
         mat.set_feature(Feature::EMISSION, true);
         mat.set_emission(Color::WHITE);
         mat.set_texture(TextureParam::EMISSION, &tex);
+        // Blanco × dibujo: brilla con sus colores. Con el operador por defecto (sumar) sería
+        // blanco + dibujo, y de noche se vería lavado, casi blanco.
+        mat.set_emission_operator(EmissionOperator::MULTIPLY);
         nocturno::registrar(mat.clone(), BRILLO_NOCHE);
     }
     let mut mi = MeshInstance3D::new_alloc();

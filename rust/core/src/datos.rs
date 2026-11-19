@@ -36,6 +36,9 @@ pub struct DefProducto {
     pub forma: Vec<Pieza>,
     #[serde(default)]
     pub coccion: Option<PerfilCoccion>,
+    /// REQ-FRE-10: en qué producto se convierte al quedar Cocido (la papa cortada, en fritas).
+    #[serde(default)]
+    pub al_cocerse: Option<String>,
     /// REQ-PLA-04: se cocina por lados (hamburguesa): cada lado tiene su propio estado.
     #[serde(default)]
     pub por_lados: bool,
@@ -67,6 +70,9 @@ pub struct DefProducto {
     /// REQ-PAR-01: si es una bolsa de carbón, cuántos kg trae.
     #[serde(default)]
     pub carbon: Option<f32>,
+    /// REQ-FRE-03: se prepara a mano (pelar, cortar): herramienta, pasadas y resultado.
+    #[serde(default)]
+    pub preparar: Option<crate::preparar::Preparacion>,
 }
 
 impl DefProducto {
@@ -185,6 +191,8 @@ pub fn cargar_catalogo(
             return Err(error("productos.ron", format!("\"{}\" repone un aderezo inexistente \"{a}\"", prod.id)));
         }
     }
+    // REQ-FRE-03: herramienta y resultado de cada preparación existen.
+    crate::preparar::validar(&p.productos).map_err(|m| error("productos.ron", m))?;
     let bloques: Vec<DefBloque> = parsear("bloques.ron", bloques)?;
     for b in &bloques {
         if !p.productos.iter().any(|x| x.id == b.producto) {
@@ -215,8 +223,8 @@ pub fn cargar_catalogo(
             }
         }
         // REQ-PAP-06: lo que trae un Surtido tiene que existir.
-        if let Some(crate::carrito::Funcion::Surtido { objetos }) = &acc.funcion {
-            for o in objetos {
+        if let Some(f) = &acc.funcion {
+            for o in f.objetos_iniciales() {
                 if !p.productos.iter().any(|x| x.id == o.producto) {
                     return Err(error(
                         "accesorios.ron",
@@ -418,6 +426,23 @@ pub(crate) mod tests {
     }
 
     #[test]
+    fn req_fre_11_papas_en_cajita_en_datos() {
+        let c = catalogo_real();
+        assert_eq!(crate::armado::combinar(&c.combinaciones, "cajita_papas", "papas_fritas"), Some("papas_en_cajita"));
+        let p = c.producto("papas_en_cajita").unwrap();
+        assert_eq!(p.precio, Some(8.0));
+        assert_eq!(p.aderezos, vec!["ketchup".to_string(), "mayonesa".to_string()]);
+        assert_eq!(p.requiere.as_deref(), Some("Freidora"));
+        assert!(p.coccion.is_none(), "no se cocina: conserva la cocción de las papas (REQ-ARM-03)");
+        assert!(p.forma.iter().any(|x| x.tinte_coccion), "los bastones muestran el color de las papas");
+        let masa = c.producto("cajita_papas").unwrap().masa + c.producto("papas_fritas").unwrap().masa;
+        assert!((p.masa - masa).abs() < 1e-6, "REQ-ARM-05");
+        // Ninguno de los ingredientes se vende suelto.
+        assert!(c.producto("cajita_papas").unwrap().precio.is_none());
+        assert!(c.producto("papas_fritas").unwrap().precio.is_none());
+    }
+
+    #[test]
     fn req_dep_01_bloques_de_panes_y_salchichas() {
         let c = catalogo_real();
         assert!(c.bloques.iter().any(|b| b.producto == "pan_pancho"));
@@ -431,7 +456,7 @@ pub(crate) mod tests {
         assert_eq!(c.producto("pancho").unwrap().precio, Some(10.0));
         let mut menu = c.menu();
         menu.sort();
-        assert_eq!(menu, vec!["choripan".to_string(), "hamburguesa".to_string(), "pancho".to_string()]);
+        assert_eq!(menu, ["choripan", "hamburguesa", "pancho", "papas_en_cajita"].map(String::from).to_vec());
         assert_eq!(c.producto("hamburguesa").unwrap().precio, Some(14.0));
         assert_eq!(c.producto("choripan").unwrap().precio, Some(12.0));
     }
@@ -511,6 +536,12 @@ pub(crate) mod tests {
         };
         assert_eq!(ids(&["Hervidor", "Plancha", "Parrilla"]), vec!["choripan", "hamburguesa", "pancho"]);
         assert_eq!(ids(&["Hervidor"]), vec!["pancho"], "sin plancha ni parrilla solo hay pancho");
+        // SPEC-029: las papas en cajita, solo con freidora.
+        assert_eq!(ids(&["Freidora"]), vec!["papas_en_cajita"]);
+        assert_eq!(
+            ids(&["Hervidor", "Plancha", "Parrilla", "Freidora"]),
+            vec!["choripan", "hamburguesa", "pancho", "papas_en_cajita"]
+        );
         assert!(ids(&[]).is_empty());
     }
 
@@ -525,6 +556,7 @@ pub(crate) mod tests {
             .filter_map(|a| a.funcion.as_ref())
             .map(|f| f.nombre())
             .collect();
+        // Pancho, hamburguesa y choripán; sin freidora no hay papas (SPEC-029).
         assert_eq!(c.menu_para(&colocados).len(), 3);
     }
 

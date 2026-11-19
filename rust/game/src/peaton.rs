@@ -201,20 +201,20 @@ impl Peaton {
             formas::pieza(TipoPieza::Esfera, [radio_cabeza * 1.04, 0.0, 0.0], [0.0, y_cabeza + 0.012, -0.008], ap.pelo);
         pelo.escala = [1.0, 0.75, 1.0];
         cuerpo.add_child(&formas::visual_pieza(&pelo));
-        if ap.gorra {
+        if let Some(gorra) = ap.gorra {
             parte(
                 &mut cuerpo,
                 TipoPieza::Cilindro,
                 [radio_cabeza * 1.08, 0.04, 0.0],
                 [0.0, y_cabeza + radio_cabeza * 0.55, 0.0],
-                ap.remera,
+                gorra,
             );
             parte(
                 &mut cuerpo,
                 TipoPieza::Caja,
                 [0.08, 0.01, 0.07],
                 [0.0, y_cabeza + radio_cabeza * 0.4, radio_cabeza + 0.02],
-                ap.remera,
+                gorra,
             );
         }
         // Ojos, para que se note hacia dónde mira (+Z).

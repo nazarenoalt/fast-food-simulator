@@ -10,6 +10,8 @@ Cada etapa abre con sus specs (SPEC-000) y cierra con docs al día. Formato en [
 | 0001 | Proceso, CLAUDE.md, roadmap, CI de PRs y docs (`chore (docs)`) | 000 | 🔄 |
 | 0002 | Dejar `cargo clippy` sin advertencias (la CI falla si aparece una) | — | ✅ |
 | 0003 | Git LFS para modelos `.glb`, fuentes `.blend` e imágenes de arte | — | ✅ |
+| 0004 | Cerrar el juego sin avisos de objetos y cuerpos de Jolt perdidos | — | ✅ |
+| 0005 | De noche, los carteles que brillan (fijos y logo) no se ven lavados | 013, 028 | ✅ |
 
 ## Hechas
 | ID | Tarea | Spec | Estado |
@@ -49,9 +51,9 @@ Cada etapa abre con sus specs (SPEC-000) y cierra con docs al día. Formato en [
 | 0353 | Modelar freidora (simple y doble), colador, pelapapas, cuchillo y cartel de cerrado (anclaje `cartel` adelante) | 026, 006 | ✅ |
 | 0354 | Función Surtido y datos `.ron` con modelo | 026 | ✅ |
 | 0355 | Puerta que se abre y cierra en el carro grande (y el kiosco) | 006 | ✅ |
-| 0356 | Pelar y cortar papas con pelapapas y cuchillo | — | ⬜ |
-| 0357 | Freír en aceite a ~180 °C con el colador | — | ⬜ |
-| 0358 | Vender papas en cajita; el cartel de cerrado frena a los clientes | — | ⬜ |
+| 0356 | Pelar y cortar papas con pelapapas y cuchillo | 029 | ✅ |
+| 0357 | Freír en aceite a ~180 °C con el colador | 029 | ✅ |
+| 0358 | Vender papas en cajita; el cartel de cerrado frena a los clientes | 029, 009 | ✅ |
 
 ## Etapa 4 · Carritos y mejoras (`feat (carrito)`) · PR TASK-0400
 | ID | Tarea | Spec | Estado |
@@ -72,6 +74,9 @@ Cada etapa abre con sus specs (SPEC-000) y cierra con docs al día. Formato en [
 | 0503 | Oficinistas al mediodía, familias a la tarde, salida nocturna | 018 | ⬜ |
 | 0504 | Clientes habituales que recuerdan la atención | 018 | ⬜ |
 | 0505 | Eventos: feria y partido | 019 | ⬜ |
+| 0506 | La gente se renueva: entra y sale por el borde del mapa y no se repite | 013 | ✅ |
+| 0508 | Los autos entran y salen fuera de la vista y se renuevan | 013 | ✅ |
+| 0507 | Gente distinta de día y de noche (ropa y actividades) | 018 | ⬜ |
 
 ## Etapa 6a · Precios y cobro (`feat (economia)`) · PR TASK-0600
 | ID | Tarea | Spec | Estado |

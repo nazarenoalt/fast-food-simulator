@@ -1,4 +1,4 @@
-//! SPEC-013 · Ciudad alrededor de la plaza, autos y nubes (datos repetibles con semilla).
+//! SPEC-013 · Ciudad alrededor de la plaza y nubes (datos repetibles con semilla).
 //!
 //! Coordenadas: norte = -Z, este = +X. La plaza está centrada en (0, 0).
 
@@ -39,6 +39,13 @@ pub struct Edificio {
 impl Edificio {
     pub fn alto(&self) -> f32 {
         ALTO_PB + (self.pisos.saturating_sub(1)) as f32 * ALTO_PISO
+    }
+
+    /// Planta en el piso: `[x_min, z_min, x_max, z_max]` (las fachadas giran de a 90°).
+    pub fn planta(&self) -> [f32; 4] {
+        let girado = (self.rot_y.abs() - 90.0).abs() < 1.0;
+        let (mx, mz) = if girado { (self.fondo, self.ancho) } else { (self.ancho, self.fondo) };
+        [self.x - mx / 2.0, self.z - mz / 2.0, self.x + mx / 2.0, self.z + mz / 2.0]
     }
 }
 
@@ -96,79 +103,11 @@ pub fn edificios() -> Vec<Edificio> {
     v
 }
 
-// ── Autos ─────────────────────────────────────────────────────────────
+// ── Calle ─────────────────────────────────────────────────────────────
+// Los autos están en `autos.rs` (REQ-AMB-08, REQ-AMB-17).
 
-/// REQ-AMB-08: mano derecha. Hacia el este (+X) por el carril sur, hacia el oeste por el norte.
-pub const CARRILES: [(f32, f32); 2] = [(-27.0, 1.0), (-31.0, -1.0)];
-pub const LIMITE_X: f32 = 75.0;
 /// Sendas peatonales (x).
 pub const SENDAS: [f32; 2] = [-25.0, 25.0];
-const MEDIO_CARRIL: f32 = 1.7;
-const MIRA_ADELANTE: f32 = 16.0;
-
-#[derive(Debug, Clone, PartialEq)]
-pub struct AutoInicial {
-    pub carril: usize,
-    pub x: f32,
-    pub crucero: f32,
-    pub color: [f32; 3],
-}
-
-const COLORES_AUTO: [[f32; 3]; 7] = [
-    [0.8, 0.1, 0.1],
-    [0.1, 0.2, 0.6],
-    [0.9, 0.9, 0.9],
-    [0.1, 0.1, 0.1],
-    [0.6, 0.6, 0.62],
-    [0.95, 0.8, 0.1],
-    [0.2, 0.45, 0.3],
-];
-
-pub fn autos_iniciales() -> Vec<AutoInicial> {
-    let mut azar = Azar::new(SEMILLA_CIUDAD + 1);
-    let mut v = Vec::new();
-    for carril in 0..CARRILES.len() {
-        for i in 0..4 {
-            v.push(AutoInicial {
-                carril,
-                x: -LIMITE_X + i as f32 * 2.0 * LIMITE_X / 4.0 + azar.rango(0.0, 15.0),
-                crucero: azar.rango(8.0, 13.0),
-                color: *azar.elegir(&COLORES_AUTO).unwrap(),
-            });
-        }
-    }
-    v
-}
-
-/// Distancia a un obstáculo que está adelante en el mismo carril, si hay. REQ-AMB-08
-pub fn distancia_adelante(auto_x: f32, carril: usize, obj_x: f32, obj_z: f32) -> Option<f32> {
-    let (z, sentido) = CARRILES[carril];
-    if (obj_z - z).abs() > MEDIO_CARRIL {
-        return None;
-    }
-    let d = (obj_x - auto_x) * sentido;
-    (0.0..MIRA_ADELANTE).contains(&d).then_some(d)
-}
-
-/// REQ-AMB-08: frena en forma gradual; parado si el obstáculo está a menos de 5 m.
-pub fn velocidad_deseada(crucero: f32, obstaculo: Option<f32>) -> f32 {
-    match obstaculo {
-        None => crucero,
-        Some(d) if d < 5.0 => 0.0,
-        Some(d) => crucero * ((d - 5.0) / (MIRA_ADELANTE - 5.0)).min(1.0),
-    }
-}
-
-/// Vuelve a entrar por el otro lado al salir del mapa.
-pub fn envolver(x: f32) -> f32 {
-    if x > LIMITE_X {
-        x - 2.0 * LIMITE_X
-    } else if x < -LIMITE_X {
-        x + 2.0 * LIMITE_X
-    } else {
-        x
-    }
-}
 
 // ── Nubes ─────────────────────────────────────────────────────────────
 
@@ -264,29 +203,6 @@ mod tests {
     fn req_amb_03_ciudad_repetible() {
         assert_eq!(edificios(), edificios());
         assert_eq!(nubes(), nubes());
-        assert_eq!(autos_iniciales(), autos_iniciales());
-    }
-
-    #[test]
-    fn req_amb_08_mano_derecha_y_frenado() {
-        // El carril hacia el este está al sur (más cerca de la plaza).
-        let este = CARRILES.iter().find(|c| c.1 > 0.0).unwrap();
-        let oeste = CARRILES.iter().find(|c| c.1 < 0.0).unwrap();
-        assert!(este.0 > oeste.0);
-        for (z, _) in CARRILES {
-            assert!((z - plaza::Z_CALLE).abs() < plaza::ANCHO_CALLE / 2.0);
-        }
-        assert_eq!(distancia_adelante(0.0, 0, 10.0, -27.0), Some(10.0));
-        assert_eq!(distancia_adelante(0.0, 0, -10.0, -27.0), None, "atrás no cuenta");
-        assert_eq!(distancia_adelante(0.0, 0, 10.0, -31.0), None, "otro carril");
-        assert_eq!(distancia_adelante(0.0, 1, -8.0, -31.0), Some(8.0));
-        assert_eq!(velocidad_deseada(10.0, None), 10.0);
-        assert_eq!(velocidad_deseada(10.0, Some(3.0)), 0.0);
-        let v = velocidad_deseada(10.0, Some(10.0));
-        assert!(v > 0.0 && v < 10.0);
-        assert_eq!(envolver(LIMITE_X + 1.0), -LIMITE_X + 1.0);
-        let vel: Vec<_> = autos_iniciales().iter().map(|a| (a.crucero * 10.0) as i32).collect();
-        assert!(vel.iter().any(|v| *v != vel[0]), "velocidades distintas");
     }
 
     #[test]

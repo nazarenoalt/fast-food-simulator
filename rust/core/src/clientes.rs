@@ -66,6 +66,54 @@ impl Fila {
     }
 }
 
+/// REQ-CLI-13: el `cartel_cerrado` está colgado (se lee «CERRADO») o descolgado (no se ve).
+/// Arranca colgado; el clic con la mano libre o E en su zona lo alterna.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct CartelCerrado {
+    pub colgado: bool,
+}
+
+impl Default for CartelCerrado {
+    fn default() -> Self {
+        Self { colgado: true }
+    }
+}
+
+impl CartelCerrado {
+    pub fn alternar(&mut self) {
+        self.colgado = !self.colgado;
+    }
+
+    /// Lo que dice el cartel de la mira. REQ-CLI-13
+    pub fn accion(&self) -> &'static str {
+        if self.colgado {
+            "[Clic/E] Abrir el puesto (sacar el cartel)"
+        } else {
+            "[Clic/E] Cerrar el puesto (colgar el cartel)"
+        }
+    }
+
+    /// REQ-CLI-13: descolgado, el cartel desaparece; su zona de uso queda en el frente.
+    pub fn se_ve(&self) -> bool {
+        self.colgado
+    }
+}
+
+/// REQ-CLI-13: zona de uso del cartel (caja que solo ve la mira), relativa al clavo del anclaje
+/// `cartel` (REQ-PAP-07): medidas y centro. Queda en el frente aunque el cartel esté descolgado,
+/// para volver a colgarlo desde la vereda. Cubre el tablero (de 10 a 26 cm abajo del clavo) con
+/// margen y sale 6 cm hacia la vereda, pero no sube más de 8 mm sobre el clavo: la mesada está
+/// 12 mm arriba, así que no asoma sobre el mostrador ni le roba la mira a lo que está apoyado.
+pub const ZONA_CARTEL_MEDIDAS: [f32; 3] = [0.40, 0.29, 0.08];
+pub const ZONA_CARTEL_CENTRO: [f32; 3] = [0.0, -0.137, 0.02];
+
+/// REQ-CLI-12 (y REQ-CLI-03): ¿se suma a la fila un cliente nuevo que llega solo? No si la fila
+/// está llena ni con el cartel de cerrado colgado. Sin cartel (`None`) o descolgado, está
+/// abierto. (La tecla C de REQ-CLI-11 no pasa por acá: trae clientes igual.)
+pub fn llegan_clientes(fila: &Fila, cartel: Option<CartelCerrado>) -> bool {
+    !fila.llena() && cartel.is_none_or(|c| !c.colgado)
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Pedido {
     pub producto: String,
@@ -413,6 +461,105 @@ mod tests {
         assert!((e3.propina - 0.5).abs() < 1e-3);
         let e_baja = evaluar(&ped, &entregado(Punto::Pasado, &["x"]), 10.0, 0.5).unwrap();
         assert_eq!(e_baja.propina, 0.0);
+    }
+
+    fn papas(punto: Punto, ad: &[&str]) -> Entregado {
+        Entregado {
+            producto: "papas_en_cajita".into(),
+            punto: Some(punto),
+            pan: None,
+            frescura: None,
+            aderezos: ad.iter().map(|s| s.to_string()).collect(),
+        }
+    }
+
+    #[test]
+    fn req_cli_08_fre_11_papas_crudas_o_quemadas_se_rechazan() {
+        let ped = Pedido { producto: "papas_en_cajita".into(), aderezos: vec!["ketchup".into()] };
+        assert_eq!(evaluar(&ped, &papas(Punto::Crudo, &["ketchup"]), 8.0, 0.0), Err(Rechazo::Crudo));
+        assert_eq!(evaluar(&ped, &papas(Punto::Quemado, &["ketchup"]), 8.0, 0.0), Err(Rechazo::Quemado));
+        // Un pancho no es lo que pidió.
+        assert_eq!(evaluar(&ped, &entregado(Punto::Cocido, &["ketchup"]), 8.0, 0.0), Err(Rechazo::OtroProducto));
+    }
+
+    #[test]
+    fn req_cli_08_09_fre_11_papas_cocidas_y_pasadas() {
+        let ped = Pedido { producto: "papas_en_cajita".into(), aderezos: vec!["ketchup".into(), "mayonesa".into()] };
+        let bien = evaluar(&ped, &papas(Punto::Cocido, &["mayonesa", "ketchup"]), 8.0, 0.0).unwrap();
+        assert_eq!(bien.estrellas, 5.0);
+        // REQ-CLI-09: $8 más el 20% de propina con 5 estrellas.
+        assert_eq!(bien.pago, 8.0);
+        assert!((bien.propina - 1.6).abs() < 1e-4);
+        // −1,5 si están pasadas.
+        let pasadas = evaluar(&ped, &papas(Punto::Pasado, &["ketchup", "mayonesa"]), 8.0, 0.0).unwrap();
+        assert_eq!(pasadas.estrellas, 3.5);
+        let sin_mayonesa = evaluar(&ped, &papas(Punto::Pasado, &["ketchup"]), 8.0, 0.0).unwrap();
+        assert_eq!(sin_mayonesa.estrellas, 2.5);
+        assert_eq!(sin_mayonesa.propina, 0.0);
+    }
+
+    #[test]
+    fn req_cli_12_con_el_cartel_colgado_no_llegan_clientes_nuevos() {
+        let mut fila = Fila::default();
+        fila.unirse(1);
+        // Sin cartel, abierto.
+        assert!(llegan_clientes(&fila, None));
+        // Colgado: no se suma nadie, pero el que estaba sigue en la fila.
+        let colgado = CartelCerrado::default();
+        assert!(!llegan_clientes(&fila, Some(colgado)));
+        assert_eq!(fila.primero(), Some(1));
+        // Descolgado: abierto otra vez.
+        assert!(llegan_clientes(&fila, Some(CartelCerrado { colgado: false })));
+        // REQ-CLI-03: con la fila llena no llega nadie, aunque esté abierto.
+        for id in 2..=LUGARES_FILA as u64 {
+            fila.unirse(id);
+        }
+        assert!(!llegan_clientes(&fila, None));
+    }
+
+    #[test]
+    fn req_cli_13_el_cartel_arranca_colgado_y_se_alterna_desapareciendo() {
+        let mut c = CartelCerrado::default();
+        assert!(c.colgado && c.se_ve());
+        assert_eq!(c.accion(), "[Clic/E] Abrir el puesto (sacar el cartel)");
+        // Descolgado: abierto y no se ve.
+        c.alternar();
+        assert!(!c.colgado && !c.se_ve());
+        assert_eq!(c.accion(), "[Clic/E] Cerrar el puesto (colgar el cartel)");
+        c.alternar();
+        assert!(c.colgado && c.se_ve());
+    }
+
+    #[test]
+    fn req_cli_13_la_zona_del_cartel_se_toca_desde_la_vereda_sin_tapar_el_mostrador() {
+        use crate::datos::tests::catalogo_real;
+        let cat = catalogo_real();
+        let [mx, my, mz] = ZONA_CARTEL_MEDIDAS;
+        let [cx, cy, cz] = ZONA_CARTEL_CENTRO;
+        // Cubre el tablero del cartel (REQ-PAP-07), relativo al clavo.
+        let cartel = cat.accesorios.iter().find(|a| a.id == "cartel_cerrado").unwrap();
+        let tablero = cartel.forma.iter().max_by(|a, b| a.medidas[0].total_cmp(&b.medidas[0])).unwrap();
+        for i in 0..3 {
+            let (m, c) = (ZONA_CARTEL_MEDIDAS[i], ZONA_CARTEL_CENTRO[i]);
+            assert!(tablero.pos[i] - tablero.medidas[i] / 2.0 >= c - m / 2.0, "eje {i}");
+            assert!(tablero.pos[i] + tablero.medidas[i] / 2.0 <= c + m / 2.0, "eje {i}");
+        }
+        assert!(mx >= 0.36 && my >= 0.25, "cómoda de tocar");
+        for b in &cat.bases {
+            let a = b.anclaje("cartel").unwrap();
+            // No asoma sobre la mesada (ni sobre la bandeja, que está apoyada en ella).
+            let arriba = a.pos[1] + cy + my / 2.0;
+            assert!(arriba < b.alto_mostrador, "{}: la zona asoma sobre el mostrador ({arriba})", b.id);
+            assert!(b.entrega[1] >= b.alto_mostrador - 1e-4, "{}: la bandeja está sobre la mesada", b.id);
+            // Sale hacia la vereda, delante del carro.
+            assert!(a.pos[2] + cz + mz / 2.0 > b.profundidad / 2.0, "{}", b.id);
+            // Desde el primer lugar de la fila, con los ojos a 1,65 m (REQ-JUG-05), está a mano
+            // (la mira llega a 2,5 m, REQ-INT-01), con margen.
+            let centro = [a.pos[0] + cx, a.pos[1] + cy, a.pos[2] + cz];
+            let ojos = [b.fila[0], 1.65, b.fila[2]];
+            let d = (0..3).map(|i| (centro[i] - ojos[i]).powi(2)).sum::<f32>().sqrt();
+            assert!(d < 1.5, "{}: lejos de la vereda ({d})", b.id);
+        }
     }
 
     #[test]

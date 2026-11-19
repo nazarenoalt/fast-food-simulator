@@ -63,6 +63,7 @@ Estado: Borrador | Aprobada | Implementada
 | PAP | 026 Papas fritas |
 | AMP | 027 Ampliaciones del carrito |
 | LOG | 028 Logo del carrito |
+| FRE | 029 Preparar y freír papas |
 
 ## Convenciones de código
 

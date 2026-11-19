@@ -12,9 +12,11 @@ use godot::prelude::*;
 use crate::aderecera::Pomo;
 use crate::armado;
 use crate::bloque_stock::BloqueStock;
+use crate::cartel::CartelCerrado;
 use crate::comida::{self, Comida};
 use crate::datos::catalogo;
 use crate::formas;
+use crate::freidora::{self, Colador, Freidora};
 use crate::heladera::Heladera;
 use crate::hervidor::Hervidor;
 use crate::hud::{self, Hud};
@@ -22,6 +24,7 @@ use crate::lugar_deposito::{self, LugarDeposito};
 use crate::paquete::Paquete;
 use crate::parrilla::Parrilla;
 use crate::plancha::Plancha;
+use crate::preparar;
 use crate::puerta::PuertaCarrito;
 use crate::sonido;
 use crate::tienda;
@@ -60,6 +63,8 @@ pub enum Objetivo {
     Paquete(Gd<Paquete>),
     Pomo(Gd<Pomo>),
     Puerta(Gd<PuertaCarrito>),
+    Cartel(Gd<CartelCerrado>),
+    Freidora(Gd<Freidora>), // REQ-FRE-05
 }
 
 /// REQ-INT-08/09/10: qué pasa al colocar lo que tenés en la mano donde apunta la mira.
@@ -69,6 +74,9 @@ enum Colocacion {
     /// Sobre una base de armado (nombre de la base).
     Armar(String),
     Guardar,
+    /// REQ-FRE-07: papas adentro del colador, o apoyadas como siempre si está lleno.
+    Colador(Gd<Colador>),
+    ColadorLleno,
 }
 
 #[derive(GodotClass)]
@@ -170,6 +178,7 @@ impl ICharacterBody3D for Jugador {
         // REQ-INT-01: lo que está a 2,5 m o menos bajo la mira.
         let mut rayo = RayCast3D::new_alloc();
         rayo.set_target_position(Vector3::new(0.0, 0.0, -ALCANCE));
+        rayo.set_collision_mask(1 | formas::CAPA_USABLES); // REQ-CLI-13: también el cartel
         let yo = self.to_gd();
         rayo.add_exception(&yo);
         camara.add_child(&rayo);
@@ -360,11 +369,13 @@ impl Jugador {
             return None;
         }
         let mut nodo: Option<Gd<Node>> = rayo.get_collider()?.try_cast::<Node>().ok();
+        let punto = rayo.get_collision_point();
         // El objeto puede ser el cuerpo físico o un hijo de un equipo: se sube hasta 4 niveles.
         for _ in 0..4 {
             let n = nodo?;
             let n = match n.try_cast::<Comida>() {
-                Ok(c) => return Some(Objetivo::Comida(c)),
+                // REQ-FRE-08: en un colador, la porción de papas que mira.
+                Ok(c) => return Some(Objetivo::Comida(freidora::agarrable_en(c, punto))),
                 Err(n) => n,
             };
             let n = match n.try_cast::<Hervidor>() {
@@ -399,12 +410,26 @@ impl Jugador {
                 Ok(p) => return Some(Objetivo::Puerta(p)),
                 Err(n) => n,
             };
+            let n = match n.try_cast::<CartelCerrado>() {
+                Ok(c) => return Some(Objetivo::Cartel(c)),
+                Err(n) => n,
+            };
+            let n = match n.try_cast::<Freidora>() {
+                Ok(f) => return Some(Objetivo::Freidora(f)),
+                Err(n) => n,
+            };
             nodo = n.get_parent();
         }
         None
     }
 
-    fn clic_izquierdo(&mut self) {
+    /// Punto donde toca la mira (el del último objetivo). REQ-FRE-05
+    fn punto_mira(&self) -> Option<Vector3> {
+        self.rayo.as_ref().filter(|r| r.is_colliding()).map(|r| r.get_collision_point())
+    }
+
+    /// REQ-INT-03, REQ-INT-06 (y REQ-CLI-13): agarrar, colocar o usar el cartel.
+    pub fn clic_izquierdo(&mut self) {
         if self.mano.is_some() {
             // REQ-INT-06: colocar donde apunta la mira.
             self.colocar();
@@ -415,6 +440,8 @@ impl Jugador {
             Some(Objetivo::Comida(c)) => self.agarrar(c.upcast()),
             Some(Objetivo::Paquete(p)) => self.agarrar(p.upcast()),
             Some(Objetivo::Bloque(b)) => self.levantar(b),
+            // REQ-CLI-13: con la mano libre, el clic saca o cuelga el cartel, igual que E.
+            Some(Objetivo::Cartel(mut c)) => c.bind_mut().alternar(),
             _ => {}
         }
     }
@@ -464,14 +491,23 @@ impl Jugador {
     fn destino_colocar(&mut self) -> Option<(Transform3D, Colocacion)> {
         let mano = self.mano.clone().filter(|c| c.is_instance_valid())?;
         let rayo = self.rayo.as_mut()?;
+        // REQ-CLI-13: colocar no ve la zona del cartel de cerrado (es solo para usarlo).
+        rayo.set_collision_mask(1);
         rayo.force_raycast_update();
-        if !rayo.is_colliding() {
-            return None;
-        }
-        let punto = rayo.get_collision_point();
-        let normal = rayo.get_collision_normal();
-        let tocado = rayo.get_collider();
+        let choque =
+            rayo.is_colliding().then(|| (rayo.get_collision_point(), rayo.get_collision_normal(), rayo.get_collider()));
+        rayo.set_collision_mask(1 | formas::CAPA_USABLES);
+        let (punto, normal, tocado) = choque?;
         let v3 = |v: Vector3| [v.x, v.y, v.z];
+
+        // REQ-FRE-07: papas sobre un colador van adentro (lleno, se apoyan como siempre).
+        let colador =
+            mano.clone().try_cast::<Comida>().ok().and_then(|c| freidora::colador_destino(&c, tocado.clone()));
+        if let Some(Ok(col)) = colador {
+            // El origen es donde toca la mira: la porción va al lugar libre más cercano.
+            return Some((Transform3D::new(Basis::IDENTITY, punto), Colocacion::Colador(col)));
+        }
+        let lleno = colador.is_some();
 
         // REQ-INT-10: un agregado sobre su base va a la zona de encastre.
         if let Ok(comida) = mano.clone().try_cast::<Comida>()
@@ -507,7 +543,13 @@ impl Jugador {
         }
 
         let c = agarre::centro_colocado(v3(punto), v3(normal), media_altura, medio_ancho);
-        let como = if agarre::es_apoyo(v3(normal)) { Colocacion::Apoyar } else { Colocacion::Pared };
+        let como = if lleno {
+            Colocacion::ColadorLleno
+        } else if agarre::es_apoyo(v3(normal)) {
+            Colocacion::Apoyar
+        } else {
+            Colocacion::Pared
+        };
         Some((Transform3D::new(self.giro_colocado(), Vector3::new(c[0], c[1], c[2])), como))
     }
 
@@ -525,6 +567,15 @@ impl Jugador {
     pub fn colocar(&mut self) {
         let destino = self.destino_colocar();
         let Some(mut c) = self.soltar() else { return };
+        // REQ-FRE-07: adentro del colador.
+        if let Some((t, Colocacion::Colador(col))) = &destino
+            && let Ok(papa) = c.clone().try_cast::<Comida>()
+        {
+            if let Err(e) = col.clone().bind_mut().meter(papa, Some(t.origin)) {
+                hud::avisar(&self.to_gd(), e.mensaje());
+            }
+            return;
+        }
         if let Some((t, _)) = destino {
             c.set_global_transform(t);
             c.set_linear_velocity(Vector3::ZERO);
@@ -649,6 +700,11 @@ impl Jugador {
     pub fn usar(&mut self) {
         let yo = self.to_gd();
         if self.mano.is_some() {
+            // REQ-CLI-13: E saca o cuelga el cartel también con algo en la mano.
+            if let Some(Objetivo::Cartel(mut c)) = self.objetivo() {
+                c.bind_mut().alternar();
+                return;
+            }
             // REQ-COC-10: un paquete sobre el hervidor se vuelca en el agua.
             if self.paquete_en_mano().is_some() {
                 if let Some(Objetivo::Hervidor(h)) = self.objetivo() {
@@ -670,6 +726,13 @@ impl Jugador {
                 }
                 return;
             }
+            // REQ-FRE-01..03: pelar o cortar con la herramienta de la mano.
+            let herramienta = comida.bind().producto().to_string();
+            if let Some(Objetivo::Comida(c)) = self.objetivo()
+                && preparar::usar(Some(&herramienta), c)
+            {
+                return;
+            }
             let Some(Objetivo::Pomo(mut pomo)) = self.objetivo() else { return };
             let repone = comida.bind().repone().map(str::to_string);
             let resultado = match repone {
@@ -688,12 +751,22 @@ impl Jugador {
         }
         match self.objetivo() {
             Some(Objetivo::Hervidor(mut h)) => h.bind_mut().alternar(),
+            // REQ-FRE-05: la cuba bajo la mira.
+            Some(Objetivo::Freidora(mut f)) => {
+                if let Some(p) = self.punto_mira() {
+                    f.bind_mut().alternar_en(p);
+                }
+            }
+            // REQ-FRE-08: E sobre un colador puesto en una cuba lo baja o lo sube.
+            Some(Objetivo::Comida(c)) if freidora::alternar_colador(&c) => {}
             // REQ-PLA-01
             Some(Objetivo::Plancha(mut p)) => p.bind_mut().alternar(),
             // REQ-HEL-01
             Some(Objetivo::Heladera(mut h)) => h.bind_mut().alternar(),
             // REQ-CAR-13
             Some(Objetivo::Puerta(mut p)) => p.bind_mut().alternar(),
+            // REQ-CLI-13
+            Some(Objetivo::Cartel(mut c)) => c.bind_mut().alternar(),
             // REQ-PAR-01
             Some(Objetivo::Parrilla(mut p)) => {
                 if let Err(e) = p.bind_mut().usar() {
@@ -781,6 +854,8 @@ impl Jugador {
             Some((_, Colocacion::Pared)) => "[Clic] Dejar acá".to_string(),
             Some((_, Colocacion::Armar(base))) => format!("[Clic] Poner en el {base}"),
             Some((_, Colocacion::Guardar)) => "[Clic] Guardar en el estante".to_string(),
+            Some((_, Colocacion::Colador(_))) => "[Clic] Poner en el colador".to_string(),
+            Some((_, Colocacion::ColadorLleno)) => "[Clic] Apoyar acá (el colador está lleno)".to_string(),
         };
         let mano_ocupada = en_mano.is_some();
         let objetivo = self.objetivo();
@@ -799,6 +874,12 @@ impl Jugador {
                         t += &format!(" · [E] Poner {}", p.cartel());
                     }
                 }
+                if let Some(Objetivo::Comida(o)) = &objetivo {
+                    t += &preparar::cartel(Some(c.producto()), o); // REQ-FRE-01..03
+                }
+                if let Some(Objetivo::Cartel(k)) = &objetivo {
+                    t += &format!(" · {}", k.bind().cartel().replace("[Clic/E]", "[E]")); // REQ-CLI-13
+                }
                 t
             } else if let Ok(p) = m.try_cast::<Paquete>() {
                 let p = p.bind();
@@ -809,6 +890,9 @@ impl Jugador {
                 {
                     let nombre = catalogo().producto(&p.def().producto).map(|d| d.nombre.clone()).unwrap_or_default();
                     t += &format!(" · [E] Echar al agua ({} × {nombre})", p.restantes());
+                }
+                if let Some(Objetivo::Cartel(k)) = &objetivo {
+                    t += &format!(" · {}", k.bind().cartel().replace("[Clic/E]", "[E]")); // REQ-CLI-13
                 }
                 t
             } else {
@@ -821,6 +905,11 @@ impl Jugador {
                     if c.bind().por_lados() {
                         t += " · [E] Dar vuelta";
                     }
+                    t += &preparar::cartel(None, &c); // REQ-FRE-03: sin la herramienta
+                    // REQ-FRE-08
+                    if let Some(e) = freidora::cartel_colador(&c) {
+                        t += &format!(" · {e}");
+                    }
                     t
                 }
                 Some(Objetivo::Hervidor(h)) => h.bind().cartel(),
@@ -828,6 +917,8 @@ impl Jugador {
                 Some(Objetivo::Parrilla(p)) => p.bind().cartel(),
                 Some(Objetivo::Heladera(h)) => h.bind().cartel(),
                 Some(Objetivo::Puerta(p)) => p.bind().cartel(),
+                Some(Objetivo::Cartel(c)) => c.bind().cartel(),
+                Some(Objetivo::Freidora(f)) => self.punto_mira().map(|p| f.bind().cartel(p)).unwrap_or_default(),
                 Some(Objetivo::Bloque(b)) => b.bind().cartel(),
                 Some(Objetivo::Paquete(p)) => format!("[Clic] Agarrar {}", p.bind().descripcion().to_lowercase()),
                 Some(Objetivo::Pomo(p)) => format!("{} — agarrá un pancho y apretá E para ponerle", p.bind().cartel()),

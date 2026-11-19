@@ -1,6 +1,6 @@
 # SPEC-013 · Ambientación
 
-Estado: **Implementada (etapa 2)**
+Estado: **Implementada (etapa 2; la gente se renueva: TASK-0506)**
 
 ## Objetivo
 
@@ -29,11 +29,19 @@ nubes y un cielo con sol y luna.
 - **REQ-AMB-13** La gente no se atraviesa: cada persona mantiene una distancia personal
   (0,6 m) con las demás y con el jugador. Si alguien viene de frente, ambos se corren hacia
   su derecha para cruzarse; si no hay lugar, frenan.
+- **REQ-AMB-15** La gente se renueva: los peatones (y los clientes cuando se van) llegan y se
+  van solo por el borde del mapa, fuera de la vista desde el carrito; al cruzarlo desaparecen
+  y llegan otros. Nadie aparece ni desaparece en medio de la plaza o la vereda.
+- **REQ-AMB-16** Cada persona nueva se ve distinta: su apariencia (piel, ropa, pelo, gorra) no
+  repite la de nadie que esté en el mapa ni la de las últimas 30 que se fueron.
 
 ### Movimiento
 - **REQ-AMB-08** Autos que circulan por la calle en los dos sentidos (mano derecha), con
   velocidades distintas. Frenan si hay un auto, un peatón o el jugador adelante en su carril.
   Hay dos sendas peatonales para cruzar a la vereda de enfrente.
+- **REQ-AMB-17** Los autos entran y salen de la calle fuera de la vista desde el carrito:
+  nadie ve un auto aparecer o desaparecer (doblan por calles laterales detrás de los edificios
+  del este y del oeste). El que vuelve a entrar es otro (otro color).
 - **REQ-AMB-09** Los autos tienen faros y luces traseras que se prenden de noche.
 - **REQ-AMB-10** Palomas en la plaza que picotean el piso y salen volando si el jugador se
   acerca a menos de 3,5 m; después vuelven a bajar en otro lugar.
@@ -56,5 +64,6 @@ nubes y un cielo con sol y luna.
 
 ## Fuera de alcance
 
+- Gente distinta de día y de noche (ropa y actividades): etapa 5 (SPEC-018).
 - Planificar rutas alrededor de multitudes (solo se esquiva a quien está cerca), semáforos,
   lluvia, interiores de edificios.

@@ -17,6 +17,9 @@ use godot::prelude::*;
 use crate::datos::catalogo;
 use crate::{formas, modelos};
 
+/// Marca de los nodos del dibujo y la colisión del producto (se cambian al convertirse).
+const CUERPO: &str = "cuerpo_producto";
+
 #[derive(GodotClass)]
 #[class(base=RigidBody3D, no_init)]
 pub struct Comida {
@@ -43,6 +46,8 @@ pub struct Comida {
     pub sostenida: bool,
     /// Ya se usó en un armado (está por desaparecer).
     consumida: bool,
+    /// REQ-FRE-03: pasadas de pelar o cortar ya hechas (quedan aunque se la mueva).
+    pub pasadas: u32,
     /// Temperatura del entorno que le dio una fuente de calor, y en qué cuadro.
     entorno: Option<(f32, u64)>,
     tintes: Vec<Gd<StandardMaterial3D>>,
@@ -84,6 +89,7 @@ impl Comida {
             vy_anterior: 0.0,
             sostenida: false,
             consumida: false,
+            pasadas: 0,
             entorno: None,
             tintes: Vec::new(),
             tintes_lado: [Vec::new(), Vec::new()],
@@ -270,6 +276,11 @@ impl Comida {
         self.def.repone.as_deref()
     }
 
+    /// REQ-FRE-03: cómo se prepara a mano (pelar, cortar), si se prepara.
+    pub fn preparacion(&self) -> Option<&carrito_core::preparar::Preparacion> {
+        self.def.preparar.as_ref()
+    }
+
     /// Si es una bolsa de carbón, cuántos kg trae. REQ-PAR-01
     pub fn carbon(&self) -> Option<f32> {
         self.def.carbon
@@ -304,6 +315,12 @@ impl Comida {
             e.temp = 70.0;
         }
         self.actualizar_color();
+    }
+
+    /// Solo para pruebas: fija el punto de un alimento que no tiene perfil de cocción (las
+    /// papas fritas antes de TASK-0357). Lo hereda el armado (REQ-FRE-11).
+    pub fn forzar_punto(&mut self, punto: carrito_core::coccion::Punto) {
+        self.punto_fijo = Some(punto);
     }
 
     /// Solo para pruebas: deja la parte cocinable quemada.
@@ -382,6 +399,61 @@ impl Comida {
         }
     }
 
+    /// Dibujo y colisión del producto (marcados para poder cambiarlos al convertirse).
+    fn armar_cuerpo(&mut self) {
+        let def = self.def.clone();
+        let mut yo = self.to_gd();
+        let marcar = |n: &mut Gd<godot::classes::Node>| n.set_meta(CUERPO, &true.to_variant());
+        // Forma visual: el modelo (SPEC-025) o las piezas simples. Las piezas que se
+        // cocinan (entera o por lados) tienen su propio material. REQ-MOD-05
+        let (visual, tintes, tintes_lado) = modelos::visual_producto(&def);
+        marcar(&mut visual.clone().upcast());
+        yo.add_child(&visual);
+        self.tintes = tintes;
+        self.tintes_lado = tintes_lado;
+
+        // Colisión.
+        let col = match def.colision {
+            Colision::Caja { medidas } => {
+                let mut s = BoxShape3D::new_gd();
+                s.set_size(formas::v3(medidas));
+                formas::nodo_colision(s.upcast(), Transform3D::IDENTITY)
+            }
+            Colision::Capsula { radio, largo } => {
+                let mut s = CapsuleShape3D::new_gd();
+                s.set_radius(radio);
+                s.set_height(largo);
+                // Acostada sobre X.
+                let t =
+                    Transform3D::new(Basis::from_axis_angle(Vector3::BACK, std::f32::consts::FRAC_PI_2), Vector3::ZERO);
+                formas::nodo_colision(s.upcast(), t)
+            }
+        };
+        marcar(&mut col.clone().upcast());
+        yo.add_child(&col);
+    }
+
+    /// REQ-FRE-10: se convierte en otro producto en el mismo lugar (la papa cortada en papas
+    /// fritas): es el mismo objeto (sigue en la mano o en el colador) con la misma temperatura,
+    /// avance y estado de cocción; cambian el dibujo, la colisión, la masa y el perfil.
+    fn convertir(&mut self, producto: &str) {
+        let Some(def) = catalogo().producto(producto).cloned() else { return };
+        if let (Some(nuevo), Some((perfil, _))) = (def.coccion.clone(), &mut self.coccion) {
+            *perfil = nuevo;
+        }
+        self.def = def;
+        let mut yo = self.to_gd();
+        for mut hijo in yo.get_children().iter_shared() {
+            if hijo.has_meta(CUERPO) {
+                yo.remove_child(&hijo);
+                hijo.queue_free();
+            }
+        }
+        yo.set_mass(self.def.masa);
+        self.armar_cuerpo();
+        self.actualizar_color();
+    }
+
     /// REQ-ARM-02: si una pieza agregable suelta está en la zona de encastre, se arma.
     fn intentar_encastre(&mut self) {
         if self.sostenida || self.consumida {
@@ -410,8 +482,8 @@ impl Comida {
             {
                 let mut n = nueva.bind_mut();
                 // REQ-ARM-03: guarda el estado de la salchicha y deja de cocinarse.
-                if let Some((p, e)) = &heredado {
-                    n.detalle = Some(format!("{nombre_agregado} {}", e.punto(p).nombre()));
+                if let Some(punto) = punto_agregado {
+                    n.detalle = Some(con_punto(&nombre_agregado, punto));
                 }
                 if self.def.pan {
                     // REQ-PAR-07: el choripán guarda el estado del chorizo y del pan.
@@ -424,6 +496,11 @@ impl Comida {
                     n.detalle =
                         Some(format!("{nombre_agregado} {punto}, pan {}", pan.map(|p| p.nombre()).unwrap_or("")));
                 } else {
+                    // REQ-FRE-11: la cajita conserva la cocción de las papas, como el pancho la de
+                    // la salchicha (y si solo traían un punto fijo, ese).
+                    if heredado.is_none() {
+                        n.punto_fijo = punto_agregado;
+                    }
                     n.coccion = heredado;
                 }
                 n.cocina = false;
@@ -461,30 +538,9 @@ impl IRigidBody3D for Comida {
         mat.set_bounce(0.15);
         yo.set_physics_material_override(&mat);
 
-        // Forma visual: el modelo (SPEC-025) o las piezas simples. Las piezas que se
-        // cocinan (entera o por lados) tienen su propio material. REQ-MOD-05
-        let (visual, tintes, tintes_lado) = modelos::visual_producto(&def);
-        yo.add_child(&visual);
-        self.tintes = tintes;
-        self.tintes_lado = tintes_lado;
-
-        // Colisión.
-        match def.colision {
-            Colision::Caja { medidas } => {
-                let mut s = BoxShape3D::new_gd();
-                s.set_size(formas::v3(medidas));
-                yo.add_child(&formas::nodo_colision(s.upcast(), Transform3D::IDENTITY));
-            }
-            Colision::Capsula { radio, largo } => {
-                let mut s = CapsuleShape3D::new_gd();
-                s.set_radius(radio);
-                s.set_height(largo);
-                // Acostada sobre X.
-                let t =
-                    Transform3D::new(Basis::from_axis_angle(Vector3::BACK, std::f32::consts::FRAC_PI_2), Vector3::ZERO);
-                yo.add_child(&formas::nodo_colision(s.upcast(), t));
-            }
-        }
+        self.armar_cuerpo();
+        // REQ-FRE-07: el colador lleva lo que tiene adentro.
+        crate::freidora::Colador::preparar(&mut yo.clone().upcast(), &def.id);
 
         // REQ-ARM-02: zona de encastre arriba de los productos que son base de una combinación.
         if armado::es_base(&catalogo().combinaciones, &def.id) {
@@ -550,6 +606,14 @@ impl IRigidBody3D for Comida {
             }
             // REQ-COC-06
             self.actualizar_color();
+            // REQ-FRE-10: al quedar Cocida, la papa cortada pasa a papas fritas (regla de los datos).
+            if let Some(otro) = self
+                .punto()
+                .and_then(|p| carrito_core::freidora::reemplazo_al_cocerse(&self.def, p))
+                .map(str::to_string)
+            {
+                self.convertir(&otro);
+            }
         }
         self.intentar_encastre();
     }
@@ -561,6 +625,12 @@ pub fn medidas_de(def: &DefProducto) -> (f32, f32, f32) {
         Colision::Caja { medidas: [x, y, z] } => (y / 2.0, x.max(z) / 2.0, x.max(y).max(z) / 2.0),
         Colision::Capsula { radio, largo } => (radio, largo / 2.0, largo / 2.0),
     }
+}
+
+/// "salchicha cocida", "papas fritas cocidas": el punto concuerda con el nombre en número.
+fn con_punto(nombre: &str, punto: carrito_core::coccion::Punto) -> String {
+    let plural = if nombre.ends_with('s') { "s" } else { "" };
+    format!("{nombre} {}{plural}", punto.nombre())
 }
 
 fn capitalizar(s: &str) -> String {

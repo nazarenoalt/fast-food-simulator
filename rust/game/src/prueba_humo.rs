@@ -28,6 +28,17 @@ use crate::sonido::Sonido;
 use crate::transito::{Autos, Nubes};
 use carrito_core::tostado::EstadoPan;
 
+#[path = "prueba_humo_autos.rs"]
+mod autos_humo; // TASK-0508: los autos entran y salen fuera de la vista (REQ-AMB-17)
+#[path = "prueba_humo_freir.rs"]
+mod freir; // SPEC-029: freír con el colador
+#[path = "prueba_humo_gente.rs"]
+mod gente_humo; // TASK-0506: la gente se renueva (REQ-AMB-15/16)
+#[path = "prueba_humo_pelar.rs"]
+mod pelar; // SPEC-029: pelar y cortar
+#[path = "prueba_humo_vender.rs"]
+mod vender; // TASK-0358: vender papas en cajita y cartel de cerrado
+
 #[derive(GodotClass)]
 #[class(base=Node, init)]
 pub struct PruebaHumo {
@@ -58,6 +69,8 @@ pub struct PruebaHumo {
     /// SPEC-026 / REQ-CAR-13: segundo carrito (carro grande) con lo de las papas.
     carro_papas: Option<Gd<Carrito>>,
     fase_papas: u32,
+    /// Qué chequeo corre al final del paso 31 (papas y puerta, pelar, freír, vender, gente).
+    cadena_papas: u32,
     /// SPEC-027: fase de la prueba de ampliaciones y lo que se mide entre cuadros.
     fase_amp: u32,
     bloque_cajon: Option<(Gd<BloqueStock>, Vector3)>,
@@ -68,6 +81,12 @@ pub struct PruebaHumo {
     salchichas_hervidor: usize,
     carnes: Option<(Gd<Comida>, Gd<Comida>)>,
     jugador_antes: Option<Transform3D>,
+    /// SPEC-029 / REQ-CLI-12: la prueba de vender papas y del cartel de cerrado.
+    vender: vender::Vender,
+    /// SPEC-029: fase de la prueba de freír, la papa y los cuadros que lleva en el aceite.
+    fase_freir: u32,
+    papa_freir: Option<Gd<Comida>>,
+    cuadros_freir: u32,
 }
 
 /// Material (de la primera superficie) de la pieza `nombre` de un modelo. SPEC-025
@@ -521,7 +540,7 @@ impl PruebaHumo {
                 let coladores = suelta("colador_freidora");
                 let adentro = coladores.iter().all(|x| {
                     let p = x.get_global_position() - base;
-                    (p.x + 1.1).abs() < 0.3 && p.y > 1.12 && p.y < 1.2 && (p.z - 0.045).abs() < 0.1
+                    (p.x + 1.1).abs() < 0.3 && p.y > 1.2 && p.y < 1.3 && (p.z - 0.045).abs() < 0.1
                 });
                 self.chequear(
                     coladores.len() == 2 && adentro,
@@ -1212,6 +1231,9 @@ impl INode for PruebaHumo {
                     carne.bind().temp == 4.0 && panes.bind().temp == 20.0,
                     "REQ-HEL-06 los paquetes de carne vienen a 4 °C",
                 );
+                // No entran al árbol: se borran a mano (si no, quedan sus cuerpos físicos al cerrar).
+                carne.free();
+                panes.free();
                 // Llega un cliente nuevo para probar el menú (REQ-CLI-04).
                 let mut gente = todos::<Gente>(&mundo).pop().unwrap();
                 if gente.bind().largo_fila() == 0 {
@@ -1360,10 +1382,25 @@ impl INode for PruebaHumo {
                         self.paso -= 1; // SPEC-027: se repite este paso hasta terminar
                     } else if !self.chequear_logo() {
                         self.paso -= 1; // SPEC-028: se repite este paso hasta terminar
-                    } else if self.chequear_papas_y_puerta() {
-                        self.terminar();
                     } else {
-                        self.paso -= 1; // se repite este paso hasta terminar
+                        // Etapa 3.5 en orden; cada chequeo corre hasta terminar y pasa al que sigue.
+                        let listo = match self.cadena_papas {
+                            0 => self.chequear_papas_y_puerta(),
+                            1 => self.chequear_pelar(),            // SPEC-029: pelar y cortar
+                            2 => self.chequear_freir(),            // SPEC-029: freír con el colador
+                            3 => self.chequear_vender(),           // TASK-0358: papas en cajita y cartel
+                            4 => self.chequear_gente_se_renueva(), // TASK-0506: REQ-AMB-15/16
+                            5 => self.chequear_autos(),            // TASK-0508: REQ-AMB-17
+                            _ => true,
+                        };
+                        if listo {
+                            self.cadena_papas += 1;
+                        }
+                        if self.cadena_papas >= 6 {
+                            self.terminar();
+                        } else {
+                            self.paso -= 1; // se repite este paso hasta terminar
+                        }
                     }
                 }
             }

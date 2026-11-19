@@ -1,12 +1,12 @@
 # SPEC-026 · Papas fritas (contenido y modelos)
 
-Estado: **Implementada (contenido: se ven, se agarran y se ubican; pelar, cortar y freír vienen después)**
+Estado: **Implementada (contenido; pelar, cortar, freír y vender: [SPEC-029](029-freir.md))**
 
 ## Objetivo
 
 Tener, como datos con su modelo 3D (guía de modelado), todo lo que hace falta para vender
 papas fritas: las papas en cada estado, sus envases, los utensilios, la freidora y un cartel de
-cerrado. Agregarlos no toca la cocción: freír llega en otra etapa (ROADMAP).
+cerrado. Prepararlas, freírlas y venderlas: [SPEC-029](029-freir.md).
 
 ## Requisitos
 
@@ -14,7 +14,7 @@ cerrado. Agregarlos no toca la cocción: freír llega en otra etapa (ROADMAP).
 - **REQ-PAP-01** Existen `papa_cruda`, `papa_pelada`, `papa_cortada` y `papas_fritas`, cada
   uno con modelo `comida/<id>`, colisión y masa, y se distinguen a simple vista: cáscara marrón
   con ojos; pelada clara y facetada; bastones crudos pálidos y rectos; bastones dorados y
-  torcidos. Todavía no se venden ni se cocinan.
+  torcidos. Se preparan y se fríen según la SPEC-029.
 - **REQ-PAP-02** Existe `cajita_papas` (cajita de cartón vacía, modelo `comida/cajita_papas`) y
   el bloque `pack_cajitas` para guardarlas en el depósito.
 - **REQ-PAP-03** Papas crudas en bolsa de arpillera blanda (abultada, boca fruncida y atada
@@ -50,14 +50,12 @@ cerrado. Agregarlos no toca la cocción: freír llega en otra etapa (ROADMAP).
 
 ## Fuera de alcance
 
-- Pelar, cortar y freír (aceite a ~180 °C), llenar la cajita y vender papas.
-- Que el cartel de cerrado frene a los clientes.
+- Pelar, cortar, freír y vender: [SPEC-029](029-freir.md). El cartel frena clientes: REQ-CLI-12.
 
 ## Notas de diseño
 
 - Colores nuevos de la paleta: `M_PapaCascara`, `M_PapaPulpa`, `M_PapaFrita` y `M_Aceite`
   (guía de modelado v1.12) y `M_Arpillera` (v1.13).
-- La cajita llena (para entregar) queda para la etapa de vender papas.
 - Bolsa de 5 kg: 25 papas exactas no forman una grilla que entre (a lo ancho entran 2):
   van 24 (≈ 4,8 kg). La de 2 kg lleva 12. Las papas de adentro no se ven (bolsa cerrada).
 - Cartel: categoría propia para que no caiga en un mostrador ni una pizarra en el canto.

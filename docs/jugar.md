@@ -7,9 +7,9 @@
 | Mouse | Mirar |
 | Shift | Correr |
 | Espacio | Saltar |
-| Clic izquierdo | Agarrar (comida, paquetes y bolsas, también del estante) / colocar lo que tenés en la mano donde apunta la cruz blanca |
+| Clic izquierdo | Agarrar (comida, paquetes y bolsas, también del estante) / colocar lo que tenés en la mano donde apunta la cruz blanca / con la mano libre, sacar o colgar el cartel de cerrado (igual que E) |
 | Clic derecho | Tirar lo que tenés en la mano hacia la cruz |
-| E | Usar: prender el hervidor, la plancha o la parrilla, abrir y cerrar la heladera, la puerta del carrito (carro grande, kiosco, food truck y tráiler) o las puertas y cajones de las alacenas, dar vuelta una hamburguesa, un chorizo o un pan, sacar del depósito, volcar todas las salchichas de un paquete en el hervidor (con el paquete en la mano), poner aderezo (con la comida en la mano), recargar un pomo (con el repuesto en la mano), echar carbón en la parrilla (con la bolsa en la mano) |
+| E | Usar: prender el hervidor, la plancha o la parrilla, abrir y cerrar la heladera, la puerta del carrito (carro grande, kiosco, food truck y tráiler) o las puertas y cajones de las alacenas, prender cada cuba de la freidora, bajar o subir el colador, pelar o cortar una papa (con el pelapapas o el cuchillo en la mano), sacar o volver a colgar el cartel de cerrado (desde la vereda, en el frente del carrito), dar vuelta una hamburguesa, un chorizo o un pan, sacar del depósito, volcar todas las salchichas de un paquete en el hervidor (con el paquete en la mano), poner aderezo (con la comida en la mano), recargar un pomo (con el repuesto en la mano), echar carbón en la parrilla (con la bolsa en la mano) |
 | Tab | Panel del proveedor (comprar mercadería) |
 | B | Modo armado: poner, mover, guardar y vender accesorios; con Tab adentro, color, logo, bases e inventario ([SPEC-017](specs/017-tienda.md), [SPEC-027](specs/027-ampliaciones.md), [SPEC-028](specs/028-logo.md)) |
 | T | Tiempo ×30 (para ver el atardecer rápido) |
@@ -43,10 +43,9 @@ llevan a cualquier lado; dejalos en un lugar libre y se vuelven a guardar.
 - **Un accesorio:** agregalo en `godot/data/accesorios.ron` (categoría, forma, función).
 - **Tu carrito:** editá `godot/data/carrito_jugador.ron` (base, color, anclajes, stock inicial).
   Si algo no encaja, el juego muestra el error arriba del carrito.
-- **Papas fritas** ([SPEC-026](specs/026-papas.md)): ya están `freidora` y `freidora_doble`
-  (traen su colador) y `tabla_papas` (cuchillo, pelapapas y una papa) para los anclajes de
-  mostrador, `cartel_cerrado` para el anclaje `cartel` (cuelga adelante, del canto del
-  mostrador), y las bolsas de papas de 2 y 5 kg y `pack_cajitas` en el proveedor. Freír viene después.
+- **Papas fritas** ([SPEC-026](specs/026-papas.md)): `freidora` y `freidora_doble` (traen su
+  colador) y `tabla_papas` (cuchillo, pelapapas y una papa) para los anclajes de mostrador,
+  `cartel_cerrado` para el anclaje `cartel`, y las bolsas de papas y `pack_cajitas` en el proveedor.
 
 ## Armar el carrito
 - **Food truck y tráiler** (panel de bases, Tab en el modo armado): arrancás afuera, adelante;
@@ -69,6 +68,17 @@ llevan a cualquier lado; dejalos en un lugar libre y se vuelven a guardar.
   avisa). Guardala en la heladera con la puerta cerrada (E la abre y la cierra). Los paquetes de
   carne del proveedor vienen fríos y se calientan si los dejás en el estante. Lo que ya está
   listo (un pancho, un choripán, una hamburguesa cocida de los dos lados) no se pudre.
+- **Papas fritas** ([SPEC-029](specs/029-freir.md)): con el pelapapas en la mano, mirá una
+  papa apoyada y apretá E 3 veces; con el cuchillo, E 4 veces sobre la pelada y sale una porción.
+  Prendé la cuba con E (llega a 180 °C en ~1 minuto), poné la porción en el colador (clic; caben
+  4 y podés sumar tandas aunque esté bajado: cada una se fríe a su ritmo y se saca sola), bajalo
+  con E y sacalo antes de que se pase (unos 80 s las deja doradas). Agarrá las papas, apuntá
+  a una cajita vacía y hacé clic: se arman las papas en cajita ($8, ketchup o mayonesa).
+  Solo las piden si tu carrito tiene freidora.
+- **Cartel de cerrado:** colgado, no llegan clientes nuevos (los de la fila se quedan). Desde la
+  vereda, apuntá al frente del carrito, donde cuelga, y hacé clic (con la mano libre) o E (aunque tengas algo en la mano): lo sacás,
+  desaparece y abrís. Para cerrar, lo mismo en ese lugar: lo volvés a colgar. Ojo: recién puesto en
+  el modo armado arranca colgado.
 - Cada cliente pide un plato del menú; solo piden lo que tu carrito puede cocinar.
 ## Sonido
 El juego suena con ambiente que cambia con la hora (pájaros de día, grillos de noche, murmullo
