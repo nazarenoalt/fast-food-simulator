@@ -71,8 +71,9 @@ llevan a cualquier lado; dejalos en un lugar libre y se vuelven a guardar.
 - **Papas fritas** ([SPEC-029](specs/029-freir.md)): con el pelapapas en la mano, mirá una
   papa apoyada y apretá E 3 veces; con el cuchillo, E 4 veces sobre la pelada y sale una porción.
   Prendé la cuba con E (llega a 180 °C en ~1 minuto), poné la porción en el colador (clic; caben
-  2), bajalo con E y sacalo antes de que se pase (unos 80 s las deja doradas). Agarrá las papas,
-  apuntá a una cajita vacía y hacé clic: se arman las papas en cajita ($8, ketchup o mayonesa).
+  4 y podés sumar tandas aunque esté bajado: cada una se fríe a su ritmo y se saca sola), bajalo
+  con E y sacalo antes de que se pase (unos 80 s las deja doradas). Agarrá las papas, apuntá
+  a una cajita vacía y hacé clic: se arman las papas en cajita ($8, ketchup o mayonesa).
   Solo las piden si tu carrito tiene freidora.
 - **Cartel de cerrado:** colgado, no llegan clientes nuevos (los de la fila se quedan). Desde la
   vereda, apuntá al frente del carrito, donde cuelga, y hacé clic (con la mano libre) o E: lo sacás,

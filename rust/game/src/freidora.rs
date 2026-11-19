@@ -33,6 +33,18 @@ pub fn canasto() -> [f32; 3] {
     }
 }
 
+/// Medidas (ancho, alto, fondo) de una porción de papas: su caja de colisión. REQ-FRE-07
+fn medidas_porcion(comida: &Gd<Comida>) -> [f32; 3] {
+    let c = comida.bind();
+    match catalogo().producto(c.producto()).map(|p| &p.colision) {
+        Some(Colision::Caja { medidas }) => *medidas,
+        _ => {
+            let (alto, ancho, _) = c.medidas();
+            [ancho * 2.0, alto * 2.0, ancho * 2.0]
+        }
+    }
+}
+
 struct Cuba {
     def: CubaFreidora,
     aceite: Aceite,
@@ -331,12 +343,18 @@ impl INode3D for Freidora {
 }
 
 /// REQ-FRE-07: lo que tiene adentro un colador. Es hijo de la comida que hace de colador y
-/// lleva sus porciones quietas en su lugar del canasto: se mueven con él.
+/// lleva sus porciones quietas, cada una en su lugar fijo del canasto: se mueven con él, y sacar
+/// una no mueve las demás.
 #[derive(GodotClass)]
 #[class(base=Node, init)]
 pub struct Colador {
     base: Base<Node>,
-    contenido: Vec<Gd<Comida>>,
+    /// Un lugar por porción (REQ-FRE-07: caben `PORCIONES_COLADOR`).
+    #[init(val = vec![None; reglas::PORCIONES_COLADOR])]
+    lugares: Vec<Option<Gd<Comida>>>,
+    /// Las que se acaban de sacar: no chocan con el colador hasta salir del canasto (si no, la
+    /// física las empuja de golpe hacia afuera, contra la cuba).
+    saliendo: Vec<Gd<Comida>>,
 }
 
 impl Colador {
@@ -361,36 +379,64 @@ impl Colador {
             .get_nodes_in_group(GRUPO_COLADORES)
             .iter_shared()
             .filter_map(|n| n.try_cast::<Colador>().ok())
-            .find(|c| c.bind().contenido.contains(comida))
+            .find(|c| c.bind().lugar_de(comida).is_some())
     }
 
     pub fn porciones(&self) -> usize {
-        self.contenido.len()
+        self.lugares.iter().flatten().count()
     }
 
-    /// Solo para pruebas.
+    /// Lo que tiene adentro, en el orden de sus lugares (para pruebas).
     pub fn contenido(&self) -> Vec<Gd<Comida>> {
-        self.contenido.clone()
+        self.lugares.iter().flatten().cloned().collect()
+    }
+
+    /// En qué lugar del canasto está esta porción.
+    pub fn lugar_de(&self, comida: &Gd<Comida>) -> Option<usize> {
+        self.lugares.iter().position(|l| l.as_ref() == Some(comida))
+    }
+
+    fn ocupados(&self) -> Vec<bool> {
+        self.lugares.iter().map(Option::is_some).collect()
     }
 
     /// REQ-FRE-07: si se puede meter este producto.
     pub fn puede_meter(&self, producto: &str) -> Result<(), NoEntra> {
-        reglas::puede_meter(producto, self.contenido.len())
+        reglas::puede_meter(producto, self.porciones())
     }
 
     fn colador(&self) -> Option<Gd<Comida>> {
         self.base().get_parent()?.try_cast::<Comida>().ok()
     }
 
-    /// REQ-FRE-07: deja la porción adentro, quieta en su lugar del canasto.
-    pub fn meter(&mut self, mut comida: Gd<Comida>) -> Result<(), NoEntra> {
+    /// Un punto global en el plano del colador (X, Z relativos a él).
+    fn local_xz(&self, punto: Vector3) -> Option<[f32; 2]> {
+        let t = self.colador()?.get_global_transform();
+        let l = Transform3D::new(t.basis.orthonormalized(), t.origin).affine_inverse() * punto;
+        Some([l.x, l.z])
+    }
+
+    /// REQ-FRE-08: la porción del cuarto del canasto donde toca la mira (`punto`, global).
+    pub fn porcion_en(&self, punto: Vector3) -> Option<Gd<Comida>> {
+        let i = reglas::porcion_apuntada(self.local_xz(punto)?, &self.ocupados(), canasto())?;
+        self.lugares[i].clone().filter(|c| c.is_instance_valid())
+    }
+
+    /// REQ-FRE-07: deja la porción adentro, quieta en el lugar libre más cercano a donde toca la
+    /// mira (`cerca`, global; sin mira, el primero libre). Vale también con el colador bajado.
+    pub fn meter(&mut self, mut comida: Gd<Comida>, cerca: Option<Vector3>) -> Result<(), NoEntra> {
         let producto = comida.bind().producto().to_string();
         self.puede_meter(&producto)?;
         let Some(colador) = self.colador() else { return Err(NoEntra::NoVa) };
+        let cerca = cerca.and_then(|p| self.local_xz(p));
+        let Some(i) = reglas::lugar_libre(&self.ocupados(), cerca, canasto()) else { return Err(NoEntra::Lleno) };
+        self.saliendo.retain(|c| *c != comida);
         comida.set_freeze_mode(FreezeMode::KINEMATIC);
         comida.set_freeze_enabled(true);
+        comida.set_linear_velocity(Vector3::ZERO);
+        comida.set_angular_velocity(Vector3::ZERO);
         comida.add_collision_exception_with(&colador);
-        self.contenido.push(comida);
+        self.lugares[i] = Some(comida);
         self.acomodar();
         Ok(())
     }
@@ -401,32 +447,58 @@ impl Colador {
         let t = colador.get_global_transform();
         let t = Transform3D::new(t.basis.orthonormalized(), t.origin);
         let canasto = canasto();
-        for (i, c) in self.contenido.iter_mut().enumerate() {
-            let (alto, _, _) = c.bind().medidas();
-            let p = reglas::lugar_en_colador(i, canasto, alto * 2.0);
-            c.set_global_transform(t * Transform3D::new(Basis::IDENTITY, formas::v3(p)));
+        for (i, c) in self.lugares.iter_mut().enumerate() {
+            let Some(c) = c else { continue };
+            let l = reglas::lugar_en_colador(i, canasto, medidas_porcion(c));
+            let giro = Basis::from_axis_angle(Vector3::UP, l.giro_y.to_radians());
+            c.set_global_transform(t * Transform3D::new(giro, formas::v3(l.pos)));
         }
+    }
+
+    /// Si la porción ya salió del canasto (con un margen de su tamaño).
+    fn afuera(&self, comida: &Gd<Comida>) -> bool {
+        let Some(colador) = self.colador() else { return true };
+        let t = colador.get_global_transform();
+        let l = Transform3D::new(t.basis.orthonormalized(), t.origin).affine_inverse() * comida.get_global_position();
+        let (_, _, r) = comida.bind().medidas();
+        let [w, h, d] = canasto();
+        l.x.abs() > w / 2.0 + r || l.y.abs() > h / 2.0 + r || l.z.abs() > d / 2.0 + r
     }
 }
 
 #[godot_api]
 impl INode for Colador {
     fn physics_process(&mut self, _delta: f64) {
-        // Las que agarró el jugador (o desaparecieron) salen del colador y vuelven a la física.
-        let colador = self.colador();
-        self.contenido.retain_mut(|c| {
+        // REQ-FRE-08: la que agarró el jugador (o desapareció) sale del colador y vuelve a la
+        // física; las demás quedan en su lugar.
+        let mut sacadas = Vec::new();
+        for l in &mut self.lugares {
+            let Some(c) = l else { continue };
             if !c.is_instance_valid() || c.is_queued_for_deletion() {
-                return false;
-            }
-            if c.bind().sostenida {
+                *l = None;
+            } else if c.bind().sostenida {
                 c.set_freeze_enabled(false);
+                sacadas.push(c.clone());
+                *l = None;
+            }
+        }
+        self.saliendo.extend(sacadas);
+        // Recién cuando salió del canasto vuelve a chocar con el colador.
+        let colador = self.colador();
+        let saliendo = std::mem::take(&mut self.saliendo);
+        self.saliendo = saliendo
+            .into_iter()
+            .filter(|c| c.is_instance_valid() && !c.is_queued_for_deletion())
+            .filter_map(|mut c| {
+                if !self.afuera(&c) {
+                    return Some(c);
+                }
                 if let Some(col) = &colador {
                     c.remove_collision_exception_with(col);
                 }
-                return false;
-            }
-            true
-        });
+                None
+            })
+            .collect();
         self.acomodar();
     }
 }
@@ -469,6 +541,16 @@ pub fn alternar_colador(apuntado: &Gd<Comida>) -> bool {
     let pos = colador.get_global_position();
     crate::sonido::sonar_en(&f, ids::SOLTAR, pos);
     true
+}
+
+/// REQ-FRE-08: lo que se agarra mirando esta comida en `punto` (global): si es un colador con
+/// papas, la porción del cuarto del canasto donde toca la mira (sola, sin mover las demás);
+/// si no, la comida misma.
+pub fn agarrable_en(comida: Gd<Comida>, punto: Vector3) -> Gd<Comida> {
+    if !es_colador(&comida) {
+        return comida;
+    }
+    Colador::de(&comida).and_then(|c| c.bind().porcion_en(punto)).unwrap_or(comida)
 }
 
 /// Para el árbol de nodos: la comida es un colador.

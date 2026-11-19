@@ -369,11 +369,13 @@ impl Jugador {
             return None;
         }
         let mut nodo: Option<Gd<Node>> = rayo.get_collider()?.try_cast::<Node>().ok();
+        let punto = rayo.get_collision_point();
         // El objeto puede ser el cuerpo físico o un hijo de un equipo: se sube hasta 4 niveles.
         for _ in 0..4 {
             let n = nodo?;
             let n = match n.try_cast::<Comida>() {
-                Ok(c) => return Some(Objetivo::Comida(c)),
+                // REQ-FRE-08: en un colador, la porción de papas que mira.
+                Ok(c) => return Some(Objetivo::Comida(freidora::agarrable_en(c, punto))),
                 Err(n) => n,
             };
             let n = match n.try_cast::<Hervidor>() {
@@ -502,7 +504,8 @@ impl Jugador {
         let colador =
             mano.clone().try_cast::<Comida>().ok().and_then(|c| freidora::colador_destino(&c, tocado.clone()));
         if let Some(Ok(col)) = colador {
-            return Some((mano.get_global_transform(), Colocacion::Colador(col)));
+            // El origen es donde toca la mira: la porción va al lugar libre más cercano.
+            return Some((Transform3D::new(Basis::IDENTITY, punto), Colocacion::Colador(col)));
         }
         let lleno = colador.is_some();
 
@@ -565,10 +568,10 @@ impl Jugador {
         let destino = self.destino_colocar();
         let Some(mut c) = self.soltar() else { return };
         // REQ-FRE-07: adentro del colador.
-        if let Some((_, Colocacion::Colador(col))) = &destino
+        if let Some((t, Colocacion::Colador(col))) = &destino
             && let Ok(papa) = c.clone().try_cast::<Comida>()
         {
-            if let Err(e) = col.clone().bind_mut().meter(papa) {
+            if let Err(e) = col.clone().bind_mut().meter(papa, Some(t.origin)) {
                 hud::avisar(&self.to_gd(), e.mensaje());
             }
             return;

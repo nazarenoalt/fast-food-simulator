@@ -57,8 +57,11 @@ pub fn volumen_aceite(cuba: &CubaFreidora) -> ([f32; 3], [f32; 3]) {
 
 /// Producto que hace de colador. REQ-FRE-07
 pub const COLADOR: &str = "colador_freidora";
-/// Porciones que entran en un colador. REQ-FRE-07
-pub const PORCIONES_COLADOR: usize = 2;
+/// Porciones que entran en un colador (varias tandas). REQ-FRE-07
+pub const PORCIONES_COLADOR: usize = 4;
+/// Las porciones van en una grilla de 2 × 2: dos a lo ancho y dos a lo largo del canasto.
+const COLUMNAS: usize = 2;
+const FILAS: usize = PORCIONES_COLADOR / COLUMNAS;
 /// Lo que se pone en el colador: las papas cortadas o fritas. REQ-FRE-07
 pub const VAN_AL_COLADOR: [&str; 2] = ["papa_cortada", "papas_fritas"];
 /// Espacio entre el piso del canasto y lo que tiene adentro (m).
@@ -96,12 +99,71 @@ pub fn puede_meter(producto: &str, porciones: usize) -> Result<(), NoEntra> {
     }
 }
 
-/// REQ-FRE-07: dónde va la porción `i` dentro del canasto (medidas ancho, alto, fondo; centrado
-/// en el origen del colador): en fila a lo largo del fondo, apoyada en el piso.
-pub fn lugar_en_colador(i: usize, canasto: [f32; 3], alto: f32) -> [f32; 3] {
-    let n = PORCIONES_COLADOR as f32;
-    let paso = canasto[2] / n;
-    [0.0, -canasto[1] / 2.0 + alto / 2.0 + HOLGURA, (i as f32 - (n - 1.0) / 2.0) * paso]
+/// REQ-FRE-07: el lugar de una porción en el canasto: centro (relativo al origen del colador)
+/// y giro en Y (grados).
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct LugarPorcion {
+    pub pos: [f32; 3],
+    pub giro_y: f32,
+}
+
+/// Medidas (ancho X, fondo Z) del cuarto del canasto que le toca a cada porción.
+fn celda(canasto: [f32; 3]) -> [f32; 2] {
+    [canasto[0] / COLUMNAS as f32, canasto[2] / FILAS as f32]
+}
+
+/// Centro (X, Z) del cuarto `i` del canasto: `i % 2` es la columna, `i / 2` la fila.
+fn centro_celda(i: usize, canasto: [f32; 3]) -> [f32; 2] {
+    let [cw, cd] = celda(canasto);
+    let (col, fila) = ((i % COLUMNAS) as f32, (i / COLUMNAS) as f32);
+    [-canasto[0] / 2.0 + cw * (col + 0.5), -canasto[2] / 2.0 + cd * (fila + 0.5)]
+}
+
+/// REQ-FRE-07: dónde va la porción `i` (0 a 3) dentro del canasto (medidas ancho, alto, fondo;
+/// centrado en el origen del colador). Cada porción tiene su cuarto fijo (grilla de 2 × 2),
+/// centrada en él, con su lado largo a lo largo del cuarto y apoyada en el piso: no se pisan, no
+/// tocan las paredes y sacar una no mueve las demás. `porcion` son sus medidas (las de la
+/// cortada o las de las fritas: el lugar es el mismo, solo cambia la altura).
+pub fn lugar_en_colador(i: usize, canasto: [f32; 3], porcion: [f32; 3]) -> LugarPorcion {
+    let [x, z] = centro_celda(i, canasto);
+    let [cw, cd] = celda(canasto);
+    let girada = (porcion[0] > porcion[2]) != (cw > cd);
+    LugarPorcion {
+        pos: [x, -canasto[1] / 2.0 + porcion[1] / 2.0 + HOLGURA, z],
+        giro_y: if girada { 90.0 } else { 0.0 },
+    }
+}
+
+/// Cuarto del canasto (0 a 3) en el que cae un punto (X, Z relativos al colador).
+fn celda_de(punto: [f32; 2], canasto: [f32; 3]) -> usize {
+    let [cw, cd] = celda(canasto);
+    let col = ((punto[0] + canasto[0] / 2.0) / cw).floor().clamp(0.0, (COLUMNAS - 1) as f32) as usize;
+    let fila = ((punto[1] + canasto[2] / 2.0) / cd).floor().clamp(0.0, (FILAS - 1) as f32) as usize;
+    fila * COLUMNAS + col
+}
+
+/// REQ-FRE-07: en qué lugar libre va una porción nueva: el más cercano a donde toca la mira
+/// (`cerca`, X y Z relativos al colador) o, sin mira, el primero libre. `None` si está lleno.
+pub fn lugar_libre(ocupados: &[bool], cerca: Option<[f32; 2]>, canasto: [f32; 3]) -> Option<usize> {
+    let libres = (0..PORCIONES_COLADOR).filter(|i| !ocupados.get(*i).copied().unwrap_or(false));
+    match cerca {
+        None => libres.min(),
+        Some([px, pz]) => libres.min_by(|a, b| {
+            let d = |i: usize| {
+                let [x, z] = centro_celda(i, canasto);
+                (x - px).powi(2) + (z - pz).powi(2)
+            };
+            d(*a).total_cmp(&d(*b))
+        }),
+    }
+}
+
+/// REQ-FRE-08: qué porción se agarra mirando el colador: la del cuarto donde toca la mira
+/// (`punto`, X y Z relativos al colador), si hay una. Si ese cuarto está vacío, `None` (se
+/// agarra el colador).
+pub fn porcion_apuntada(punto: [f32; 2], ocupados: &[bool], canasto: [f32; 3]) -> Option<usize> {
+    let i = celda_de(punto, canasto);
+    ocupados.get(i).copied().unwrap_or(false).then_some(i)
 }
 
 /// REQ-FRE-08: altura del origen del colador (relativa al accesorio) en la cuba. Arriba es
@@ -204,39 +266,135 @@ mod tests {
         }
     }
 
+    fn caja(id: &str) -> [f32; 3] {
+        match catalogo_real().producto(id).unwrap().colision {
+            crate::datos::Colision::Caja { medidas } => medidas,
+            _ => panic!("{id} es una caja"),
+        }
+    }
+
+    /// Huella (mitades en X y Z) de una porción en su lugar, según el giro.
+    fn huella(l: &LugarPorcion, porcion: [f32; 3]) -> [f32; 2] {
+        if l.giro_y == 0.0 { [porcion[0] / 2.0, porcion[2] / 2.0] } else { [porcion[2] / 2.0, porcion[0] / 2.0] }
+    }
+
     #[test]
-    fn req_fre_07_entran_dos_porciones_de_papas() {
-        assert_eq!(puede_meter("papa_cortada", 0), Ok(()));
-        assert_eq!(puede_meter("papas_fritas", 1), Ok(()));
-        assert_eq!(puede_meter("papa_cortada", 2), Err(NoEntra::Lleno));
+    fn req_fre_07_entran_cuatro_porciones_de_papas() {
+        for n in 0..4 {
+            assert_eq!(puede_meter("papa_cortada", n), Ok(()), "{n}");
+            assert_eq!(puede_meter("papas_fritas", n), Ok(()), "{n}");
+        }
+        assert_eq!(puede_meter("papa_cortada", 4), Err(NoEntra::Lleno), "la 5.ª no entra");
         assert_eq!(puede_meter("salchicha", 0), Err(NoEntra::NoVa));
         assert_eq!(NoEntra::Lleno.mensaje(), "El colador está lleno");
-        // Las dos porciones entran en el canasto sin pisarse ni salirse.
-        let cat = catalogo_real();
-        let canasto = match cat.producto(COLADOR).unwrap().colision {
-            crate::datos::Colision::Caja { medidas } => medidas,
-            _ => panic!("el colador es una caja"),
-        };
+    }
+
+    #[test]
+    fn req_fre_07_las_cuatro_entran_en_el_canasto_sin_pisarse_ni_tocar_las_paredes() {
+        let canasto = caja(COLADOR);
+        // El canasto del modelo es de alambre: se deja 1 cm a las paredes y entre porciones.
+        let margen = 0.01;
         for id in VAN_AL_COLADOR {
-            let [x, y, z] = match cat.producto(id).unwrap().colision {
-                crate::datos::Colision::Caja { medidas } => medidas,
-                _ => panic!("{id} es una caja"),
-            };
-            let a = lugar_en_colador(0, canasto, y);
-            let b = lugar_en_colador(1, canasto, y);
-            assert!((b[2] - a[2]).abs() >= z && (a[2] - z / 2.0) >= -canasto[2] / 2.0, "{id}: a lo largo");
-            assert!(x <= canasto[0] && a[1] - y / 2.0 >= -canasto[1] / 2.0, "{id}: adentro");
+            let p = caja(id);
+            let lugares: Vec<LugarPorcion> = (0..PORCIONES_COLADOR).map(|i| lugar_en_colador(i, canasto, p)).collect();
+            for (i, l) in lugares.iter().enumerate() {
+                let [hx, hz] = huella(l, p);
+                assert!(l.pos[0].abs() + hx <= canasto[0] / 2.0 - margen, "{id} {i}: a lo ancho {l:?}");
+                assert!(l.pos[2].abs() + hz <= canasto[2] / 2.0 - margen, "{id} {i}: a lo largo {l:?}");
+                // Apoyada en el piso del canasto, sin asomar por arriba.
+                let piso = l.pos[1] - p[1] / 2.0;
+                assert!(piso > -canasto[1] / 2.0 && piso < -canasto[1] / 2.0 + 0.01, "{id} {i}: en el piso");
+                assert!(l.pos[1] + p[1] / 2.0 < canasto[1] / 2.0, "{id} {i}: no asoma");
+                for (j, m) in lugares.iter().enumerate().skip(i + 1) {
+                    let [mx, mz] = huella(m, p);
+                    let separadas_x = (l.pos[0] - m.pos[0]).abs() >= hx + mx + margen;
+                    let separadas_z = (l.pos[2] - m.pos[2]).abs() >= hz + mz + margen;
+                    assert!(separadas_x || separadas_z, "{id}: {i} y {j} se pisan");
+                }
+            }
         }
+        // REQ-FRE-10: al freírse, la porción queda en el mismo lugar y con el mismo giro.
+        for i in 0..PORCIONES_COLADOR {
+            let a = lugar_en_colador(i, canasto, caja("papa_cortada"));
+            let b = lugar_en_colador(i, canasto, caja("papas_fritas"));
+            assert_eq!((a.pos[0], a.pos[2], a.giro_y), (b.pos[0], b.pos[2], b.giro_y), "{i}");
+        }
+        // Acostadas a lo largo del canasto (su lado largo con el del canasto).
+        assert_eq!(lugar_en_colador(0, canasto, caja("papa_cortada")).giro_y, 90.0);
+    }
+
+    #[test]
+    fn req_fre_07_cada_tanda_va_al_lugar_libre_mas_cercano_a_la_mira() {
+        let canasto = caja(COLADOR);
+        let p = caja("papa_cortada");
+        let xz = |i: usize| {
+            let l = lugar_en_colador(i, canasto, p);
+            [l.pos[0], l.pos[2]]
+        };
+        assert_eq!(lugar_libre(&[false; 4], None, canasto), Some(0));
+        assert_eq!(lugar_libre(&[true, false, false, false], None, canasto), Some(1));
+        for i in 0..4 {
+            assert_eq!(lugar_libre(&[false; 4], Some(xz(i)), canasto), Some(i), "apuntando al lugar {i}");
+        }
+        // Apuntando a un lugar ocupado, va al libre más cercano (el de al lado, no el de enfrente).
+        assert_eq!(
+            lugar_libre(&[true, false, false, false], Some(xz(0)), canasto).map(|i| i == 1 || i == 2),
+            Some(true)
+        );
+        assert_eq!(lugar_libre(&[true; 4], Some(xz(0)), canasto), None, "lleno");
+        // Sacar una deja su lugar libre y las otras no se mueven (cada lugar es fijo).
+        assert_eq!(lugar_libre(&[true, true, false, true], None, canasto), Some(2));
+    }
+
+    #[test]
+    fn req_fre_07_cada_porcion_se_frie_a_su_ritmo() {
+        // Una tanda nueva arranca cruda mientras la otra sigue: cada una lleva su propia cocción.
+        let p = perfil("papa_cortada");
+        let (mut primera, mut segunda) = (EstadoCoccion::default(), EstadoCoccion::default());
+        let mut t = 0.0;
+        while primera.punto(&p) == Punto::Crudo {
+            primera.paso(&p, 180.0, DT);
+            if t >= 30.0 {
+                segunda.paso(&p, 180.0, DT);
+            }
+            t += DT;
+        }
+        assert_eq!(segunda.punto(&p), Punto::Crudo, "la segunda (30 s después) sigue cruda a los {t:.0} s");
+        assert!(segunda.avance > 0.0, "pero ya se está friendo");
+        // Sacar la primera no frena a la segunda.
+        while segunda.punto(&p) == Punto::Crudo {
+            segunda.paso(&p, 180.0, DT);
+            t += DT;
+        }
+        assert!(t < 200.0);
+    }
+
+    #[test]
+    fn req_fre_08_se_agarra_la_porcion_del_cuarto_que_mira() {
+        let canasto = caja(COLADOR);
+        let p = caja("papas_fritas");
+        let ocupados = [true, false, true, true];
+        for i in 0..4 {
+            let l = lugar_en_colador(i, canasto, p);
+            // En el centro de la porción o cerca del borde de su cuarto: esa porción, si está.
+            for (dx, dz) in [(0.0, 0.0), (0.03, -0.05), (-0.03, 0.05)] {
+                let punto = [l.pos[0] + dx, l.pos[2] + dz];
+                let esperado = ocupados[i].then_some(i);
+                assert_eq!(porcion_apuntada(punto, &ocupados, canasto), esperado, "{i} {punto:?}");
+            }
+        }
+        // Mirando el cuarto vacío (o el colador vacío) se agarra el colador.
+        assert_eq!(porcion_apuntada([0.05, -0.07], &[false; 4], canasto), None);
+        // Fuera del canasto (el borde o la pared), cuenta el cuarto más cercano.
+        assert_eq!(porcion_apuntada([-0.2, 0.3], &[true; 4], canasto), Some(2));
     }
 
     #[test]
     fn req_fre_08_bajado_las_papas_quedan_en_el_aceite_y_subido_encima() {
         let cat = catalogo_real();
-        let canasto = match cat.producto(COLADOR).unwrap().colision {
-            crate::datos::Colision::Caja { medidas } => medidas,
-            _ => panic!(),
-        };
-        let alto_papa = 0.034;
+        let canasto = caja(COLADOR);
+        let papa = caja("papas_fritas");
+        let alto_papa = papa[1];
         for id in ["freidora", "freidora_doble"] {
             let f = cat.accesorios.iter().find(|a| a.id == id).unwrap().funcion.clone().unwrap();
             let Funcion::Freidora { cubas, objetos } = &f else { unreachable!() };
@@ -244,7 +402,7 @@ mod tests {
                 let (centro, medidas) = volumen_aceite(c);
                 let techo = centro[1] + medidas[1] / 2.0;
                 let papa = |abajo: bool| {
-                    altura_colador(c, canasto, o.pos[1], abajo) + lugar_en_colador(0, canasto, alto_papa)[1]
+                    altura_colador(c, canasto, o.pos[1], abajo) + lugar_en_colador(0, canasto, papa).pos[1]
                 };
                 // Abajo, la papa entera dentro del aceite; arriba (como viene), entera encima.
                 assert!(papa(true) + alto_papa / 2.0 < techo && papa(true) - alto_papa / 2.0 > c.centro[1], "{id}");

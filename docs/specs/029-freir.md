@@ -70,3 +70,4 @@ aceite caliente con el colador y se vendan en cajita. Usa el modelo de calor de 
 - La papa cortada cambia de modelo al freírse porque las fritas son torcidas y doradas
   (REQ-PAP-01); el color sigue saliendo del avance.
 - El colador es la manera cómoda de sacar todo junto, pero tirar papas a la cuba también fríe.
+- Las 4 porciones van en una grilla de 2 × 2: cada una tiene su cuarto fijo del canasto.
