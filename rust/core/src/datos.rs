@@ -215,8 +215,8 @@ pub fn cargar_catalogo(
             }
         }
         // REQ-PAP-06: lo que trae un Surtido tiene que existir.
-        if let Some(crate::carrito::Funcion::Surtido { objetos }) = &acc.funcion {
-            for o in objetos {
+        if let Some(f) = &acc.funcion {
+            for o in f.objetos_iniciales() {
                 if !p.productos.iter().any(|x| x.id == o.producto) {
                     return Err(error(
                         "accesorios.ron",

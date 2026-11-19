@@ -330,10 +330,11 @@ impl Carrito {
                 Some(Funcion::Aderezos { tipos, separacion }) => {
                     aderecera::construir(&mut nodo, tipos, *separacion);
                 }
-                Some(Funcion::Surtido { objetos }) => {
-                    // REQ-PAP-06: objetos sueltos apoyados en el accesorio (el colador en la
-                    // freidora, el cuchillo en la tabla); se agarran como cualquier comida.
-                    for o in objetos {
+                Some(f @ (Funcion::Surtido { .. } | Funcion::Freidora { .. })) => {
+                    // REQ-PAP-06, REQ-FRE-06: objetos sueltos apoyados en el accesorio (el
+                    // colador en la freidora, el cuchillo en la tabla); se agarran como
+                    // cualquier comida. El aceite de la freidora: TODO TASK-0357.
+                    for o in f.objetos_iniciales() {
                         let mut c = Comida::crear(&o.producto);
                         c.set_position(formas::v3(o.pos));
                         c.set_rotation_degrees(Vector3::new(0.0, o.rot_y, 0.0));

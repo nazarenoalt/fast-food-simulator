@@ -137,6 +137,20 @@ pub enum Funcion {
     Surtido {
         objetos: Vec<ObjetoInicial>,
     },
+    /// REQ-FRE-04: freidora (SPEC-029): sus cubas de aceite y los coladores que trae ya
+    /// apoyados, como un Surtido (REQ-FRE-06).
+    Freidora {
+        cubas: Vec<CubaFreidora>,
+        objetos: Vec<ObjetoInicial>,
+    },
+}
+
+/// REQ-FRE-04: una cuba de aceite. `centro` es el centro del piso interior relativo al
+/// accesorio; `interior`, el hueco útil (ancho X, alto Y del aceite, fondo Z).
+#[derive(Debug, Clone, PartialEq, Deserialize)]
+pub struct CubaFreidora {
+    pub centro: [f32; 3],
+    pub interior: [f32; 3],
 }
 
 /// Un producto suelto de un Surtido (REQ-PAP-06): posición y giro en Y relativos al accesorio.
@@ -151,8 +165,8 @@ pub struct ObjetoInicial {
 
 impl Funcion {
     /// Nombres de todas las funciones (los usa `requiere` de los productos).
-    pub const NOMBRES: [&'static str; 8] =
-        ["Hervidor", "Plancha", "Parrilla", "Heladera", "Deposito", "Luz", "Aderezos", "Surtido"];
+    pub const NOMBRES: [&'static str; 9] =
+        ["Hervidor", "Plancha", "Parrilla", "Heladera", "Deposito", "Luz", "Aderezos", "Surtido", "Freidora"];
 
     /// REQ-CLI-04: nombre de la función, tal cual se escribe en los datos.
     pub fn nombre(&self) -> &'static str {
@@ -165,6 +179,15 @@ impl Funcion {
             Funcion::Luz { .. } => "Luz",
             Funcion::Aderezos { .. } => "Aderezos",
             Funcion::Surtido { .. } => "Surtido",
+            Funcion::Freidora { .. } => "Freidora",
+        }
+    }
+
+    /// REQ-PAP-06, REQ-FRE-06: objetos sueltos que trae ya apoyados (Surtido o Freidora).
+    pub fn objetos_iniciales(&self) -> &[ObjetoInicial] {
+        match self {
+            Funcion::Surtido { objetos } | Funcion::Freidora { objetos, .. } => objetos,
+            _ => &[],
         }
     }
 }

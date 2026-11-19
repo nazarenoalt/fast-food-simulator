@@ -156,8 +156,8 @@ mod tests {
     fn req_pap_06_surtidos() {
         let cat = catalogo_real();
         let trae = |id: &str| match &accesorio(&cat, id).funcion {
-            Some(Funcion::Surtido { objetos }) => objetos.iter().map(|o| o.producto.clone()).collect::<Vec<_>>(),
-            otra => panic!("{id} debería tener Surtido, tiene {otra:?}"),
+            Some(f) => f.objetos_iniciales().iter().map(|o| o.producto.clone()).collect::<Vec<_>>(),
+            None => panic!("{id} debería traer objetos"),
         };
         assert_eq!(trae("freidora"), vec!["colador_freidora"]);
         assert_eq!(trae("freidora_doble"), vec!["colador_freidora", "colador_freidora"]);
@@ -167,6 +167,13 @@ mod tests {
         }
         assert_eq!(accesorio(&cat, "tabla_papas").categoria, Categoria::Equipamiento);
         assert_eq!(Funcion::Surtido { objetos: vec![] }.nombre(), "Surtido");
+        // REQ-FRE-04: la freidora es una Freidora con sus cubas (la doble, dos).
+        for (id, n) in [("freidora", 1), ("freidora_doble", 2)] {
+            match &accesorio(&cat, id).funcion {
+                Some(Funcion::Freidora { cubas, .. }) => assert_eq!(cubas.len(), n, "{id}"),
+                otra => panic!("{id} debería ser Freidora, es {otra:?}"),
+            }
+        }
     }
 
     #[test]

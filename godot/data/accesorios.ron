@@ -63,7 +63,11 @@
             (tipo: Caja, medidas: (0.26, 0.24, 0.36), pos: (0, 0.12, -0.055), color: (0.82, 0.83, 0.85), metal: true),
             (tipo: Caja, medidas: (0.26, 0.33, 0.11), pos: (0, 0.165, 0.18), color: (0.82, 0.83, 0.85), metal: true),
         ],
-        funcion: Some(Surtido(objetos: [(producto: "colador_freidora", pos: (0, 0.153, -0.055))])),
+        // REQ-FRE-04: interior de la cuba (0,206 × 0,31 del modelo); alto del aceite a medir.
+        funcion: Some(Freidora(
+            cubas: [(centro: (0, 0.06, -0.055), interior: (0.206, 0.12, 0.31))],
+            objetos: [(producto: "colador_freidora", pos: (0, 0.153, -0.055))],
+        )),
     ),
     (
         id: "freidora_doble",
@@ -75,10 +79,16 @@
             (tipo: Caja, medidas: (0.521, 0.24, 0.36), pos: (0, 0.12, -0.055), color: (0.82, 0.83, 0.85), metal: true),
             (tipo: Caja, medidas: (0.521, 0.33, 0.11), pos: (0, 0.165, 0.18), color: (0.82, 0.83, 0.85), metal: true),
         ],
-        funcion: Some(Surtido(objetos: [
-            (producto: "colador_freidora", pos: (-0.1305, 0.153, -0.055)),
-            (producto: "colador_freidora", pos: (0.1305, 0.153, -0.055)),
-        ])),
+        funcion: Some(Freidora(
+            cubas: [
+                (centro: (-0.1305, 0.06, -0.055), interior: (0.206, 0.12, 0.31)),
+                (centro: (0.1305, 0.06, -0.055), interior: (0.206, 0.12, 0.31)),
+            ],
+            objetos: [
+                (producto: "colador_freidora", pos: (-0.1305, 0.153, -0.055)),
+                (producto: "colador_freidora", pos: (0.1305, 0.153, -0.055)),
+            ],
+        )),
     ),
     // ── Depósito ────────────────────────────────────────────
     (
