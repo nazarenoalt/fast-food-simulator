@@ -1,6 +1,8 @@
 //! SPEC-013 · Autos que circulan por la calle y nubes que cruzan el cielo.
 
-use carrito_core::ciudad::{self, AutoInicial, CARRILES};
+use carrito_core::autos::{self, AutoInicial, Recorrido};
+use carrito_core::azar::Azar;
+use carrito_core::ciudad;
 use carrito_core::forma::TipoPieza;
 use godot::classes::geometry_instance_3d::ShadowCastingSetting;
 use godot::classes::{AnimatableBody3D, BoxShape3D, INode3D, Node3D};
@@ -13,9 +15,11 @@ struct Auto {
     nodo: Gd<Node3D>,
     ruedas: Vec<Gd<Node3D>>,
     carril: usize,
-    x: f32,
+    /// Metros recorridos desde la entrada del carril.
+    s: f32,
     v: f32,
     crucero: f32,
+    color: [f32; 3],
     /// Ya pasó cerca del jugador (para sonar una sola vez por pasada). REQ-SON-08
     cerca: bool,
 }
@@ -25,15 +29,33 @@ struct Auto {
 pub struct Autos {
     base: Base<Node3D>,
     autos: Vec<Auto>,
+    recorridos: Vec<Recorrido>,
+    azar: Option<Azar>,
+    /// Últimas vueltas (REQ-AMB-17), para la prueba de humo.
+    vueltas: Vec<Vuelta>,
+}
+
+/// Un auto que salió del carril y volvió a entrar como otro. REQ-AMB-17
+#[derive(Debug, Clone, Copy)]
+pub struct Vuelta {
+    pub sale: Vector2,
+    pub entra: Vector2,
+    pub color_antes: [f32; 3],
+    pub color_despues: [f32; 3],
+}
+
+/// Giro en Y para que el auto (armado mirando a +X) mire en la dirección `d` = (x, z).
+fn rumbo(d: [f32; 2]) -> f32 {
+    (-d[1]).atan2(d[0])
 }
 
 impl Autos {
     fn crear_auto(&mut self, a: &AutoInicial) -> Auto {
         let mut nodo = Node3D::new_alloc();
-        let (z, sentido) = CARRILES[a.carril];
-        // El auto se arma mirando a +X; los que van al oeste se giran.
-        nodo.set_rotation_degrees(Vector3::new(0.0, if sentido > 0.0 { 0.0 } else { 180.0 }, 0.0));
-        nodo.set_position(Vector3::new(a.x, 0.0, z));
+        let (p, d) = self.recorridos[a.carril].punto(a.s);
+        // El auto se arma mirando a +X y se gira hacia donde va.
+        nodo.set_rotation(Vector3::new(0.0, rumbo(d), 0.0));
+        nodo.set_position(Vector3::new(p[0], 0.0, p[1]));
         self.base_mut().add_child(&nodo);
         let c = a.color;
         for p in [
@@ -77,18 +99,49 @@ impl Autos {
             Transform3D::new(Basis::IDENTITY, Vector3::new(0.0, 0.75, 0.0)),
         ));
         nodo.add_child(&cuerpo);
-        Auto { nodo, ruedas, carril: a.carril, x: a.x, v: a.crucero, crucero: a.crucero, cerca: false }
+        Auto { nodo, ruedas, carril: a.carril, s: a.s, v: a.crucero, crucero: a.crucero, color: c, cerca: false }
     }
 
+    /// Lo recorrido por cada auto en su carril.
     pub fn posiciones(&self) -> Vec<f32> {
-        self.autos.iter().map(|a| a.x).collect()
+        self.autos.iter().map(|a| a.s).collect()
+    }
+
+    pub fn vueltas(&self) -> &[Vuelta] {
+        &self.vueltas
+    }
+
+    /// REQ-AMB-17: el auto `i` llegó al final del carril (fuera de la vista): en su lugar
+    /// entra otro, de otro color, por el principio del carril (también fuera de la vista).
+    fn renovar(&mut self, i: usize, s: f32) {
+        let viejo = &self.autos[i];
+        let sale = viejo.nodo.get_position();
+        let (carril, color_antes, v) = (viejo.carril, viejo.color, viejo.v);
+        let azar = self.azar.get_or_insert_with(|| Azar::new(ciudad::SEMILLA_CIUDAD + 3));
+        let color = autos::color_nuevo(azar, color_antes);
+        let crucero = azar.rango(8.0, 13.0);
+        let mut nuevo = self.crear_auto(&AutoInicial { carril, s, crucero, color });
+        nuevo.v = v.min(crucero);
+        let entra = nuevo.nodo.get_position();
+        let mut viejo = std::mem::replace(&mut self.autos[i], nuevo);
+        viejo.nodo.queue_free();
+        self.vueltas.push(Vuelta {
+            sale: Vector2::new(sale.x, sale.z),
+            entra: Vector2::new(entra.x, entra.z),
+            color_antes,
+            color_despues: color,
+        });
+        if self.vueltas.len() > 20 {
+            self.vueltas.remove(0);
+        }
     }
 }
 
 #[godot_api]
 impl INode3D for Autos {
     fn ready(&mut self) {
-        for a in ciudad::autos_iniciales() {
+        self.recorridos = (0..autos::CARRILES.len()).map(autos::recorrido).collect();
+        for a in autos::autos_iniciales() {
             let auto = self.crear_auto(&a);
             self.autos.push(auto);
         }
@@ -108,42 +161,54 @@ impl INode3D for Autos {
             obstaculos.push((p.x, p.z));
             jugador = Some(p);
         }
-        let autos: Vec<(usize, f32)> = self.autos.iter().map(|a| (a.carril, a.x)).collect();
+        let otros: Vec<(usize, f32)> = self.autos.iter().map(|a| (a.carril, a.s)).collect();
+        let mut renovar = Vec::new();
         for (i, a) in self.autos.iter_mut().enumerate() {
-            let (z, sentido) = CARRILES[a.carril];
+            let rec = &self.recorridos[a.carril];
             let mut cerca: Option<f32> = None;
             let mut mirar = |d: Option<f32>| {
                 if let Some(d) = d {
                     cerca = Some(cerca.map_or(d, |c: f32| c.min(d)));
                 }
             };
-            for (j, &(carril, x)) in autos.iter().enumerate() {
+            for (j, &(carril, s)) in otros.iter().enumerate() {
                 if j != i && carril == a.carril {
                     // El auto de adelante cuenta con su largo (4 m).
-                    mirar(ciudad::distancia_adelante(a.x, a.carril, x, z).map(|d| (d - 4.0).max(0.0)));
+                    mirar(autos::distancia_al_de_adelante(rec.largo(), a.s, s).map(|d| (d - 4.0).max(0.0)));
                 }
             }
             for &(x, oz) in &obstaculos {
-                mirar(ciudad::distancia_adelante(a.x, a.carril, x, oz).map(|d| (d - 2.2).max(0.0)));
+                mirar(autos::distancia_adelante(rec, a.s, [x, oz]).map(|d| (d - 2.2).max(0.0)));
             }
-            let deseada = ciudad::velocidad_deseada(a.crucero, cerca);
+            let deseada = autos::velocidad_deseada(a.crucero, cerca);
             let cambio = (deseada - a.v).clamp(-9.0 * dt, 3.0 * dt);
             a.v += cambio;
-            a.x = ciudad::envolver(a.x + a.v * sentido * dt);
-            a.nodo.set_position(Vector3::new(a.x, 0.0, z));
+            let (s, vuelta) = autos::avanzar(rec.largo(), a.s, a.v * dt);
+            a.s = s;
+            if vuelta {
+                renovar.push((i, s));
+                continue;
+            }
+            let (p, d) = rec.punto(a.s);
+            a.nodo.set_position(Vector3::new(p[0], 0.0, p[1]));
+            a.nodo.set_rotation(Vector3::new(0.0, rumbo(d), 0.0));
             // REQ-SON-08: un auto que pasa cerca suena una vez por pasada.
             if let Some(j) = jugador {
-                let d = Vector2::new(a.x - j.x, z - j.z).length();
-                if d < 14.0 && !a.cerca && a.v > 3.0 {
+                let dist = Vector2::new(p[0] - j.x, p[1] - j.z).length();
+                if dist < 14.0 && !a.cerca && a.v > 3.0 {
                     a.cerca = true;
-                    crate::sonido::sonar_en(&yo, carrito_core::sonido::ids::AUTO_PASA, Vector3::new(a.x, 1.0, z));
-                } else if d > 22.0 {
+                    let donde = Vector3::new(p[0], 1.0, p[1]);
+                    crate::sonido::sonar_en(&yo, carrito_core::sonido::ids::AUTO_PASA, donde);
+                } else if dist > 22.0 {
                     a.cerca = false;
                 }
             }
             for r in &mut a.ruedas {
                 r.rotate_z(-a.v * dt / 0.33);
             }
+        }
+        for (i, s) in renovar {
+            self.renovar(i, s);
         }
     }
 }

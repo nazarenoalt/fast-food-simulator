@@ -1,5 +1,6 @@
 //! SPEC-008 · Construye el terreno, la plaza, la vereda y la calle.
 
+use carrito_core::autos;
 use carrito_core::forma::{Pieza, TipoPieza};
 use carrito_core::plaza::{self, Prop, TipoProp};
 use godot::classes::{INode3D, Node3D};
@@ -128,13 +129,31 @@ impl INode3D for Plaza {
             superficie(&mut yo, 2.0, 0.15, x, plaza::Z_CALLE, 0.008, [0.9, 0.9, 0.85]);
             x += 5.0;
         }
-        // Cordón de la vereda.
-        yo.add_child(&formas::visual_pieza(&formas::pieza(
-            TipoPieza::Caja,
-            [t, 0.12, 0.2],
-            [0.0, 0.06, plaza::Z_VEREDA - plaza::ANCHO_VEREDA / 2.0],
-            [0.75, 0.75, 0.72],
-        )));
+        // REQ-AMB-17: calles laterales donde los autos doblan, detrás de los edificios de
+        // los costados; cruzan la vereda del carrito.
+        let borde_calle = plaza::Z_CALLE + plaza::ANCHO_CALLE / 2.0;
+        let fin = autos::Z_FIN_LATERAL + 8.0;
+        let ancho = autos::ANCHO_CALLE_LATERAL;
+        for s in [-1.0_f32, 1.0] {
+            let x = s * autos::X_CALLE_LATERAL;
+            superficie(&mut yo, ancho, fin - borde_calle, x, (fin + borde_calle) / 2.0, 0.009, ASFALTO);
+            let mut z = borde_calle + 3.0;
+            while z < fin - 1.0 {
+                superficie(&mut yo, 0.15, 2.0, x, z, 0.011, [0.9, 0.9, 0.85]);
+                z += 5.0;
+            }
+        }
+        // Cordón de la vereda, cortado donde la cruzan las calles laterales.
+        let hueco = autos::X_CALLE_LATERAL - ancho / 2.0;
+        let fuera = autos::X_CALLE_LATERAL + ancho / 2.0;
+        for (x0, x1) in [(-t / 2.0, -fuera), (-hueco, hueco), (fuera, t / 2.0)] {
+            yo.add_child(&formas::visual_pieza(&formas::pieza(
+                TipoPieza::Caja,
+                [x1 - x0, 0.12, 0.2],
+                [(x0 + x1) / 2.0, 0.06, plaza::Z_VEREDA - plaza::ANCHO_VEREDA / 2.0],
+                [0.75, 0.75, 0.72],
+            )));
+        }
 
         // REQ-MUN-05: distribución fija.
         for (i, p) in plaza::distribucion().iter().enumerate() {
