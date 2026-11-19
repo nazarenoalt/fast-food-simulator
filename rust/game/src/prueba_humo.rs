@@ -1212,6 +1212,9 @@ impl INode for PruebaHumo {
                     carne.bind().temp == 4.0 && panes.bind().temp == 20.0,
                     "REQ-HEL-06 los paquetes de carne vienen a 4 °C",
                 );
+                // No entran al árbol: se borran a mano (si no, quedan sus cuerpos físicos al cerrar).
+                carne.free();
+                panes.free();
                 // Llega un cliente nuevo para probar el menú (REQ-CLI-04).
                 let mut gente = todos::<Gente>(&mundo).pop().unwrap();
                 if gente.bind().largo_fila() == 0 {
