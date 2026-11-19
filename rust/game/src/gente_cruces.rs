@@ -17,9 +17,10 @@ use crate::util;
 /// Cuánto se para cada vez; si el auto sigue viniendo, vuelve a pararse.
 const ESPERA_CORTA: f32 = 0.4;
 
-/// Alguien parado en un cordón: dónde y cuánto lleva esperando ahí.
+/// Alguien parado en un cordón: en qué cordón, dónde se paró y cuánto lleva esperando.
 struct Espera {
     cordon: [f32; 2],
+    donde: Vector3,
     segundos: f32,
 }
 
@@ -70,9 +71,10 @@ impl Gente {
             let viene =
                 estado_autos.iter().find(|&&(carril, s, v)| cruces::viene_auto(&est.recorridos[carril], s, v, &c));
             let Some(&(carril, s, _)) = viene else { continue };
-            let espera = est.esperas.entry(id).or_insert(Espera { cordon: c.cordon, segundos: 0.0 });
+            let nueva = Espera { cordon: c.cordon, donde: pos, segundos: 0.0 };
+            let espera = est.esperas.entry(id).or_insert(nueva);
             if (espera.cordon[0] - c.cordon[0]).hypot(espera.cordon[1] - c.cordon[1]) > 1.0 {
-                *espera = Espera { cordon: c.cordon, segundos: 0.0 };
+                *espera = Espera { cordon: c.cordon, donde: pos, segundos: 0.0 };
             }
             if espera.segundos >= cruces::ESPERA_MAXIMA {
                 continue; // cruza igual
@@ -80,6 +82,10 @@ impl Gente {
             if espera.segundos == 0.0 {
                 est.paradas += 1;
                 est.esperaron.insert(id);
+            } else {
+                // Entre una espera corta y la siguiente alcanzó a dar un paso (un cuadro): vuelve
+                // a donde estaba, para no ir bajando de a poco a la calzada.
+                p.set_global_position(espera.donde);
             }
             espera.segundos += ESPERA_CORTA;
             let (a, _) = est.recorridos[carril].punto(s);
