@@ -90,7 +90,7 @@ pub fn velocidad(azar: &mut Azar, plan: Plan) -> f32 {
     if plan == Plan::Trotar { VEL_TROTE + azar.rango(-0.3, 0.4) } else { azar.rango(1.05, 1.5) }
 }
 
-/// REQ-AMB-06
+/// REQ-AMB-06, REQ-AMB-16
 #[derive(Debug, Clone, PartialEq)]
 pub struct Apariencia {
     pub piel: [f32; 3],
@@ -98,12 +98,36 @@ pub struct Apariencia {
     pub pantalon: [f32; 3],
     pub pelo: [f32; 3],
     pub altura: f32,
-    pub gorra: bool,
+    /// Color de la gorra, si lleva.
+    pub gorra: Option<[f32; 3]>,
 }
 
-const PIELES: [[f32; 3]; 5] =
-    [[0.96, 0.8, 0.68], [0.87, 0.67, 0.5], [0.72, 0.52, 0.38], [0.55, 0.38, 0.26], [0.38, 0.26, 0.18]];
-const ROPA: [[f32; 3]; 10] = [
+impl Apariencia {
+    /// REQ-AMB-16: en cuántos rasgos (piel, remera, pantalón, pelo, gorra) se diferencian.
+    /// La altura no cuenta: de lejos no se distingue.
+    pub fn diferencias(&self, otra: &Apariencia) -> usize {
+        [
+            self.piel != otra.piel,
+            self.remera != otra.remera,
+            self.pantalon != otra.pantalon,
+            self.pelo != otra.pelo,
+            self.gorra != otra.gorra,
+        ]
+        .iter()
+        .filter(|d| **d)
+        .count()
+    }
+}
+
+const PIELES: [[f32; 3]; 6] = [
+    [0.96, 0.8, 0.68],
+    [0.87, 0.67, 0.5],
+    [0.78, 0.58, 0.42],
+    [0.66, 0.47, 0.33],
+    [0.52, 0.36, 0.24],
+    [0.38, 0.26, 0.18],
+];
+const ROPA: [[f32; 3]; 16] = [
     [0.85, 0.2, 0.2],
     [0.2, 0.35, 0.75],
     [0.95, 0.95, 0.92],
@@ -114,12 +138,48 @@ const ROPA: [[f32; 3]; 10] = [
     [0.4, 0.75, 0.85],
     [0.9, 0.5, 0.6],
     [0.6, 0.45, 0.3],
+    [0.95, 0.5, 0.15],
+    [0.1, 0.25, 0.3],
+    [0.5, 0.12, 0.18],
+    [0.65, 0.8, 0.35],
+    [0.55, 0.57, 0.6],
+    [0.85, 0.8, 0.6],
 ];
-const PANTALONES: [[f32; 3]; 5] =
-    [[0.15, 0.2, 0.35], [0.2, 0.2, 0.22], [0.45, 0.4, 0.3], [0.3, 0.32, 0.36], [0.6, 0.55, 0.45]];
-const PELOS: [[f32; 3]; 5] =
-    [[0.08, 0.06, 0.05], [0.3, 0.2, 0.1], [0.55, 0.4, 0.2], [0.85, 0.75, 0.5], [0.6, 0.6, 0.6]];
+const PANTALONES: [[f32; 3]; 8] = [
+    [0.15, 0.2, 0.35],
+    [0.2, 0.2, 0.22],
+    [0.45, 0.4, 0.3],
+    [0.3, 0.32, 0.36],
+    [0.6, 0.55, 0.45],
+    [0.35, 0.45, 0.6],
+    [0.3, 0.35, 0.2],
+    [0.4, 0.22, 0.15],
+];
+const PELOS: [[f32; 3]; 8] = [
+    [0.08, 0.06, 0.05],
+    [0.3, 0.2, 0.1],
+    [0.55, 0.4, 0.2],
+    [0.85, 0.75, 0.5],
+    [0.6, 0.6, 0.6],
+    [0.6, 0.25, 0.1],
+    [0.18, 0.11, 0.07],
+    [0.92, 0.9, 0.86],
+];
+const GORRAS: [[f32; 3]; 7] = [
+    [0.8, 0.15, 0.15],
+    [0.12, 0.2, 0.5],
+    [0.1, 0.1, 0.1],
+    [0.95, 0.95, 0.95],
+    [0.2, 0.5, 0.25],
+    [0.95, 0.7, 0.1],
+    [0.45, 0.6, 0.8],
+];
+const CHANCE_GORRA: f32 = 0.3;
 
+/// Combinaciones de rasgos distintas que existen (sin contar la altura). REQ-AMB-16
+pub const COMBINACIONES: usize = PIELES.len() * ROPA.len() * PANTALONES.len() * PELOS.len() * (GORRAS.len() + 1);
+
+/// REQ-AMB-06: una apariencia al azar (sin memoria; ver `Variedad`).
 pub fn apariencia(azar: &mut Azar) -> Apariencia {
     Apariencia {
         piel: *azar.elegir(&PIELES).unwrap(),
@@ -127,7 +187,89 @@ pub fn apariencia(azar: &mut Azar) -> Apariencia {
         pantalon: *azar.elegir(&PANTALONES).unwrap(),
         pelo: *azar.elegir(&PELOS).unwrap(),
         altura: azar.rango(1.55, 1.9),
-        gorra: azar.chance(0.2),
+        gorra: if azar.chance(CHANCE_GORRA) { azar.elegir(&GORRAS).copied() } else { None },
+    }
+}
+
+/// REQ-AMB-16: cuántas de las que se fueron se recuerdan.
+pub const MEMORIA_IDAS: usize = 30;
+/// Intentos para encontrar alguien que se diferencie en al menos dos rasgos de todos.
+const INTENTOS: usize = 200;
+
+/// REQ-AMB-16: recuerda cómo se ven las personas que están en el mapa y las últimas que se
+/// fueron, para que cada persona nueva se vea distinta.
+#[derive(Debug, Clone, Default)]
+pub struct Variedad {
+    presentes: Vec<(u64, Apariencia)>,
+    idas: std::collections::VecDeque<Apariencia>,
+}
+
+impl Variedad {
+    fn recordadas(&self) -> impl Iterator<Item = &Apariencia> {
+        self.presentes.iter().map(|(_, a)| a).chain(self.idas.iter())
+    }
+
+    /// Menor cantidad de rasgos en que `a` se diferencia de las recordadas (5 si no hay nadie).
+    fn minimo_de_diferencias(&self, a: &Apariencia) -> usize {
+        self.recordadas().map(|r| r.diferencias(a)).min().unwrap_or(5)
+    }
+
+    /// Apariencia para la persona `id` que llega: no repite a nadie presente ni a las últimas
+    /// `MEMORIA_IDAS` que se fueron, y en lo posible se diferencia en dos rasgos o más.
+    pub fn nueva(&mut self, azar: &mut Azar, id: u64) -> Apariencia {
+        let mut mejor: Option<(usize, Apariencia)> = None;
+        for _ in 0..INTENTOS {
+            let a = apariencia(azar);
+            let d = self.minimo_de_diferencias(&a);
+            if mejor.as_ref().is_none_or(|(m, _)| d > *m) {
+                mejor = Some((d, a));
+            }
+            if d >= 2 {
+                break;
+            }
+        }
+        let (d, mut a) = mejor.expect("al menos un intento");
+        if d == 0 {
+            // Muy improbable (hay muchas más combinaciones que recordadas): se recorre la
+            // paleta de remeras hasta encontrar una que no repita.
+            for r in ROPA {
+                a.remera = r;
+                if self.minimo_de_diferencias(&a) > 0 {
+                    break;
+                }
+            }
+        }
+        self.presentes.push((id, a.clone()));
+        a
+    }
+
+    /// La persona `id` se fue del mapa.
+    pub fn se_fue(&mut self, id: u64) {
+        if let Some(i) = self.presentes.iter().position(|(p, _)| *p == id) {
+            let (_, a) = self.presentes.remove(i);
+            self.idas.push_back(a);
+            while self.idas.len() > MEMORIA_IDAS {
+                self.idas.pop_front();
+            }
+        }
+    }
+
+    /// Da por idas a las presentes que no están en `vivos`.
+    pub fn quedan(&mut self, vivos: &[u64]) {
+        let idas: Vec<u64> = self.presentes.iter().map(|(id, _)| *id).filter(|id| !vivos.contains(id)).collect();
+        for id in idas {
+            self.se_fue(id);
+        }
+    }
+
+    pub fn presentes(&self) -> usize {
+        self.presentes.len()
+    }
+
+    /// Ninguna de las recordadas (presentes y últimas idas) repite a otra.
+    pub fn sin_repetir(&self) -> bool {
+        let v: Vec<_> = self.recordadas().collect();
+        (0..v.len()).all(|i| (i + 1..v.len()).all(|j| v[i].diferencias(v[j]) > 0))
     }
 }
 
@@ -202,6 +344,48 @@ mod tests {
         let (minima, llegaron) = simular([-5.0, 0.0], [5.0, 0.0], [0.0, -5.0], [0.0, 5.0]);
         assert!(minima > 0.4, "se acercaron a {minima:.2} m");
         assert!(llegaron);
+    }
+
+    #[test]
+    fn req_amb_16_nadie_repite_a_los_presentes_ni_a_las_ultimas_30() {
+        let mut a = Azar::new(16);
+        let mut v = Variedad::default();
+        let mut historia: Vec<(u64, Apariencia)> = Vec::new();
+        let mut presentes: Vec<u64> = Vec::new();
+        let mut idas: Vec<u64> = Vec::new();
+        // Una plaza con 35 personas: cada vez se va la más vieja y llega una nueva.
+        for id in 0..400_u64 {
+            if presentes.len() >= 35 {
+                let sale = presentes.remove(0);
+                v.se_fue(sale);
+                idas.push(sale);
+            }
+            let nueva = v.nueva(&mut a, id);
+            let ap = |id: &u64| &historia.iter().find(|(h, _)| h == id).unwrap().1;
+            for otro in presentes.iter().chain(idas.iter().rev().take(MEMORIA_IDAS)) {
+                assert!(nueva.diferencias(ap(otro)) > 0, "la {id} repite a la {otro}");
+                assert!(nueva.diferencias(ap(otro)) >= 2, "la {id} se parece mucho a la {otro}");
+            }
+            historia.push((id, nueva));
+            presentes.push(id);
+            assert!(v.sin_repetir());
+        }
+        assert_eq!(v.presentes(), 35);
+    }
+
+    #[test]
+    fn req_amb_16_hay_variedad_de_sobra() {
+        // Muchas más combinaciones que personas recordadas (26 de día, 6 en la fila y 30 idas).
+        const { assert!(COMBINACIONES > 50 * (26 + 6 + MEMORIA_IDAS)) };
+        // Las que se van y ya no están dejan de contar como presentes.
+        let mut a = Azar::new(3);
+        let mut v = Variedad::default();
+        for id in 0..5 {
+            v.nueva(&mut a, id);
+        }
+        v.quedan(&[1, 3]);
+        assert_eq!(v.presentes(), 2);
+        assert!(v.sin_repetir());
     }
 
     #[test]

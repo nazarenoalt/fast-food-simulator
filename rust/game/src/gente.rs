@@ -6,7 +6,7 @@ use carrito_core::aderezos::enumerar;
 use carrito_core::azar::Azar;
 use carrito_core::caminos::{self, Red, TipoNodo};
 use carrito_core::clientes::{self, Animo, Fila, Paciencia, Pedido};
-use carrito_core::peatones::{self, Plan};
+use carrito_core::peatones::{self, Plan, Variedad};
 use godot::classes::{INode3D, Node3D};
 use godot::prelude::*;
 
@@ -42,6 +42,12 @@ pub struct Gente {
     clientes: HashMap<u64, Cliente>,
     t_spawn: f32,
     poblado: bool,
+    /// REQ-AMB-16: cómo se ven los presentes y los últimos que se fueron.
+    variedad: Variedad,
+    /// REQ-AMB-15: dónde estaba cada persona en el último cuadro y dónde desaparecieron las
+    /// últimas que se fueron.
+    donde: HashMap<u64, Vector3>,
+    desapariciones: Vec<Vector3>,
 }
 
 fn color_animo(a: Animo) -> Color {
@@ -79,6 +85,9 @@ impl INode3D for Gente {
             clientes: HashMap::new(),
             t_spawn: 0.0,
             poblado: false,
+            variedad: Variedad::default(),
+            donde: HashMap::new(),
+            desapariciones: Vec::new(),
         }
     }
 
@@ -99,6 +108,7 @@ impl INode3D for Gente {
         self.peatones.retain(|p| p.is_instance_valid());
         let vivos: Vec<u64> = self.peatones.iter().map(|p| p.bind().id).collect();
         self.asientos.retain(|id, _| vivos.contains(id));
+        self.registrar_idas(&vivos);
 
         // REQ-AMB-04: cantidad de gente según la hora; al empezar, la plaza ya tiene gente.
         let objetivo = peatones::cantidad_objetivo(hora);
@@ -135,6 +145,23 @@ impl INode3D for Gente {
 }
 
 impl Gente {
+    /// REQ-AMB-15, REQ-AMB-16: quien ya no está se fue (por una salida del borde): se anota
+    /// dónde desapareció y su apariencia pasa a la memoria de las que se fueron.
+    fn registrar_idas(&mut self, vivos: &[u64]) {
+        let idas: Vec<u64> = self.donde.keys().copied().filter(|id| !vivos.contains(id)).collect();
+        for id in idas {
+            if let Some(p) = self.donde.remove(&id) {
+                self.desapariciones.push(p);
+            }
+        }
+        let sobran = self.desapariciones.len().saturating_sub(64);
+        self.desapariciones.drain(..sobran);
+        self.variedad.quedan(vivos);
+        for p in &self.peatones {
+            self.donde.insert(p.bind().id, p.get_global_position());
+        }
+    }
+
     /// REQ-AMB-13: a cada peatón le pasa las posiciones de quienes tiene a menos de 2 m
     /// (incluido el jugador), para que los esquive.
     fn avisar_vecinos(&mut self) {
@@ -199,7 +226,7 @@ impl Gente {
     fn agregar(&mut self, en: usize, acciones: Vec<Accion>, plan: Plan) -> Gd<Peaton> {
         let id = self.sig_id;
         self.sig_id += 1;
-        let ap = peatones::apariencia(&mut self.azar);
+        let ap = self.variedad.nueva(&mut self.azar, id); // REQ-AMB-16
         let vel = peatones::velocidad(&mut self.azar, plan);
         let mut p = Peaton::crear(id, ap, vel, plan == Plan::PasearPerro, acciones);
         let pos = self.pos(en);
@@ -481,6 +508,16 @@ impl Gente {
 
     pub fn cantidad(&self) -> usize {
         self.peatones.len()
+    }
+
+    /// Para pruebas: dónde desaparecieron las últimas personas que se fueron. REQ-AMB-15
+    pub fn desapariciones(&self) -> Vec<Vector3> {
+        self.desapariciones.clone()
+    }
+
+    /// Para pruebas: nadie presente ni de las últimas que se fueron se ve igual. REQ-AMB-16
+    pub fn apariencias_sin_repetir(&self) -> bool {
+        self.variedad.sin_repetir() && self.variedad.presentes() == self.peatones.len()
     }
 
     /// Para pruebas: cambia el pedido del primero (para probar aderezos sí o sí).
