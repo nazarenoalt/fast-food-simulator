@@ -3,6 +3,7 @@
 //! Cada módulo implementa una spec de `docs/specs/`.
 
 pub mod aderezos; // SPEC-012
+pub mod ampliaciones; // SPEC-027
 pub mod armado; // SPEC-005
 pub mod azar; // números al azar con semilla
 pub mod caminos; // SPEC-013 (red de peatones)

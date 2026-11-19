@@ -18,11 +18,17 @@
         (id: "parrilla", pos: (-2.15, 0.92, 0.45), categorias: [Cocina]),
         (id: "heladera", pos: (2.95, 0.0, -0.35), rot_y: 180, categorias: [Cocina]),
         (id: "sombra", pos: (-1.9, 0.0, -1.25), categorias: [Sombrilla]),
-        (id: "techo", pos: (0.0, 0.0, -0.2), categorias: [Carpa]),
+        (id: "techo", pos: (0.0, 0.0, -0.2), categorias: [Carpa, Techo]),
         (id: "frente", pos: (0.0, 0.0, 0.61), categorias: [Telon, Cerco, Decoracion]),
         (id: "cerco", pos: (0.0, 0.0, 1.8), categorias: [Cerco, Decoracion, Mobiliario]),
         (id: "luz_1", pos: (-0.7, 2.1, 0.2), categorias: [Luz]),
         (id: "luz_2", pos: (0.7, 2.1, 0.2), categorias: [Luz]),
         (id: "cartel", pos: (0.0, 0.988, 0.662), categorias: [Cartel]), // REQ-PAP-07: adelante, en el canto de la mesada
+        (id: "toldo", pos: (0.0, 0.0, 0.61), categorias: [Toldo]), // REQ-AMP-07: en el punto del frente
+        (id: "guirnalda", pos: (0.0, 2.08, 0.6), categorias: [Guirnalda], requiere: Some(Techo)), // REQ-AMP-10
+        (id: "bahia_1", pos: (-1.27, 0.34, -0.6), categorias: [Alacena]), // REQ-AMP-04
+        (id: "bahia_2", pos: (-0.6, 0.34, -0.6), categorias: [Alacena]), // REQ-AMP-04
+        (id: "bahia_3", pos: (0.07, 0.34, -0.6), categorias: [Alacena]), // REQ-AMP-04
+        (id: "bahia_4", pos: (0.74, 0.34, -0.6), categorias: [Alacena]), // REQ-AMP-04
     ],
 )

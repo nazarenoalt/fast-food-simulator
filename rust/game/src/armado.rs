@@ -144,7 +144,12 @@ impl ModoArmado {
         self.borrar_marcas();
         let Some(mut c) = self.carrito() else { return };
         let anclajes = c.bind().anclajes_globales();
+        let cat = catalogo();
         for (anclaje, pos) in anclajes {
+            // REQ-AMP-10: un anclaje que pide algo que no está (la guirnalda sin techo) no se ve.
+            if self.estado().is_some_and(|e| !e.anclaje_disponible(&anclaje, cat)) {
+                continue;
+            }
             let pos = if pos.y < c.get_global_position().y + 0.3 { pos + Vector3::UP * 0.4 } else { pos };
             let mut malla = SphereMesh::new_gd();
             malla.set_radius(RADIO_MARCA);
@@ -415,6 +420,7 @@ impl ModoArmado {
                 }
                 let costo = if gasto > 0.0 { format!(" (−{})", plata(gasto)) } else { String::new() };
                 self.avisar(&format!("Pusiste {}{costo}", nombre_acc(acc)));
+                self.soltar_sin_requisito();
                 self.cerrar_panel();
                 self.crear_marcas();
             }
@@ -431,7 +437,9 @@ impl ModoArmado {
             Ok(id) => {
                 c.bind_mut().quitar(anclaje);
                 self.avisar(&format!("Guardaste {}", nombre_acc(&id)));
+                self.soltar_sin_requisito();
                 self.cerrar_panel();
+                self.crear_marcas();
             }
             Err(e) => self.avisar(&e.to_string()),
         }
@@ -456,8 +464,31 @@ impl ModoArmado {
             Ok(_) => {
                 c.bind_mut().mover(&desde, hasta);
                 self.avisar("Listo, movido");
+                self.soltar_sin_requisito();
+                self.crear_marcas();
             }
             Err(e) => self.avisar(&e.to_string()),
+        }
+    }
+
+    /// Anclajes con marca (para la prueba de humo: REQ-AMP-10).
+    pub(crate) fn marcas_visibles(&self) -> Vec<String> {
+        self.marcas.iter().map(|m| m.anclaje.clone()).collect()
+    }
+
+    /// Lo guardado (para la prueba de humo).
+    pub(crate) fn inventario(&self) -> Vec<String> {
+        self.estado.as_ref().map(|e| e.inventario.accesorios.clone()).unwrap_or_default()
+    }
+
+    /// REQ-AMP-10: lo que quedó sin lo que pide su anclaje (la guirnalda sin techo) se guarda solo.
+    fn soltar_sin_requisito(&mut self) {
+        let Some(mut c) = self.carrito() else { return };
+        let Some(estado) = self.estado() else { return };
+        let sueltos = estado.soltar_sin_requisito(catalogo());
+        for (anclaje, id) in sueltos {
+            c.bind_mut().quitar(&anclaje);
+            self.avisar(&format!("{} se guardó: necesita un techo", nombre_acc(&id)));
         }
     }
 

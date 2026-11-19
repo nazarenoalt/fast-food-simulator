@@ -62,8 +62,8 @@ venderlos y cambiar el color, sin tocar archivos. Usa los anclajes de SPEC-006.
 ## Fuera de alcance
 
 - Guardar la partida (lo comprado se pierde al cerrar: SPEC-022, etapa 7b). Segunda parte
-  de la etapa 4: food truck, tráiler, alacenas bajo mesada, toldos (piden un anclaje propio) y
-  guirnaldas (piden un techo puesto). Precios definitivos (etapa 6b).
+  de la etapa 4 (food truck, tráiler, alacenas, toldos y guirnaldas): [SPEC-027](027-ampliaciones.md).
+  Precios definitivos (etapa 6b).
 
 ## Notas de diseño
 

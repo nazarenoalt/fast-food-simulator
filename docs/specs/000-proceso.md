@@ -61,6 +61,7 @@ Estado: Borrador | Aprobada | Implementada
 | SON | 024 Sonido |
 | MOD | 025 Modelos 3D |
 | PAP | 026 Papas fritas |
+| AMP | 027 Ampliaciones del carrito |
 
 ## Convenciones de código
 

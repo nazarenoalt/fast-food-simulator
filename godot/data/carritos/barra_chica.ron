@@ -17,9 +17,13 @@
         (id: "parrilla", pos: (-1.25, 0.92, -0.25), categorias: [Cocina]),
         (id: "heladera", pos: (2.0, 0.0, -0.25), rot_y: 180, categorias: [Cocina]),
         (id: "sombra", pos: (-1.0, 0.0, -0.95), categorias: [Sombrilla]),
-        (id: "techo", pos: (0.0, 0.0, -0.1), categorias: [Carpa]),
+        (id: "techo", pos: (0.0, 0.0, -0.1), categorias: [Carpa, Techo]),
         (id: "frente", pos: (0.0, 0.0, 0.36), categorias: [Telon, Cerco, Decoracion]),
         (id: "luz_1", pos: (0.0, 2.05, 0.05), categorias: [Luz]),
         (id: "cartel", pos: (0.0, 0.938, 0.412), categorias: [Cartel]), // REQ-PAP-07: adelante, en el canto de la mesada
+        (id: "toldo", pos: (0.0, 0.0, 0.36), categorias: [Toldo]), // REQ-AMP-07: en el punto del frente
+        (id: "guirnalda", pos: (0.0, 2.08, 0.35), categorias: [Guirnalda], requiere: Some(Techo)), // REQ-AMP-10
+        (id: "bahia_1", pos: (-0.33, 0.29, -0.35), categorias: [Alacena]), // REQ-AMP-04
+        (id: "bahia_2", pos: (0.33, 0.29, -0.35), categorias: [Alacena]), // REQ-AMP-04
     ],
 )

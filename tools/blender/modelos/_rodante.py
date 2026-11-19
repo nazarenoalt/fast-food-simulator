@@ -293,7 +293,7 @@ def toldo(P, mats):
     zh = P["zh"]
     yb = vy1 + 0.06                         # bisagra, arriba de la ventana
     largo = yb - vy0 + 0.04                 # cerrada tapa la ventana y 4 cm más
-    ancho = vb - va + 0.14
+    ancho = vb - va + 2 * P.get("tapa_sobra", 0.07)   # SPEC-027: más ancha si lleva toldo
     bm = bmesh.new()
     # Armada cerrada (colgando sobre la pared, eje en (yb, zh + 0,02)) y después se abre.
     piezas.caja(bm, (ancho, largo, 0.03), ((va + vb) / 2, yb - largo / 2, zh + 0.017), mat=0, bisel=0.01)
@@ -306,7 +306,8 @@ def toldo(P, mats):
     bpy.context.view_layer.update()
     # Amortiguadores (en la estructura): de la pared a 1/2 del largo de la tapa.
     puntas = []
-    for x in (va - 0.035, vb + 0.035):                              # a los costados de la ventana
+    sep = P.get("amortiguador", 0.035)  # SPEC-027: afuera del ancho del toldo (no lo cruzan)
+    for x in (va - sep, vb + sep):                                  # a los costados de la ventana
         a = (x, (vy0 + vy1) / 2, zh + 0.012)
         tapa = Vector(g2b((x, yb - largo * 0.55, zh + 0.002)))     # en la tapa cerrada
         b = obj.matrix_world @ (Matrix.Rotation(math.radians(P["toldo_abierto"]), 4, "X") @

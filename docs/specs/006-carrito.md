@@ -23,7 +23,7 @@ agregar un archivo de datos.
 ### Accesorios
 - **REQ-CAR-04** Categorías de accesorio: Decoración, Equipamiento, Cerco, Carpa, Telón,
   Cocina, Depósito, Sombrilla, Luz, Porche (cerramiento para comer al costado del carro) y
-  Cartel (colgante, SPEC-026).
+  Cartel (colgante, SPEC-026); Techo, Toldo, Alacena y Guirnalda en SPEC-027.
 - **REQ-CAR-05** Un accesorio se define en `godot/data/accesorios.ron` con id, nombre,
   categoría, precio, forma visual (lista de piezas simples: caja, cilindro, esfera, cono,
   con medidas, posición y color) y opcionalmente una **función**: Hervidor, Depósito
@@ -65,8 +65,7 @@ agregar un archivo de datos.
 
 ## Fuera de alcance (próximas etapas)
 
-- El food truck y el tráiler, las alacenas bajo mesada y las vitrinas del kiosco como depósito. Los
-  modelos 3D están en SPEC-025.
+- Las vitrinas del kiosco como depósito. Food truck, tráiler y alacenas: [SPEC-027](027-ampliaciones.md).
 
 ## Notas de diseño
 

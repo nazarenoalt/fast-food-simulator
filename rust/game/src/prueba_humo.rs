@@ -3,7 +3,7 @@
 
 use carrito_core::coccion::Punto;
 use carrito_core::plaza;
-use godot::classes::{INode, MeshInstance3D, Node, Node3D, PackedScene, StandardMaterial3D};
+use godot::classes::{INode, Input, MeshInstance3D, Node, Node3D, PackedScene, StandardMaterial3D};
 use godot::prelude::*;
 
 use crate::aderecera::Pomo;
@@ -58,6 +58,9 @@ pub struct PruebaHumo {
     /// SPEC-026 / REQ-CAR-13: segundo carrito (carro grande) con lo de las papas.
     carro_papas: Option<Gd<Carrito>>,
     fase_papas: u32,
+    /// SPEC-027: fase de la prueba de ampliaciones y lo que se mide entre cuadros.
+    fase_amp: u32,
+    bloque_cajon: Option<(Gd<BloqueStock>, Vector3)>,
 }
 
 /// Material (de la primera superficie) de la pieza `nombre` de un modelo. SPEC-025
@@ -141,6 +144,13 @@ impl PruebaHumo {
         let saldo = |n: &Gd<Negocio>| n.bind().saldo();
         neg.bind_mut().set_saldo(1_000_000.0);
 
+        // REQ-AMP-11: con la sombrilla puesta, el techo choca y no se pone.
+        m.bind_mut().elegir("techo", "techo_plano_mediano", Origen::Tienda);
+        self.chequear(
+            !puestos().contains_key("techo") && (saldo(&neg) - 1_000_000.0).abs() < 0.5,
+            "REQ-AMP-11 con la sombrilla, el techo choca y no se cobra",
+        );
+        m.bind_mut().guardar("sombra");
         m.bind_mut().elegir("techo", "techo_plano_mediano", Origen::Tienda);
         self.chequear(
             puestos().get("techo").map(String::as_str) == Some("techo_plano_mediano")
@@ -163,7 +173,6 @@ impl PruebaHumo {
         );
 
         let antes = saldo(&neg);
-        m.bind_mut().guardar("sombra");
         m.bind_mut().vender_accesorio("sombrilla_roja");
         self.chequear(
             !puestos().contains_key("sombra") && (saldo(&neg) - antes - 36.0).abs() < 0.5,
@@ -204,6 +213,146 @@ impl PruebaHumo {
             "REQ-TIE-10 vuelvo a la barra mediana guardada, gratis",
         );
         m.bind_mut().cerrar_panel();
+    }
+
+    /// SPEC-027 sobre el carrito del jugador (barra mediana, después de chequear_armado): guirnalda
+    /// con techo, alacena de cajones con un bloque, choque toldo/carpa, y el food truck con el
+    /// jugador que entra por la puerta subiendo el escalón. Se llama en varios cuadros; devuelve
+    /// true al terminar.
+    fn chequear_ampliaciones(&mut self) -> bool {
+        use carrito_core::tienda::Origen;
+        let mundo = self.mundo();
+        let Some(mut m) = todos::<ModoArmado>(&mundo).pop() else { return true };
+        let carrito = todos::<Carrito>(&mundo).into_iter().next().expect("carrito");
+        let puestos = || carrito.bind().accesorios_puestos();
+        let mut jugador = todos::<Jugador>(&mundo).pop().expect("jugador");
+        let local = |c: &Gd<Carrito>, p: Vector3| c.get_global_transform().affine_inverse() * p;
+        match self.fase_amp {
+            0 => {
+                let marcas = |m: &Gd<ModoArmado>| m.bind().marcas_visibles();
+                let sin = !marcas(&m).iter().any(|a| a == "guirnalda");
+                m.bind_mut().elegir("techo", "techo_plano_mediano", Origen::Guardado);
+                let con = marcas(&m).iter().any(|a| a == "guirnalda");
+                self.chequear(sin && con, "CA-AMP-03 sin techo no aparece la guirnalda; con techo sí");
+                m.bind_mut().elegir("guirnalda", "guirnalda_luces_mediano", Origen::Tienda);
+                m.bind_mut().elegir("bahia_1", "alacena_cajones", Origen::Tienda);
+                let c = carrito.bind();
+                self.chequear(
+                    puestos().get("guirnalda").map(String::as_str) == Some("guirnalda_luces_mediano")
+                        && c.tapa_visible(1) == Some(false)
+                        && c.tapa_visible(2) == Some(true),
+                    "REQ-AMP-04 pongo la guirnalda y una cajonera: se esconde la tapa de su bahía",
+                );
+                let nodo = c.nodo_puesto("bahia_1").expect("alacena");
+                drop(c);
+                let lugares = crate::carrito::lugares_de(&nodo);
+                let mut cajon = todos::<crate::puerta::PuertaCarrito>(&nodo.clone().upcast())
+                    .into_iter()
+                    .filter(|p| p.bind().es_cajon())
+                    .min_by(|a, b| b.get_global_position().y.total_cmp(&a.get_global_position().y))
+                    .expect("cajón de arriba");
+                self.chequear(lugares.len() == 6, "REQ-AMP-05 la cajonera tiene 6 lugares");
+                // El bloque va en el lugar 1, que es del cajón de arriba.
+                let def = crate::datos::catalogo().bloque("bolsa_panes_12").unwrap().clone();
+                let bloque = BloqueStock::crear(def);
+                let mut l1 = lugares[0].clone();
+                l1.add_child(&bloque);
+                self.chequear(!cajon.bind().abierta(), "REQ-AMP-06 los cajones arrancan cerrados");
+                cajon.bind_mut().alternar();
+                let antes = bloque.get_global_position();
+                self.bloque_cajon = Some((bloque, antes));
+                self.esperar(40);
+            }
+            1 => {
+                let (b, antes) = self.bloque_cajon.take().expect("bloque");
+                let d = b.get_global_position().distance_to(antes);
+                self.chequear(
+                    (d - carrito_core::ampliaciones::SALIDA_CAJON).abs() < 0.02,
+                    &format!("CA-AMP-02 abro el cajón y la bolsa sale con él ({d:.2} m)"),
+                );
+                m.bind_mut().guardar("techo");
+                let inv = m.bind().inventario();
+                self.chequear(
+                    !puestos().contains_key("guirnalda") && inv.contains(&"guirnalda_luces_mediano".to_string()),
+                    "CA-AMP-03 saco el techo y la guirnalda va al inventario",
+                );
+                m.bind_mut().elegir("toldo", "toldo_rayado_mediano", Origen::Tienda);
+                m.bind_mut().elegir("techo", "carpa_2x2", Origen::Tienda);
+                self.chequear(
+                    puestos().contains_key("toldo") && !puestos().contains_key("techo"),
+                    "CA-AMP-04 con el toldo rayado, la carpa avisa que choca",
+                );
+                // Food truck: el toldo y la cajonera (con su bolsa) pasan; el jugador va afuera.
+                // El estante del costado no tiene lugar ahí: se vacía (REQ-TIE-10) y se guarda.
+                if let Some(n) = carrito.bind().nodo_puesto("lateral") {
+                    for l in crate::carrito::lugares_de(&n) {
+                        if let Some(mut b) = l.bind().bloque() {
+                            b.queue_free();
+                        }
+                    }
+                }
+                self.esperar(2);
+                self.fase_amp = 10;
+                return false;
+            }
+            10 => {
+                m.bind_mut().guardar("lateral");
+                m.bind_mut().cambiar_base("food_truck");
+                m.bind_mut().cerrar_panel();
+                let b = carrito.bind().base_actual().cloned().expect("base");
+                let pj = local(&carrito, jugador.get_global_position());
+                let puerta = carrito.bind().puerta();
+                self.chequear(
+                    b.id == "food_truck"
+                        && puestos().contains_key("toldo")
+                        && puestos().contains_key("bahia_1")
+                        && pj.z > b.profundidad / 2.0
+                        && puerta.as_ref().is_some_and(|p| !p.bind().abierta()),
+                    &format!(
+                        "REQ-AMP-01/02 cambio al food truck: arranco afuera, adelante, con la puerta cerrada \
+                         ({} toldo {} bahia {} z {:.2} puerta {:?})",
+                        b.id,
+                        puestos().contains_key("toldo"),
+                        puestos().contains_key("bahia_1"),
+                        pj.z,
+                        puerta.as_ref().map(|p| p.bind().abierta())
+                    ),
+                );
+                if let Some(mut p) = puerta {
+                    p.bind_mut().alternar();
+                }
+                // Al pie del escalón, mirando a la puerta (+Z del carrito), y camina.
+                let t = carrito.get_global_transform();
+                // Por el medio de lo que deja libre la hoja abierta (la bisagra está en x 0,10).
+                let desde = t * Vector3::new(0.52, 0.05, -2.0);
+                let hacia = t * Vector3::new(0.52, 0.05, 0.0);
+                jugador.set_global_position(desde);
+                jugador.look_at(Vector3::new(hacia.x, desde.y, hacia.z));
+                self.esperar(40);
+                self.fase_amp = 2;
+                return false;
+            }
+            2 => {
+                Input::singleton().action_press("adelante");
+                self.esperar(70);
+            }
+            3 => {
+                Input::singleton().action_release("adelante");
+                let pj = local(&carrito, jugador.get_global_position());
+                self.chequear(
+                    pj.y > 0.45 && pj.z > -1.05,
+                    &format!(
+                        "CA-AMP-01 / REQ-JUG-09 subo el escalón y entro por la puerta (y {:.2}, z {:.2})",
+                        pj.y, pj.z
+                    ),
+                );
+                self.fase_amp = 99; // listo: no se repite
+                return true;
+            }
+            _ => return true,
+        }
+        self.fase_amp += 1;
+        false
     }
 
     /// SPEC-026 y REQ-CAR-13: arma un segundo carrito (carro grande, plateado) con la freidora
@@ -1087,10 +1236,12 @@ impl INode for PruebaHumo {
                 self.esperar(30);
             }
             31 => {
-                if self.fase_papas == 0 {
+                if self.fase_papas == 0 && self.fase_amp == 0 {
                     self.chequear_armado(); // SPEC-017, una sola vez
                 }
-                if self.chequear_papas_y_puerta() {
+                if !self.chequear_ampliaciones() {
+                    self.paso -= 1; // SPEC-027: se repite este paso hasta terminar
+                } else if self.chequear_papas_y_puerta() {
                     self.terminar();
                 } else {
                     self.paso -= 1; // se repite este paso hasta terminar

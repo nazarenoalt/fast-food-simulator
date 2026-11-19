@@ -2,7 +2,10 @@
 
 use std::collections::BTreeMap;
 
-use carrito_core::carrito::{Accesorio, BaseCarrito, CarritoArmado, Colocado, ConfigCarrito, Funcion, armar};
+use carrito_core::ampliaciones;
+use carrito_core::carrito::{
+    Accesorio, BaseCarrito, CarritoArmado, Categoria, Colocado, ConfigCarrito, Funcion, armar,
+};
 use carrito_core::clientes::SEPARACION_FILA;
 use carrito_core::forma::TipoPieza;
 use godot::classes::base_material_3d::BillboardMode;
@@ -256,9 +259,10 @@ impl Carrito {
             // REQ-MOD-01: el modelo del accesorio (corrido con pos_modelo, REQ-MOD-03) o sus
             // piezas simples. El hervidor arma su propio dibujo (usa el agua y el piloto).
             let es_hervidor = matches!(c.accesorio.funcion, Some(Funcion::Hervidor { .. }));
+            let mut modelo = None;
             if !es_hervidor {
-                let modelo = c.accesorio.modelo.as_deref().and_then(|m| modelos::agregar(&mut nodo, m));
-                match modelo {
+                modelo = c.accesorio.modelo.as_deref().and_then(|m| modelos::agregar(&mut nodo, m));
+                match modelo.clone() {
                     Some(mut m) => {
                         m.set_position(formas::v3(c.accesorio.pos_modelo));
                         // REQ-TIE-08: las partes pintadas del accesorio siguen el color del carrito.
@@ -272,6 +276,12 @@ impl Carrito {
                     }
                     None => formas::construir(&mut nodo, &c.accesorio.forma),
                 }
+            }
+            // REQ-AMP-06: puertas y cajones de las alacenas, cerrados; E los abre.
+            if let Some(m) = &modelo
+                && c.accesorio.categoria == Categoria::Alacena
+            {
+                envolver_hojas(m);
             }
 
             // REQ-CAR-05: función del accesorio.
@@ -295,8 +305,18 @@ impl Carrito {
                     // REQ-DEP-07: cada lugar es un nodo que guarda a lo sumo un bloque.
                     for (i, lugar) in lugares.iter().enumerate() {
                         let mut l = LugarDeposito::new_alloc();
-                        l.set_position(formas::v3(*lugar));
-                        nodo.add_child(&l);
+                        // REQ-AMP-05: si el modelo trae su punto_lugar, el lugar cuelga de ahí
+                        // (así el de un cajón sale con el cajón, REQ-AMP-06).
+                        let punto = modelo
+                            .as_ref()
+                            .and_then(|m| modelos::buscar(m, &format!("{}{}", ampliaciones::PUNTO_LUGAR, i + 1)));
+                        match punto {
+                            Some(mut p) => p.add_child(&l),
+                            None => {
+                                l.set_position(formas::v3(*lugar));
+                                nodo.add_child(&l);
+                            }
+                        }
                         if let Some(Some(id)) = c.stock.get(i) {
                             let def = catalogo().bloque(id).expect("bloque validado").clone();
                             l.add_child(&BloqueStock::crear(def));
@@ -329,8 +349,26 @@ impl Carrito {
     }
 
     /// REQ-CLI-04 / REQ-TIE-06: lo que se puede cocinar sale de lo que está puesto ahora.
+    /// También esconde la tapa de cada bahía con alacena (REQ-AMP-04).
     fn actualizar_funciones(&mut self) {
         self.funciones = self.puestos.values().filter_map(|(a, _)| a.funcion.as_ref()).map(|f| f.nombre()).collect();
+        let Some(r) = &self.raiz_base else { return };
+        for mut tapa in modelos::buscar_prefijos(r, &[ampliaciones::PIEZA_TAPA_BAHIA]) {
+            let nombre = tapa.get_name().to_string();
+            let n = nombre.trim_start_matches(ampliaciones::PIEZA_TAPA_BAHIA);
+            tapa.set_visible(!self.puestos.contains_key(&format!("bahia_{n}")));
+        }
+    }
+
+    /// REQ-AMP-04: la tapa de esa bahía se ve (no hay alacena).
+    pub fn tapa_visible(&self, bahia: u32) -> Option<bool> {
+        let r = self.raiz_base.as_ref()?;
+        modelos::buscar(r, &format!("{}{bahia}", ampliaciones::PIEZA_TAPA_BAHIA)).map(|t| t.is_visible())
+    }
+
+    /// El nodo de lo que está puesto en el anclaje (para la prueba de humo).
+    pub fn nodo_puesto(&self, anclaje: &str) -> Option<Gd<Node3D>> {
+        self.puestos.get(anclaje).map(|(_, n)| n.clone())
     }
 
     fn anclaje_def(&self, id: &str) -> Option<carrito_core::carrito::Anclaje> {
@@ -367,11 +405,10 @@ impl Carrito {
 
     /// REQ-TIE-05: el depósito de ese anclaje tiene algún bloque.
     pub fn deposito_con_bloques(&self, anclaje: &str) -> bool {
-        let Some((_, nodo)) = self.puestos.get(anclaje) else { return false };
-        nodo.get_children()
-            .iter_shared()
-            .filter_map(|n| n.try_cast::<LugarDeposito>().ok())
-            .any(|l| l.get_child_count() > 0)
+        let Some((acc, nodo)) = self.puestos.get(anclaje) else { return false };
+        // Solo los depósitos (la heladera guarda lo suyo aparte). Los lugares pueden estar
+        // dentro del modelo (REQ-AMP-05): se buscan en todo el árbol.
+        matches!(acc.funcion, Some(Funcion::Deposito { .. })) && lugares_de(nodo).iter().any(|l| l.bind().ocupado())
     }
 
     /// Anclajes con un depósito que tiene bloques. REQ-TIE-10
@@ -407,6 +444,7 @@ impl Carrito {
         Self::ubicar(&mut uno.1, &a_hasta);
         uno.1.set_name(&format!("{}_{}", hasta, uno.0.id));
         self.puestos.insert(hasta.to_string(), uno);
+        self.actualizar_funciones(); // REQ-AMP-04: las tapas de las bahías
     }
 
     /// REQ-TIE-08: pinta la base y las partes pintadas de los accesorios.
@@ -427,6 +465,7 @@ impl Carrito {
         self.base_def = Some(armado.base.clone());
         self.construir_bandeja(&armado.base);
         let viejos: Vec<String> = self.puestos.keys().cloned().collect();
+        // (las tapas de las bahías se acomodan al final, en actualizar_funciones)
         for anc in viejos {
             match (pasan.contains(&anc), armado.base.anclaje(&anc).cloned()) {
                 (true, Some(a)) => {
@@ -489,5 +528,56 @@ impl INode3D for Carrito {
                 self.mostrar_error(&mensaje);
             }
         }
+    }
+}
+
+/// Todos los lugares de depósito debajo de un nodo (a cualquier profundidad).
+pub fn lugares_de(nodo: &Gd<Node3D>) -> Vec<Gd<LugarDeposito>> {
+    fn juntar(n: &Gd<Node>, v: &mut Vec<Gd<LugarDeposito>>) {
+        for h in n.get_children().iter_shared() {
+            if let Ok(l) = h.clone().try_cast::<LugarDeposito>() {
+                v.push(l);
+            }
+            juntar(&h, v);
+        }
+    }
+    let mut v = Vec::new();
+    juntar(&nodo.clone().upcast(), &mut v);
+    v
+}
+
+/// REQ-AMP-06: envuelve cada `pieza_puerta_<n>` y `pieza_cajon_<n>` de una alacena para que E
+/// las abra. Cerradas al arrancar. La puerta gira hacia afuera (−Z) del lado contrario a su
+/// bisagra; el cajón sale hacia el vendedor. Se les arma una colisión para que el rayo las vea.
+fn envolver_hojas(modelo: &Gd<Node3D>) {
+    use godot::classes::{BoxShape3D, CollisionShape3D, MeshInstance3D, StaticBody3D};
+    let hojas = modelos::buscar_prefijos(modelo, &[ampliaciones::PIEZA_PUERTA_ALACENA, ampliaciones::PIEZA_CAJON]);
+    for mut pieza in hojas {
+        let cajon = pieza.get_name().to_string().starts_with(ampliaciones::PIEZA_CAJON);
+        let Ok(malla) = pieza.clone().try_cast::<MeshInstance3D>() else { continue };
+        let caja = malla.get_aabb();
+        // Colisión: la puerta entera; del cajón, solo el frente (adentro van los bloques).
+        let (tam, centro) = if cajon {
+            let t = Vector3::new(caja.size.x, caja.size.y, 0.03);
+            (t, Vector3::new(caja.center().x, caja.center().y, caja.position.z + 0.015))
+        } else {
+            (caja.size, caja.center())
+        };
+        let mut forma = BoxShape3D::new_gd();
+        forma.set_size(tam);
+        let mut col = CollisionShape3D::new_alloc();
+        col.set_shape(&forma);
+        col.set_position(centro);
+        let mut cuerpo = StaticBody3D::new_alloc();
+        cuerpo.add_child(&col);
+        pieza.add_child(&cuerpo);
+        let (apertura, nombre) = if cajon {
+            (ampliaciones::SALIDA_CAJON, "Cajon")
+        } else {
+            // La hoja está hacia +X de la bisagra: gira +; hacia −X: gira − (las dos abren a −Z).
+            let signo = if caja.center().x >= 0.0 { 1.0 } else { -1.0 };
+            (signo * ampliaciones::APERTURA_PUERTA_ALACENA, "PuertaAlacena")
+        };
+        PuertaCarrito::envolver_ex(pieza, apertura, false, nombre, cajon);
     }
 }

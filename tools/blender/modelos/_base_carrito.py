@@ -118,6 +118,8 @@ def leer_ron(id_base):
         for m in re.finditer(
             r'\(\s*id:\s*"(\w+)",\s*pos:\s*\(([^)]*)\)(?:,\s*rot_y:\s*([-\d.]+))?', texto)
     ]
+    # Los anclajes `bahia_<n>` (SPEC-027) son los punto_bahia_<n> que arma la base: no se repiten.
+    anclajes = [x for x in anclajes if not x[0].startswith("bahia_")]
     return {
         "ancho": num("ancho"), "profundidad": num("profundidad"),
         "alto": num("alto_mostrador"), "ruedas": "ruedas: true" in texto,

@@ -4,7 +4,7 @@
 use std::collections::BTreeMap;
 use std::fmt;
 
-use crate::carrito::{Accesorio, Anclaje, BaseCarrito, ConfigCarrito};
+use crate::carrito::{Accesorio, Anclaje, BaseCarrito, Categoria, ConfigCarrito};
 use crate::datos::Catalogo;
 use crate::economia::{Caja, plata};
 
@@ -61,6 +61,13 @@ pub enum ErrorArmado {
     /// REQ-TIE-05 / REQ-TIE-10: depósito con bloques.
     ConBloques(String),
     MismaBase,
+    /// REQ-AMP-11: (lo que se quiere poner, lo que ya está).
+    Choca {
+        accesorio: String,
+        con: String,
+    },
+    /// REQ-AMP-10: el anclaje pide algo de esa categoría puesto.
+    FaltaRequisito(Categoria),
 }
 
 impl fmt::Display for ErrorArmado {
@@ -75,6 +82,8 @@ impl fmt::Display for ErrorArmado {
             NoGuardado(id) => write!(f, "No tenés \"{id}\" guardado"),
             ConBloques(a) => write!(f, "El depósito de \"{a}\" tiene mercadería: vacialo primero"),
             MismaBase => write!(f, "Ya estás usando esa base"),
+            Choca { accesorio, con } => write!(f, "\"{accesorio}\" choca con \"{con}\": sacalo primero"),
+            FaltaRequisito(c) => write!(f, "Primero poné algo de {c:?}"),
         }
     }
 }
@@ -147,11 +156,51 @@ impl Armado {
         accesorios.iter().find(|a| a.id == id).ok_or_else(|| ErrorArmado::Inexistente(id.to_string()))
     }
 
+    /// REQ-AMP-10: hay puesto algo de esa categoría (sin contar el anclaje `salvo`).
+    fn hay_puesto(&self, categoria: Categoria, salvo: Option<&str>, cat: &Catalogo) -> bool {
+        self.accesorios.iter().any(|(anc, id)| {
+            Some(anc.as_str()) != salvo && cat.accesorios.iter().any(|a| &a.id == id && a.categoria == categoria)
+        })
+    }
+
+    /// REQ-AMP-10: el anclaje se puede usar (y se ve en el modo armado): lo que pide está puesto.
+    pub fn anclaje_disponible(&self, anclaje: &str, cat: &Catalogo) -> bool {
+        let Ok(base) = self.base_def(&cat.bases) else { return false };
+        base.anclaje(anclaje).is_some_and(|a| a.requiere.is_none_or(|c| self.hay_puesto(c, Some(anclaje), cat)))
+    }
+
+    /// REQ-AMP-11: lo puesto (fuera de `salvo`) con lo que chocaría `acc`.
+    fn choque(&self, acc: &Accesorio, salvo: &str, cat: &Catalogo) -> Option<String> {
+        self.accesorios
+            .iter()
+            .filter(|(anc, _)| anc.as_str() != salvo)
+            .filter_map(|(_, id)| cat.accesorios.iter().find(|a| &a.id == id))
+            .find(|b| acc.choca(b))
+            .map(|b| b.nombre.clone())
+    }
+
+    /// REQ-AMP-10: guarda lo que quedó en anclajes cuyo requisito ya no está (la guirnalda sin
+    /// techo). Devuelve (anclaje, accesorio) de cada uno; el juego avisa.
+    pub fn soltar_sin_requisito(&mut self, cat: &Catalogo) -> Vec<(String, String)> {
+        let mut sueltos = Vec::new();
+        loop {
+            let Some(anc) = self.accesorios.keys().find(|a| !self.anclaje_disponible(a, cat)).cloned() else {
+                return sueltos;
+            };
+            let id = self.accesorios.remove(&anc).expect("está en las claves");
+            self.inventario.accesorios.push(id.clone());
+            sueltos.push((anc, id));
+        }
+    }
+
     /// REQ-TIE-02: lo que entra en un anclaje; primero lo guardado (sin repetir), después la tienda.
     pub fn opciones(&self, anclaje: &str, cat: &Catalogo) -> Vec<Opcion> {
         let (bases, accesorios) = (&cat.bases[..], &cat.accesorios[..]);
         let Ok(base) = self.base_def(bases) else { return Vec::new() };
         let Some(anc) = base.anclaje(anclaje) else { return Vec::new() };
+        if !self.anclaje_disponible(anclaje, cat) {
+            return Vec::new(); // REQ-AMP-10
+        }
         let mut v: Vec<Opcion> = Vec::new();
         for id in &self.inventario.accesorios {
             if v.iter().any(|o| &o.accesorio == id) {
@@ -187,6 +236,12 @@ impl Armado {
         }
         if self.accesorios.contains_key(anclaje) && con_bloques {
             return Err(ErrorArmado::ConBloques(anclaje.to_string()));
+        }
+        if let Some(c) = anc.requiere.filter(|c| !self.hay_puesto(*c, Some(anclaje), cat)) {
+            return Err(ErrorArmado::FaltaRequisito(c)); // REQ-AMP-10
+        }
+        if let Some(con) = self.choque(acc, anclaje, cat) {
+            return Err(ErrorArmado::Choca { accesorio: acc.nombre.clone(), con }); // REQ-AMP-11
         }
         let gasto = match origen {
             Origen::Guardado => {
@@ -311,6 +366,11 @@ impl Armado {
         for (anc, acc) in &guardados {
             self.accesorios.remove(anc);
             self.inventario.accesorios.push(acc.clone());
+        }
+        // REQ-AMP-10: si el techo no pasó, la guirnalda tampoco.
+        for (anc, acc) in self.soltar_sin_requisito(cat) {
+            pasan.retain(|a| a != &anc);
+            guardados.push((anc, acc));
         }
         Ok(CambioBase { pagado, pasan, guardados })
     }

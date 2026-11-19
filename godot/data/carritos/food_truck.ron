@@ -1,0 +1,36 @@
+// Base de carrito (SPEC-006). Frente (cliente) = +Z, vendedor del lado -Z.
+// REQ-AMP-01: food truck. Camioncito con caja cocina (de x −2,25 a 1,05) y cabina en +X. El
+// vendedor trabaja adentro, sobre un piso a 0,50 m (escalón a 0,25 en la puerta de atrás).
+// Posiciones relativas al centro del modelo, a nivel de la calle (ver tools/blender/modelos/food_truck.py).
+(
+    id: "food_truck",
+    modelo: Some("carritos/food_truck"), // SPEC-025, REQ-MOD-14
+    nombre: "Food truck",
+    ancho: 4.5, profundidad: 2.2, alto_mostrador: 1.45,
+    color: (0.78, 0.13, 0.1),
+    ruedas: true,
+    precio: 7200, // REQ-AMP-01
+    entrega: (-0.1, 1.45, 1.22), // REQ-CAR-10: en la repisa de afuera
+    fila: (-0.6, 0.0, 1.75), // REQ-CAR-10: frente a la ventana (sigue hacia +X)
+    jugador: Some((-1.9, 0.0, 2.3)), // REQ-AMP-02: afuera, adelante
+    pallet: Some((-1.5, 0.0, -1.9)), // REQ-AMP-02: atrás, lejos de la puerta
+    puerta: Some(100.0), // REQ-AMP-01: se abre 100° hacia afuera...
+    puerta_abierta: false, // ...y arranca cerrada
+    anclajes: [
+        (id: "mostrador_izq", pos: (-1.35, 1.45, 0.75), categorias: [Cocina, Equipamiento]),
+        (id: "mostrador_centro", pos: (-0.6, 1.45, 0.75), categorias: [Cocina, Equipamiento, Decoracion]),
+        (id: "mostrador_der", pos: (0.15, 1.45, 0.75), categorias: [Cocina, Equipamiento, Decoracion]),
+        (id: "atras_izq", pos: (-1.75, 1.45, -0.775), categorias: [Cocina, Equipamiento, Deposito]),
+        (id: "atras_der", pos: (-0.75, 1.45, -0.775), categorias: [Cocina, Equipamiento, Deposito]),
+        (id: "frente", pos: (-0.6, 0.7, 1.11), categorias: [Telon, Decoracion]),
+        (id: "cartel", pos: (-0.6, 1.438, 1.302), categorias: [Cartel]), // REQ-AMP-03: canto de la repisa
+        (id: "cartel_techo", pos: (-0.6, 2.62, 0.75), categorias: [Decoracion]), // REQ-AMP-03
+        (id: "toldo", pos: (-0.6, 0.15, 1.1), categorias: [Toldo]), // REQ-AMP-07: debajo de la tapa
+        (id: "carpa", pos: (-0.6, 0.0, 3.0), categorias: [Carpa]), // REQ-AMP-08
+        (id: "luz_1", pos: (-1.2, 2.57, 0.3), categorias: [Luz]),
+        (id: "luz_2", pos: (0.0, 2.57, 0.3), categorias: [Luz]),
+        (id: "bahia_1", pos: (-0.725, 0.79, 0.47), categorias: [Alacena]), // REQ-AMP-04
+        (id: "bahia_2", pos: (-0.065, 0.79, 0.47), categorias: [Alacena]), // REQ-AMP-04
+        (id: "bahia_3", pos: (0.595, 0.79, 0.47), categorias: [Alacena]), // REQ-AMP-04
+    ],
+)

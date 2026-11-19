@@ -25,6 +25,14 @@ pub enum Categoria {
     Mobiliario,
     /// REQ-CAR-04 / REQ-PAP-07: cartel que cuelga adelante, del canto del mostrador.
     Cartel,
+    /// REQ-AMP-09: techos y marquesinas (con caños adelante; la carpa sigue en Carpa).
+    Techo,
+    /// REQ-AMP-07: toldos del frente.
+    Toldo,
+    /// REQ-AMP-04: alacenas que encastran en las bahías bajo la mesada.
+    Alacena,
+    /// REQ-AMP-10: guirnaldas de luces colgadas de los caños de un techo.
+    Guirnalda,
 }
 
 /// REQ-CAR-03
@@ -36,6 +44,9 @@ pub struct Anclaje {
     #[serde(default)]
     pub rot_y: f32,
     pub categorias: Vec<Categoria>,
+    /// REQ-AMP-10: el anclaje solo se usa si en el carrito hay algo de esta categoría.
+    #[serde(default)]
+    pub requiere: Option<Categoria>,
 }
 
 /// REQ-CAR-01. Convención: el frente (lado del cliente) mira a +Z; el vendedor se para en -Z.
@@ -177,6 +188,16 @@ pub struct Accesorio {
     /// REQ-TIE-11: bases donde entra (por tamaño). Si falta, entra en todas.
     #[serde(default)]
     pub bases: Option<Vec<String>>,
+    /// REQ-AMP-11: categorías con las que no puede estar en el mismo carrito.
+    #[serde(default)]
+    pub choca_con: Vec<Categoria>,
+}
+
+impl Accesorio {
+    /// REQ-AMP-11: el choque vale para los dos lados.
+    pub fn choca(&self, otro: &Accesorio) -> bool {
+        self.choca_con.contains(&otro.categoria) || otro.choca_con.contains(&self.categoria)
+    }
 }
 
 /// El carrito del jugador (`godot/data/carrito_jugador.ron`). REQ-CAR-07
@@ -197,12 +218,42 @@ pub struct ConfigCarrito {
 #[derive(Debug, Clone, PartialEq)]
 pub enum ErrorCarrito {
     BaseInexistente(String),
-    AnclajeInexistente { base: String, anclaje: String },
-    AccesorioInexistente { anclaje: String, accesorio: String },
-    CategoriaNoPermitida { anclaje: String, accesorio: String, categoria: Categoria, permitidas: Vec<Categoria> },
-    StockSinDeposito { anclaje: String },
-    StockDemasiadosBloques { anclaje: String, lugares: usize, pedidos: usize },
-    BloqueInexistente { anclaje: String, bloque: String },
+    AnclajeInexistente {
+        base: String,
+        anclaje: String,
+    },
+    AccesorioInexistente {
+        anclaje: String,
+        accesorio: String,
+    },
+    CategoriaNoPermitida {
+        anclaje: String,
+        accesorio: String,
+        categoria: Categoria,
+        permitidas: Vec<Categoria>,
+    },
+    StockSinDeposito {
+        anclaje: String,
+    },
+    StockDemasiadosBloques {
+        anclaje: String,
+        lugares: usize,
+        pedidos: usize,
+    },
+    BloqueInexistente {
+        anclaje: String,
+        bloque: String,
+    },
+    /// REQ-AMP-11
+    Choque {
+        accesorio: String,
+        con: String,
+    },
+    /// REQ-AMP-10
+    FaltaRequisito {
+        anclaje: String,
+        categoria: Categoria,
+    },
 }
 
 impl fmt::Display for ErrorCarrito {
@@ -227,6 +278,10 @@ impl fmt::Display for ErrorCarrito {
             }
             BloqueInexistente { anclaje, bloque } => {
                 write!(f, "Depósito en \"{anclaje}\": no existe el bloque \"{bloque}\"")
+            }
+            Choque { accesorio, con } => write!(f, "\"{accesorio}\" choca con \"{con}\""),
+            FaltaRequisito { anclaje, categoria } => {
+                write!(f, "Anclaje \"{anclaje}\": necesita algo de {categoria:?} puesto en el carrito")
             }
         }
     }
@@ -278,6 +333,18 @@ pub fn armar(
             });
         }
         colocados.push(Colocado { anclaje: anclaje.clone(), accesorio: acc.clone(), stock: Vec::new() });
+    }
+
+    // REQ-AMP-10 / REQ-AMP-11: sin choques y con lo que pide cada anclaje.
+    for (i, a) in colocados.iter().enumerate() {
+        if let Some(b) = colocados[i + 1..].iter().find(|b| a.accesorio.choca(&b.accesorio)) {
+            return Err(ErrorCarrito::Choque { accesorio: a.accesorio.id.clone(), con: b.accesorio.id.clone() });
+        }
+        if let Some(cat) = a.anclaje.requiere
+            && !colocados.iter().any(|c| c.accesorio.categoria == cat)
+        {
+            return Err(ErrorCarrito::FaltaRequisito { anclaje: a.anclaje.id.clone(), categoria: cat });
+        }
     }
 
     for (anclaje_id, bloques) in &config.stock {

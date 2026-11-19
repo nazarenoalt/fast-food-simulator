@@ -91,6 +91,7 @@ pub fn modelo_prop(tipo: TipoProp, i: usize) -> &'static str {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::carrito::Categoria;
     use crate::datos::tests::catalogo_real;
     use std::path::PathBuf;
 
@@ -154,6 +155,19 @@ mod tests {
         assert_eq!(pieza, "pieza_pano");
         assert_eq!(colores.len(), 2);
         assert_ne!(colores[0], colores[1]);
+    }
+
+    #[test]
+    fn req_mod_14_ampliaciones_con_modelo() {
+        let c = catalogo_real();
+        for b in ["food_truck", "trailer"] {
+            assert!(c.bases.iter().find(|x| x.id == b).unwrap().modelo.is_some(), "base {b}");
+        }
+        for a in c.accesorios.iter().filter(|a| {
+            matches!(a.categoria, Categoria::Alacena | Categoria::Toldo | Categoria::Guirnalda | Categoria::Techo)
+        }) {
+            assert_eq!(a.modelo.as_deref(), Some(format!("accesorios/{}", a.id).as_str()), "accesorio {}", a.id);
+        }
     }
 
     #[test]
