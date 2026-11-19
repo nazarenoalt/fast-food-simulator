@@ -10,8 +10,8 @@ Cada etapa abre con sus specs (SPEC-000) y cierra con docs al día. Formato en [
 | 0001 | Proceso, CLAUDE.md, roadmap, CI de PRs y docs (`chore (docs)`) | 000 | 🔄 |
 | 0002 | Dejar `cargo clippy` sin advertencias (la CI falla si aparece una) | — | ✅ |
 | 0003 | Git LFS para modelos `.glb`, fuentes `.blend` e imágenes de arte | — | ✅ |
-| 0004 | Cerrar el juego sin avisos de objetos y cuerpos de Jolt perdidos | — | 🔄 |
-| 0005 | De noche, los carteles que brillan (fijos y logo) no se ven lavados | 013, 028 | 🔄 |
+| 0004 | Cerrar el juego sin avisos de objetos y cuerpos de Jolt perdidos | — | ✅ |
+| 0005 | De noche, los carteles que brillan (fijos y logo) no se ven lavados | 013, 028 | ✅ |
 
 ## Hechas
 | ID | Tarea | Spec | Estado |
