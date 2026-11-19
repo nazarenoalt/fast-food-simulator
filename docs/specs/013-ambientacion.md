@@ -1,6 +1,6 @@
 # SPEC-013 · Ambientación
 
-Estado: **Implementada (etapa 2)**
+Estado: **Implementada (etapa 2; la gente se renueva: TASK-0506)**
 
 ## Objetivo
 

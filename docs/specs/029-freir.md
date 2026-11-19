@@ -1,6 +1,6 @@
 # SPEC-029 · Preparar y freír papas
 
-Estado: **Aprobada**
+Estado: **Implementada**
 
 ## Objetivo
 
