@@ -288,7 +288,9 @@ impl Gente {
     /// (REQ-AMB-16), con su velocidad (REQ-RUT-02).
     fn agregar(&mut self, en: usize, acciones: Vec<Accion>, perfil: Perfil, plan: Plan) -> Gd<Peaton> {
         let paleta = vestimenta::paleta(perfil, self.hora);
-        let vel = plaza().agenda.velocidad(&mut self.azar, perfil);
+        // Un corredor que no trota (REQ-RUT-11, de noche) camina como cualquiera.
+        let perfil_vel = if perfil == Perfil::Corredor && plan != Plan::Trotar { Perfil::Paseante } else { perfil };
+        let vel = plaza().agenda.velocidad(&mut self.azar, perfil_vel);
         self.agregar_con(en, acciones, perfil, plan, Origen::Nueva(paleta), vel)
     }
 
