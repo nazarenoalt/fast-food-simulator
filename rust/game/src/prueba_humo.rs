@@ -1135,12 +1135,13 @@ impl INode for PruebaHumo {
                 self.pararse_al_lado(&mundo, pa.get_global_position());
                 self.disparos_ref = disparos_de_sonido(&mundo);
                 self.chequear(!pa.bind_mut().alternar(), "REQ-PAR-01 sin carbón no se enciende");
-                self.chequear(pa.bind_mut().cargar(1.0).is_ok(), "REQ-PAR-01 entra una bolsa de carbón");
+                // REQ-PAR-02: medio kilo dura 2 h de juego (0,25 kg/h): 120 s a 1 min/s.
+                self.chequear(pa.bind_mut().cargar(0.5).is_ok(), "REQ-PAR-01 entra una bolsa de carbón");
                 self.chequear(pa.bind_mut().cargar(3.0).is_err(), "REQ-PAR-01 no entra más de 3 kg");
                 self.chequear(pa.bind_mut().alternar(), "REQ-PAR-01 con carbón se enciende");
                 let encima = pa.get_global_position() + Vector3::new(0.0, 0.12, 0.0);
                 self.chorizo = Some(self.agregar_comida("chorizo", encima));
-                self.esperar(90 * 60);
+                self.esperar(105 * 60);
             }
             20 => {
                 // REQ-SON-08: sonó el carbón al cargar y empezaron las brasas al prender.
@@ -1159,7 +1160,7 @@ impl INode for PruebaHumo {
                     l.lados[0].avance > 3.0 && l.lados[1].avance == 0.0,
                     &format!("REQ-PAR-04 se cocina el lado de abajo del chorizo ({:.1})", l.lados[0].avance),
                 );
-                self.esperar(40 * 60);
+                self.esperar(25 * 60);
             }
             21 => {
                 // CA-PAR-02: sigue prendida un rato largo: se queda sin carbón y se apaga.

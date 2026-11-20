@@ -5,7 +5,7 @@ use crate::TEMP_AMBIENTE;
 /// Carbón máximo que entra en la parrilla (kg). REQ-PAR-01
 pub const CARBON_MAX: f32 = 3.0;
 /// Carbón que se gasta encendida, por hora de juego (kg). REQ-PAR-02
-pub const GASTO_KG_POR_HORA: f32 = 0.5;
+pub const GASTO_KG_POR_HORA: f32 = 0.25;
 /// Subida de las brasas por segundo (°C/s). REQ-PAR-02
 pub const SUBIDA_POR_SEGUNDO: f32 = 3.0;
 /// Qué tan rápido se enfría (1/s). REQ-PAR-03
@@ -136,7 +136,7 @@ mod tests {
     }
 
     #[test]
-    fn req_par_02_gasta_medio_kilo_por_hora_de_juego() {
+    fn req_par_02_gasta_un_cuarto_de_kilo_por_hora_de_juego() {
         let mut p = Parrilla::default();
         p.cargar(2.0).unwrap();
         p.alternar().unwrap();
@@ -144,7 +144,7 @@ mod tests {
         for _ in 0..60 {
             p.paso(1.0, 1.0 / 60.0);
         }
-        assert!((p.carbon - 1.5).abs() < 1e-3, "quedan {} kg", p.carbon);
+        assert!((p.carbon - 1.75).abs() < 1e-3, "quedan {} kg", p.carbon);
     }
 
     #[test]
@@ -152,7 +152,12 @@ mod tests {
         let mut p = Parrilla::default();
         p.cargar(0.5).unwrap();
         p.alternar().unwrap();
-        for _ in 0..(2 * 60) {
+        // 0,5 kg duran 2 horas de juego.
+        for _ in 0..(2 * 60 - 5) {
+            p.paso(1.0, 1.0 / 60.0);
+        }
+        assert!(p.encendida && p.carbon > 0.0);
+        for _ in 0..10 {
             p.paso(1.0, 1.0 / 60.0);
         }
         assert_eq!(p.carbon, 0.0);
