@@ -1,4 +1,5 @@
-// El carrito del jugador (SPEC-006, REQ-CAR-07).
+// El carrito del jugador (SPEC-006, REQ-CAR-07): la base común con la que arranca toda partida.
+// Lo de cada producto (equipo y estante) se suma desde arranque.ron (SPEC-031, REQ-ARR-02).
 // Probá cambiar "barra_mediana" por "barra_chica", "carro_grande" o "carro_kiosco"
 // (el kiosco usa "atras_der" para el estante, "lateral_der" para el porche y no tiene
 // anclajes de parrilla ni heladera).
@@ -6,18 +7,13 @@
     base: "barra_mediana",
     color: Some((0.78, 0.13, 0.1)), // REQ-CAR-09: estilo propio
     accesorios: {
-        "mostrador_izq": "hervidor_chico",
-        "mostrador_centro": "plancha_chica",
-        "mostrador_der": "aderecera_cinco",
-        "parrilla": "parrilla_chica",
         "heladera": "heladera_chica",
         "lateral": "estante_deposito",
         "sombra": "sombrilla_roja",
         "luz_1": "foco_calido",
         "frente": "telon_panchos",
+        "cartel": "cartel_cerrado", // REQ-ARR-03: el puesto arranca cerrado (cartel colgado)
     },
-    // Bloque que va en cada lugar del depósito (None = vacío).
-    stock: {
-        "lateral": [Some("bolsa_panes_12"), Some("caja_salchichas_12"), Some("caja_salchichas_12"), Some("caja_hamburguesas_12")],
-    },
+    // Bloque que va en cada lugar del depósito (None = vacío). El estante lo llena arranque.ron.
+    stock: {},
 )

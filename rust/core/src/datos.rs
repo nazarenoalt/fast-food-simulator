@@ -287,8 +287,17 @@ pub(crate) mod tests {
         std::fs::read_to_string(dir_datos().join(nombre)).unwrap_or_else(|e| panic!("{nombre}: {e}"))
     }
 
-    /// Carga los archivos reales del juego.
+    /// Carga los archivos reales del juego, con el carrito del jugador de la prueba de humo: la
+    /// base común más los cuatro equipos y sin el cartel (REQ-ARR-04), el de antes del arranque.
     pub(crate) fn catalogo_real() -> Catalogo {
+        let mut c = catalogo_base_comun();
+        let arranque = crate::arranque::tests::arranque_real();
+        c.carrito_jugador = crate::arranque::config_prueba(&c.carrito_jugador, &arranque);
+        c
+    }
+
+    /// Los archivos reales tal cual: `carrito_jugador.ron` es la base común (REQ-ARR-02).
+    pub(crate) fn catalogo_base_comun() -> Catalogo {
         catalogo_con_jugador(&leer("carrito_jugador.ron")).unwrap_or_else(|e| panic!("{e}"))
     }
 

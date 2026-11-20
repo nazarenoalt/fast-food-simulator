@@ -230,7 +230,8 @@ impl Accesorio {
     }
 }
 
-/// El carrito del jugador (`godot/data/carrito_jugador.ron`). REQ-CAR-07
+/// Una configuración de carrito. REQ-CAR-07. `godot/data/carrito_jugador.ron` es la base común
+/// del jugador, a la que el arranque le suma lo del producto (REQ-ARR-02, `arranque.rs`).
 #[derive(Debug, Clone, PartialEq, Deserialize)]
 pub struct ConfigCarrito {
     pub base: String,
@@ -493,6 +494,7 @@ mod tests {
 
     #[test]
     fn req_car_07_config_del_jugador_es_valida() {
+        // El carrito de la prueba de humo (base común + los cuatro equipos, REQ-ARR-04).
         let cat = catalogo_real();
         let armado = armar_cfg(&cat.carrito_jugador).expect("carrito_jugador.ron inválido");
         assert!(armado.colocados.iter().any(|c| matches!(c.accesorio.funcion, Some(Funcion::Hervidor { .. }))));
