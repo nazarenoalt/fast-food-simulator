@@ -430,7 +430,7 @@ pub(crate) mod tests {
         let c = catalogo_real();
         assert_eq!(crate::armado::combinar(&c.combinaciones, "cajita_papas", "papas_fritas"), Some("papas_en_cajita"));
         let p = c.producto("papas_en_cajita").unwrap();
-        assert_eq!(p.precio, Some(8.0));
+        assert_eq!(p.precio, Some(10.0)); // REQ-FRE-11
         assert_eq!(p.aderezos, vec!["ketchup".to_string(), "mayonesa".to_string()]);
         assert_eq!(p.requiere.as_deref(), Some("Freidora"));
         assert!(p.coccion.is_none(), "no se cocina: conserva la cocción de las papas (REQ-ARM-03)");
@@ -458,7 +458,7 @@ pub(crate) mod tests {
         menu.sort();
         assert_eq!(menu, ["choripan", "hamburguesa", "pancho", "papas_en_cajita"].map(String::from).to_vec());
         assert_eq!(c.producto("hamburguesa").unwrap().precio, Some(14.0));
-        assert_eq!(c.producto("choripan").unwrap().precio, Some(12.0));
+        assert_eq!(c.producto("choripan").unwrap().precio, Some(14.0));
     }
 
     #[test]

@@ -101,7 +101,7 @@
             id: "choripan",
             nombre: "choripán",
             masa: 0.18,
-            precio: Some(12), // REQ-ECO-03
+            precio: Some(14), // REQ-ECO-03
             aderezos: ["chimichurri", "mostaza"], // REQ-ADE-07
             requiere: Some("Parrilla"), // REQ-CLI-04
             colision: Caja(medidas: (0.2, 0.07, 0.065)),
@@ -312,7 +312,7 @@
             id: "papas_en_cajita",
             nombre: "papas en cajita",
             masa: 0.14, // REQ-ARM-05: cajita + papas fritas
-            precio: Some(8), // REQ-FRE-11
+            precio: Some(10), // REQ-FRE-11
             aderezos: ["ketchup", "mayonesa"], // REQ-FRE-11, REQ-ADE-07
             altura_aderezos: Some(0.066), // sobre los bastones
             requiere: Some("Freidora"), // REQ-CLI-04
