@@ -21,25 +21,26 @@ Cada etapa abre con sus specs (SPEC-000) y cierra con docs al día. Formato en [
 | 0200 | Etapa 2 · Clientes con fila, caja y reputación, proveedor, aderezos, ciudad viva | 009, 010, 011, 012, 013 | ✅ |
 | 0290 | Builds descargables Win/Mac/Linux (acción Builds) | — | ✅ |
 
-## Etapa 2.5 · Prueba de juego (`fix (balance)`) · PR TASK-0250
+## Etapa 2.5 · Prueba de juego (`fix (balance)`) · PR TASK-0250 🔄
 | ID | Tarea | Spec | Estado |
 |---|---|---|---|
 | 0251 | Jugarlo y anotar fricciones (hoja de hallazgos en el PR) | — | ⬜ |
 | 0252 | Ajustar sensibilidad y salto (el agarre, en 0256) | 001 | ⬜ |
-| 0253 | Ajustar tiempos de cocción y paciencia | 003, 009 | ⬜ |
-| 0254 | Ajustar precios y clientes por hora | 009, 010 | ⬜ |
-| 0255 | Rendimiento (FPS) con ciudad y fila llena | 013 | ⬜ |
+| 0253 | Ajustar tiempos de cocción y paciencia | 009, 015 | ⬜ |
+| 0254 | Ajustar precios y clientes por hora; festejo variable | 009, 010, 015, 019, 029 | ⬜ |
+| 0255 | Rendimiento (FPS) con ciudad y fila llena: `tools/rendimiento.sh` | 032 | ⬜ |
 | 0256 | Agarre cercano, colocar con la mira (cruz blanca), salchicha al pan apuntando, levantar paquetes del estante y volcarlos al hervidor | 002, 003, 004 | ✅ |
 | 0257 | Las comidas listas no se echan a perder | 016 | ✅ |
 | 0258 | Las sombras no tiemblan "como líquido" al moverse el sol (pedido del dueño) | 007 | ⬜ |
 | 0259 | Caminar con arranque y frenado suaves, menos estático | 001 | ⬜ |
 | 0260 | Clic: lo que tenés en la mano queda siempre donde apunta la cruz (hervidor, estante, mesada), nunca se tira ni hay que calcular la distancia | 002, 003 | ⬜ |
-| 0261 | El cartel de cerrado viene con el carrito inicial y arranca colgado (cerrado) | 009, 026 | ⬜ |
+| 0261 | El cartel de cerrado viene con el carrito inicial y arranca colgado (cerrado) | 031 | ⬜ |
 | 0262 | Las salchichas flotan en el hervidor y se ven (hoy quedan en el fondo) | 003 | ⬜ |
 | 0263 | Arreglo: "clic para guardar en el estante" tira el paquete al piso (el clic derecho sí lo guarda) | 004 | ⬜ |
-| 0264 | Arranque tranquilo: los primeros días viene poca gente, para aprender | 009, 018 | ⬜ |
+| 0264 | Arranque tranquilo: la primera semana los clientes y la fila van creciendo, sin eventos | 031, 019 | ⬜ |
 | 0265 | Lo que tenés en la mano se ve siempre derecho (el pancho, con la salchicha a la vista) | 002 | ⬜ |
 | 0266 | Las salchichas pueden quedarse en el agua sin pasarse | 003 | ⬜ |
+| 0267 | Empezar con un solo producto a elección; el carrito se arma para ese producto | 031 | ⬜ |
 
 ## Etapa 3 · Plancha y parrilla (`feat (cocina)`) · PR TASK-0300
 | ID | Tarea | Spec | Estado |
@@ -111,9 +112,9 @@ Cada etapa abre con sus specs (SPEC-000) y cierra con docs al día. Formato en [
 | 0753 | Pausa, menú e interfaz gráfica; opciones | 022 | ⬜ |
 | 0754 | Clima: lluvia y viento | 023 | ⬜ |
 | 0755 | Elegir la dificultad en el menú: cambia la cantidad de gente y la exigencia | 022 | ⬜ |
+| 0756 | Modo "Testing": eventos desde el día 1 y mucha plata para comprar de todo | 022 | ⬜ |
 
 ## Etapa 8 · Arranque guiado (`feat (economia)`) · PR TASK-0800
 | ID | Tarea | Spec | Estado |
 |---|---|---|---|
-| 0801 | Empezar con un solo producto a elección; los demás se suman comprando | — | ⬜ |
 | 0802 | Tutorial guiado para aprender a jugar (al final, con el juego terminado) | — | ⬜ |

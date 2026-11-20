@@ -10,9 +10,10 @@ y caminar por la plaza.
 ## Requisitos
 
 - **REQ-JUG-01** Movimiento en primera persona con W/A/S/D relativo a hacia dónde mira la cámara.
-- **REQ-JUG-02** Mirar con el mouse. El ángulo vertical se limita a ±85° para no dar la vuelta.
+- **REQ-JUG-02** Mirar con el mouse, 0,0018 rad por píxel. El ángulo vertical se limita a ±85°.
 - **REQ-JUG-03** Velocidad al caminar 3,5 m/s; con Shift (correr) 6 m/s.
-- **REQ-JUG-04** Saltar con Espacio, solo si está apoyado en el piso. Gravedad del proyecto.
+- **REQ-JUG-04** Saltar con Espacio, solo si está apoyado en el piso: sale a 3,5 m/s hacia
+  arriba (sube ~0,6 m). Gravedad del proyecto.
 - **REQ-JUG-05** El cuerpo del jugador es una cápsula de 1,75 m de alto y 0,3 m de radio;
   la cámara está a 1,65 m del piso.
 - **REQ-JUG-06** El jugador choca con el carrito, el mobiliario y el piso (no los atraviesa),
@@ -21,6 +22,10 @@ y caminar por la plaza.
 - **REQ-JUG-08** El jugador aparece detrás del mostrador del carrito.
 - **REQ-JUG-09** Camina por escalones de hasta 0,30 m sin saltar (el del food truck y el
   tráiler, SPEC-027): si choca de frente con un borde que se puede pisar, sube a ese nivel.
+- **REQ-JUG-10** Arranca y frena suave (TASK-0259): en el piso la velocidad va hacia la pedida
+  con 12 m/s² al acelerar y 16 m/s² al frenar; en el aire, con 3 m/s². Al caminar la cámara
+  se balancea (2 cm arriba y abajo, 2 pasos por segundo a 3,5 m/s, más chico si va más lento)
+  y al parar vuelve al centro en 0,2 s.
 
 ## Criterios de aceptación
 

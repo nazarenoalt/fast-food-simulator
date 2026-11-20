@@ -12,10 +12,11 @@ y se van) y juzgan lo que les diste.
 ### Llegada
 - **REQ-CLI-01** La cantidad esperada de clientes por hora de juego depende de la hora:
   casi nadie de 0 a 7, picos al mediodía (12–14) y a la noche (20–22). Se multiplica por un
-  factor de reputación (SPEC-010): con 0 estrellas viene el 40%, con 5 estrellas el 160%.
+  factor de reputación (SPEC-010): con 0 estrellas viene el 40%, con 5 estrellas el 160%;
+  por el menú: × (1 + 0,15 × (productos del menú − 1)); y por el arranque (REQ-ARR-04).
 - **REQ-CLI-02** Los clientes llegan caminando desde los extremos de la vereda o desde la
   plaza, siguiendo los caminos (SPEC-013).
-- **REQ-CLI-03** Fila: hasta 6 lugares en la vereda, frente al carrito. Si está llena no
+- **REQ-CLI-03** Fila: hasta 6 lugares (menos la primera semana, REQ-ARR-05) en la vereda, frente al carrito. Si está llena no
   llegan más clientes. Cuando alguien se va, los de atrás avanzan.
 
 ### Pedido
@@ -26,7 +27,7 @@ y se van) y juzgan lo que les diste.
   parrilla) y papas en cajita (con freidora, SPEC-029). Cada uno tiene la misma chance.
 - **REQ-CLI-05** El pedido se muestra en un globo sobre su cabeza (ej. "Pancho con
   mostaza y ketchup"). El color del globo muestra la paciencia: verde, amarillo, rojo.
-- **REQ-CLI-06** Paciencia: 100 s desde que pide. Mientras espera en la fila (sin pedir
+- **REQ-CLI-06** Paciencia: 150 s desde que pide (cocinar antes conviene: decisión del dueño). Mientras espera en la fila (sin pedir
   todavía) la paciencia baja a la mitad de velocidad. Con paciencia 0 se va enojado
   (1 estrella, no paga).
 

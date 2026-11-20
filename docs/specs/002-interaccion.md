@@ -1,6 +1,6 @@
 # SPEC-002 · Interacción y agarre
 
-Estado: **Implementada (etapa 2.5: agarre cercano y colocar con la mira)**
+Estado: **Implementada (etapa 2.5: agarre cercano y colocar con la mira; TASK-0250 en curso)**
 
 ## Objetivo
 
@@ -17,24 +17,29 @@ tirarla, y usar equipos (encender el hervidor, sacar del depósito).
 - **REQ-INT-03** Clic izquierdo sobre un objeto agarrable (comida, paquete o bloque del
   depósito, REQ-DEP-09) lo toma. Queda cerca, abajo a la derecha de la vista, como en la mano:
   0,2 m a la derecha, 0,17 m abajo y 0,35 m + media medida del objeto adelante de los ojos,
-  girado como la cámara (si estaba dado vuelta, sigue dado vuelta). **No pierde la física**:
-  choca con todo menos con el jugador.
+  **derecho** (TASK-0265): acostado como sobre una mesa, con su largo cruzado a la vista, la
+  parte de arriba (la salchicha del pancho) hacia arriba e inclinado 25° hacia los ojos. Lo que
+  se cocina por lados conserva qué cara mira abajo. **No pierde la física**: choca con todo
+  menos con el jugador.
 - **REQ-INT-04** El objeto agarrado va hacia ese punto con velocidad proporcional a la
   distancia (resorte, ×20) con un tope de 12 m/s, y su giro va hacia el de la cámara igual.
 - **REQ-INT-05** Si el objeto agarrado queda trabado a más de 1,5 m del punto donde debería
   estar, se suelta solo.
-- **REQ-INT-06** Clic izquierdo con algo en la mano lo **coloca** (REQ-INT-09); si la mira no
-  toca nada a su alcance, lo suelta donde está (cae). Clic derecho lo tira hacia la mira con
-  un impulso de 4 m/s.
+- **REQ-INT-06** Clic izquierdo con algo en la mano lo **coloca** (REQ-INT-09) donde apunta la
+  cruz, a 3 m o menos: nunca lo suelta ni lo tira (TASK-0260). Si ahí no se puede apoyar (lejos,
+  una pared, el cielo), el clic no hace nada y el cartel dice "No se puede apoyar acá". Clic
+  derecho lo tira hacia la mira con un impulso de 4 m/s.
 - **REQ-INT-07** La tecla E usa el objetivo. Con la mano libre: enciende/apaga el hervidor
   o saca una unidad de un bloque del depósito (SPEC-004). Con algo en la mano: aderezos y
   repuestos sobre un pomo (SPEC-012); un paquete sobre el hervidor se vuelca (REQ-COC-10).
 - **REQ-INT-08** Mientras se sostiene algo, el cartel muestra qué es, su estado de cocción y
-  qué hace el clic ahí ("Apoyar", "Poner en el pan", "Guardar en el estante", "Soltar").
+  qué hace el clic ahí ("Apoyar", "Poner en el pan", "Guardar en el estante", "Al agua").
+  El clic hace siempre lo que dice el cartel (TASK-0263: "Guardar" guarda, no tira al piso).
 - **REQ-INT-09** Colocar deja el objeto quieto donde toca la mira: sobre una superficie
   inclinada 50° o menos, parado encima del punto, derecho y girado hacia donde mira el
-  jugador; contra una pared, delante del punto (y cae). Un paquete con la mira a 0,3 m o menos
-  de un lugar libre del depósito va centrado a ese lugar y se guarda (REQ-PRO-06).
+  jugador. Un paquete con la mira a 0,3 m o menos de un lugar libre del depósito va centrado
+  a ese lugar y se guarda (REQ-PRO-06). Con la mira en cualquier parte del hervidor (borde,
+  cuba o agua), lo que se cocina en agua va al agua, al primer lugar libre (REQ-COC-10).
 - **REQ-INT-10** Con un agregado en la mano (salchicha, chorizo) y la mira en una base que lo
   combina (REQ-ARM-01), colocar lo pone en la zona de encastre de la base, y se arma (REQ-ARM-02).
 
@@ -44,6 +49,8 @@ tirarla, y usar equipos (encender el hervidor, sacar del depósito).
 - **CA-INT-02** Tiro un pan y rebota en el piso.
 - **CA-INT-03** Con una salchicha en la mano miro el pan de la mesada y hago clic: se arma el pancho.
 - **CA-INT-04** Agarro la bolsa de papas del estante, la apoyo en el piso y la vuelvo a guardar.
+- **CA-INT-05** Con una salchicha en la mano apunto al borde del hervidor desde 2,5 m y hago
+  clic: queda en el agua. Apunto a una pared y hago clic: sigue en mi mano.
 
 ## Fuera de alcance
 

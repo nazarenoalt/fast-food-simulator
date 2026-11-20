@@ -13,7 +13,7 @@ La plata que entra y sale, y la fama del puesto, para que vender bien tenga sent
 - **REQ-ECO-02** No se puede gastar más de lo que hay en la caja: la compra se rechaza con un
   aviso.
 - **REQ-ECO-03** Precio de venta de cada producto en `productos.ron` (pancho: $10, hamburguesa:
-  $14, choripán: $12, con los aderezos incluidos; valores a ajustar en la etapa 2.5).
+  $14, choripán: $14, papas: $10, con los aderezos incluidos; ajustados en TASK-0254).
 - **REQ-ECO-07** Unidad de la plata: **1 pancho básico = $10**. Todos los precios del juego
   (productos, stock, accesorios y bases) se piensan en esa escala.
 - **REQ-ECO-04** Reputación de 0 a 5 estrellas; arranca en 3. Con cada cliente se acerca un
