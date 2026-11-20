@@ -1,0 +1,66 @@
+// SPEC-031 · Arranque de la partida (REQ-ARR-01, REQ-ARR-02): un botón por producto en el
+// panel "¿Con qué arrancás?" y lo que se suma a la base común de carrito_jugador.ron.
+// "producto" es el id de productos.ron (el único que queda en el menú); "accesorios" va
+// anclaje → accesorio (accesorios.ron) y "stock", anclaje con depósito → bloque por lugar
+// (bloques.ron). Si un anclaje ya está en la base común, manda el del producto.
+(
+    productos: [
+        (
+            producto: "pancho",
+            nombre: "Pancho",
+            accesorios: {
+                "mostrador_izq": "hervidor_chico",
+                "mostrador_der": "aderecera_cinco",
+            },
+            stock: {
+                "lateral": [Some("bolsa_panes_12"), Some("bolsa_panes_12"), Some("caja_salchichas_12"), Some("caja_salchichas_12")],
+            },
+        ),
+        (
+            producto: "hamburguesa",
+            nombre: "Hamburguesa",
+            accesorios: {
+                "mostrador_centro": "plancha_chica",
+                "mostrador_der": "aderecera_cinco",
+            },
+            stock: {
+                "lateral": [Some("caja_hamburguesas_12"), Some("caja_hamburguesas_12")],
+            },
+        ),
+        (
+            producto: "choripan",
+            nombre: "Choripán",
+            accesorios: {
+                "parrilla": "parrilla_chica",
+                "mostrador_der": "aderecera_cinco",
+            },
+            stock: {
+                "lateral": [Some("caja_chorizos_12"), Some("bolsa_panes_choripan_12"), Some("pack_carbon")],
+            },
+        ),
+        (
+            producto: "papas_en_cajita",
+            nombre: "Papas fritas",
+            accesorios: {
+                "mostrador_izq": "freidora",
+                "mostrador_centro": "tabla_papas",
+            },
+            stock: {
+                "lateral": [Some("bolsa_papas_5kg"), Some("pack_cajitas")],
+            },
+        ),
+    ],
+    // REQ-ARR-04: la prueba de humo no muestra el panel y arranca con los cuatro equipos de
+    // siempre (y sin el cartel de cerrado, para que lleguen clientes).
+    prueba: (
+        accesorios: {
+            "mostrador_izq": "hervidor_chico",
+            "mostrador_centro": "plancha_chica",
+            "mostrador_der": "aderecera_cinco",
+            "parrilla": "parrilla_chica",
+        },
+        stock: {
+            "lateral": [Some("bolsa_panes_12"), Some("caja_salchichas_12"), Some("caja_salchichas_12"), Some("caja_hamburguesas_12")],
+        },
+    ),
+)
