@@ -22,9 +22,10 @@ const TAMANO_DISCO_SOL: f32 = 1.0;
 
 /// REQ-DIA-08, REQ-AMB-14: ajustes de las sombras del sol (TASK-0258). El sol gira un poquito
 /// cada cuadro y Godot vuelve a dibujar el mapa de sombras con la grilla girada: los bordes se
-/// corren de a un texel ("tiemblan como líquido"). Se achica el texel en lo cercano (4 tramos
-/// más cortos y repartidos hacia adelante) y se suaviza el borde con PCF (desenfoque y
-/// filtrado de `project.godot`), sin PCSS (tamaño 0: su ruido por píxel hierve al moverse).
+/// corren de a un texel ("tiemblan como líquido"). Se achica el texel (atlas de 8192 en
+/// `project.godot` y 4 tramos más cortos y repartidos hacia adelante) y se suaviza el borde con
+/// PCF (desenfoque y filtro "Soft Medium" de `project.godot`), sin PCSS (tamaño 0: su ruido
+/// por píxel hierve al moverse).
 pub mod sombras {
     /// Hasta dónde hay sombras (m): toda la plaza vista desde el carrito.
     pub const DISTANCIA_MAX: f32 = 100.0;
