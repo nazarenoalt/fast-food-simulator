@@ -13,9 +13,9 @@ use super::{PruebaHumo, todos};
 use crate::arranque::{self, Arranque};
 use crate::carrito::{self, Carrito};
 use crate::datos::catalogo;
-use crate::util;
 
 const NOMBRE: &str = "CarritoArranque";
+const NOMBRE_INICIAL: &str = "CarritoInicial";
 
 /// Productos de los bloques que hay en el estante (anclaje `lateral`).
 fn estante(c: &Gd<Carrito>) -> Vec<String> {
@@ -85,12 +85,12 @@ impl PruebaHumo {
                         && m == ["choripan", "hamburguesa", "pancho"],
                     &format!("REQ-ARR-04 la prueba usa los cuatro equipos y sin cartel (menú {m:?})"),
                 );
-                let jugador = util::unico::<Carrito>(&mundo, carrito::GRUPO);
-                let puestos = jugador.as_ref().map(|c| c.bind().accesorios_puestos()).unwrap_or_default();
-                let equipos = ["hervidor_chico", "plancha_chica", "aderecera_cinco", "parrilla_chica"]
-                    .iter()
-                    .all(|e| puestos.values().any(|v| v == e));
-                self.chequear(equipos, "REQ-ARR-04 el carrito del jugador de la prueba tiene los cuatro equipos");
+                // Un carrito sin config forzada se arma como el del jugador al cargar (el de la
+                // prueba ya lo cambiaron los brazos de la tienda): se revisa en la fase 1.
+                let mut nuevo = Carrito::new_alloc();
+                nuevo.set_name(NOMBRE_INICIAL);
+                nuevo.set_position(Vector3::new(8.0, 0.0, -37.0));
+                mundo.clone().add_child(&nuevo);
                 let panel = todos::<Arranque>(&mundo).pop();
                 let quieto = panel.as_ref().is_some_and(|a| !a.bind().abierto() && !a.bind().panel_visible());
                 self.chequear(
@@ -110,6 +110,22 @@ impl PruebaHumo {
                     self.chequear(false, "REQ-ARR-01 hay panel del arranque y carrito de prueba");
                     return true;
                 };
+                // REQ-ARR-04: el carrito con el que arranca la prueba: los cuatro equipos, sin cartel.
+                let inicial = mundo.get_node_or_null(NOMBRE_INICIAL).and_then(|n| n.try_cast::<Carrito>().ok());
+                let puestos = inicial.as_ref().map(|c| c.bind().accesorios_puestos()).unwrap_or_default();
+                let equipos = ["hervidor_chico", "plancha_chica", "aderecera_cinco", "parrilla_chica"]
+                    .iter()
+                    .all(|e| puestos.values().any(|v| v == e));
+                let sin_cartel = inicial.as_ref().is_some_and(|c| c.bind().cartel_cerrado().is_none());
+                self.chequear(
+                    equipos && sin_cartel,
+                    &format!(
+                        "REQ-ARR-04 en la prueba el carrito arranca con los cuatro equipos y sin cartel ({puestos:?})"
+                    ),
+                );
+                if let Some(mut n) = inicial {
+                    n.queue_free();
+                }
                 // REQ-ARR-03: la base común sola trae el cartel colgado (el puesto arranca cerrado).
                 let colgado = c.bind().cartel_cerrado().is_some_and(|k| k.bind().colgado());
                 self.chequear(colgado, "REQ-ARR-03 el cartel de cerrado arranca colgado");
