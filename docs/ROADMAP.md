@@ -12,7 +12,7 @@ Cada etapa abre con sus specs (SPEC-000) y cierra con docs al día. Formato en [
 | 0003 | Git LFS para modelos `.glb`, fuentes `.blend` e imágenes de arte | — | ✅ |
 | 0004 | Cerrar el juego sin avisos de objetos y cuerpos de Jolt perdidos | — | ✅ |
 | 0005 | De noche, los carteles que brillan (fijos y logo) no se ven lavados | 013, 028 | ✅ |
-| 0006 | La semana empieza el lunes; cerrar 6a y postergar 6b (`feat (mundo)`) | 019, 009, 010, 024 | 🔄 |
+| 0006 | La semana empieza el lunes; cerrar 6a y postergar 6b (`feat (mundo)`) | 019, 009, 010, 024 | ✅ |
 
 ## Hechas
 | ID | Tarea | Spec | Estado |
