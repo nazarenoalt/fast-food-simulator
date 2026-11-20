@@ -29,4 +29,7 @@ La plata que entra y sale, y la fama del puesto, para que vender bien tenga sent
 
 ## Fuera de alcance
 
-- Cambiar precios, impuestos, alquiler del lugar, préstamos.
+- Impuestos, alquiler del lugar, préstamos.
+- Descartado por el dueño (TASK-0006): elegir precios (son los de REQ-ECO-03), billetes y
+  vuelto, caja registradora, permisos, gas, inspección de higiene y suciedad.
+- Objetivos y campañas: postergados (ver el [ROADMAP](../ROADMAP.md)).

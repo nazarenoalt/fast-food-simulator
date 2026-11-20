@@ -12,6 +12,7 @@ Cada etapa abre con sus specs (SPEC-000) y cierra con docs al día. Formato en [
 | 0003 | Git LFS para modelos `.glb`, fuentes `.blend` e imágenes de arte | — | ✅ |
 | 0004 | Cerrar el juego sin avisos de objetos y cuerpos de Jolt perdidos | — | ✅ |
 | 0005 | De noche, los carteles que brillan (fijos y logo) no se ven lavados | 013, 028 | ✅ |
+| 0006 | La semana empieza el lunes; cerrar 6a y postergar 6b (`feat (mundo)`) | 019, 009, 010, 024 | 🔄 |
 
 ## Hechas
 | ID | Tarea | Spec | Estado |
@@ -80,20 +81,11 @@ Cada etapa abre con sus specs (SPEC-000) y cierra con docs al día. Formato en [
 | 0509 | Los peatones esperan en el cordón si viene un auto (también en las calles laterales) | 013 | ✅ |
 | 0510 | La frase del rechazo concuerda con lo entregado ("¡Están crudas!") | 009 | ✅ |
 
-## Etapa 6a · Precios y cobro (`feat (economia)`) · PR TASK-0600
-| ID | Tarea | Spec | Estado |
-|---|---|---|---|
-| 0601 | Escribir spec 020 Precios | 020 | ⬜ |
-| 0602 | Elegir precios; la demanda reacciona | 020 | ⬜ |
-| 0603 | Cobrar con billetes y dar vuelto | 020 | ⬜ |
-
-## Etapa 6b · Gastos y progresión (`feat (economia)`) · PR TASK-0650
-| ID | Tarea | Spec | Estado |
-|---|---|---|---|
-| 0651 | Escribir spec 021 Gastos | 021 | ⬜ |
-| 0652 | Gastos fijos: permiso, gas | 021 | ⬜ |
-| 0653 | Inspección de higiene | 021 | ⬜ |
-| 0654 | Objetivos y progresión | 021 | ⬜ |
+## Etapa 6 · Economía: descartada y postergada (decisión del dueño, TASK-0006)
+- **6a Precios y cobro: descartada.** Los precios son fijos ([SPEC-010](specs/010-economia.md))
+  y el cliente paga solo al aceptar la comida, con sonido de moneda. Sin billetes, vuelto ni caja.
+- **6b: postergada.** Sin permisos, gas, inspección de higiene ni suciedad. Objetivos y
+  campañas quedan para más adelante.
 
 ## Etapa 7a · Sonido y arte (`feat (ambientacion)`) · PR TASK-0700
 | ID | Tarea | Spec | Estado |

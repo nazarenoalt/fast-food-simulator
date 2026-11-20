@@ -20,7 +20,7 @@ impl PruebaHumo {
         };
         match self.fase5 {
             0 => {
-                // Se guardan día y hora para dejarlos como estaban; un lunes (día 4), sin
+                // Se guardan día y hora para dejarlos como estaban; un jueves (día 4), sin
                 // eventos (SPEC-019).
                 self.notas5 = vec![dn.bind().hora() as f64 * 60.0, dn.bind().dia() as f64];
                 dn.bind_mut().set_dia(4);

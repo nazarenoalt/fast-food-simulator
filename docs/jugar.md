@@ -86,7 +86,7 @@ llevan a cualquier lado; dejalos en un lugar libre y se vuelven a guardar.
   al trabajo a la mañana, jubilados en los bancos, oficinistas al mediodía (apurados: tienen
   menos paciencia), familias con chicos a la tarde y grupos de amigos a la noche, con campera.
   Los horarios y quién llega están en `godot/data/agenda.ron`.
-- **La semana** ([SPEC-019](specs/019-eventos.md)): la partida arranca un viernes; el día se
+- **La semana** ([SPEC-019](specs/019-eventos.md)): la partida arranca un lunes; el día se
   ve al lado de la hora. Sábados y domingos hay **feria** de 10 a 18 (más gente y más
   clientes). Miércoles y domingos **juega el equipo** a las 21: antes hay camisetas, durante
   el partido la plaza se vacía y a las 23 el festejo llena la fila. Aviso a las 7:00.

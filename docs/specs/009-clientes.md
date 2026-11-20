@@ -64,5 +64,5 @@ y se van) y juzgan lo que les diste.
 
 ## Fuera de alcance
 
-- Cobrar con billetes y dar vuelto, pedidos de varios productos. Habituales: SPEC-030;
+- Pedidos de varios productos. Billetes y vuelto: descartado (el pago entra solo, REQ-CLI-09). Habituales: SPEC-030;
   perfiles y eventos que cambian paciencia y cantidad: SPEC-018 y SPEC-019.

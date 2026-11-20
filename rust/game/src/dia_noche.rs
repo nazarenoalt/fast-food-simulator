@@ -128,7 +128,7 @@ impl DiaNoche {
         self.aplicar();
     }
 
-    /// Pone el número de día (1 = viernes, REQ-EVE-01). Para pruebas y para cargar partidas.
+    /// Pone el número de día (1 = lunes, REQ-EVE-01). Para pruebas y para cargar partidas.
     #[func]
     pub fn set_dia(&mut self, dia: u32) {
         self.reloj.dia = dia.max(1);
