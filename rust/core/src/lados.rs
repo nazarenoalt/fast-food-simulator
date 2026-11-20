@@ -69,8 +69,8 @@ pub(crate) fn perfil_chorizo() -> PerfilCoccion {
         k: 0.05,
         t_min: 60.0,
         velocidad: 0.0012,
-        punto: 10.0,
-        pasado: 22.0,
+        punto: 7.0,
+        pasado: 18.0,
         t_quemado: 280.0,
         segundos_quemado: 60.0,
         color_crudo: [0.75, 0.3, 0.25],
@@ -185,9 +185,36 @@ mod tests {
     }
 
     #[test]
-    fn req_par_05_chorizo_a_250_queda_cocido_entre_60_y_150_s() {
+    fn req_par_05_chorizo_a_250_cada_lado_cocido_entre_40_y_100_s() {
         let cocido = segundos_chorizo(250.0, Punto::Cocido, 600.0).expect("nunca se cocinó");
-        assert!((60.0..=150.0).contains(&cocido), "cocido a los {cocido} s");
+        assert!((40.0..=100.0).contains(&cocido), "cocido a los {cocido} s");
+    }
+
+    /// Chorizo en la parrilla a `temp` °C: se da vuelta cuando el lado de abajo queda Cocido y
+    /// se saca cuando el otro también. Devuelve los segundos totales y cómo quedó.
+    fn chorizo_dado_vuelta(temp: f32) -> (f32, CoccionLados) {
+        let p = perfil_chorizo();
+        let mut c = CoccionLados::default();
+        let (mut t, mut abajo) = (0.0, 0);
+        while t < 600.0 {
+            c.paso(&p, abajo, temp, 20.0, DT);
+            t += DT;
+            if c.lados[abajo].punto(&p) == Punto::Cocido {
+                if abajo == 1 {
+                    break;
+                }
+                abajo = 1;
+            }
+        }
+        (t, c)
+    }
+
+    #[test]
+    fn req_par_05_chorizo_a_320_los_dos_lados_cocidos_entre_80_y_95_s() {
+        let p = perfil_chorizo();
+        let (t, c) = chorizo_dado_vuelta(320.0);
+        assert!((80.0..=95.0).contains(&t), "los dos lados cocidos a los {t} s");
+        assert_eq!(c.punto(&p), Punto::Cocido, "ni pasado ni quemado: {c:?}");
     }
 
     #[test]
