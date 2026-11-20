@@ -28,14 +28,26 @@ use crate::sonido::Sonido;
 use crate::transito::{Autos, Nubes};
 use carrito_core::tostado::EstadoPan;
 
+#[path = "prueba_humo_agenda.rs"]
+mod agenda_humo; // TASK-0502: agenda por hora (SPEC-018)
 #[path = "prueba_humo_autos.rs"]
 mod autos_humo; // TASK-0508: los autos entran y salen fuera de la vista (REQ-AMB-17)
+#[path = "prueba_humo_cruces.rs"]
+mod cruces_humo; // TASK-0509: esperar en el cordón (REQ-AMB-18)
+#[path = "prueba_humo_eventos.rs"]
+mod eventos_humo; // TASK-0505: feria y partido (SPEC-019)
 #[path = "prueba_humo_freir.rs"]
 mod freir; // SPEC-029: freír con el colador
 #[path = "prueba_humo_gente.rs"]
 mod gente_humo; // TASK-0506: la gente se renueva (REQ-AMB-15/16)
+#[path = "prueba_humo_grupos.rs"]
+mod grupos_humo; // TASK-0503: oficinistas, familias y salida nocturna (SPEC-018)
+#[path = "prueba_humo_habituales.rs"]
+mod habituales_humo; // TASK-0504: clientes habituales (SPEC-030)
 #[path = "prueba_humo_pelar.rs"]
 mod pelar; // SPEC-029: pelar y cortar
+#[path = "prueba_humo_ropa.rs"]
+mod ropa_humo; // TASK-0507: ropa y actividades de día y de noche (SPEC-018)
 #[path = "prueba_humo_vender.rs"]
 mod vender; // TASK-0358: vender papas en cajita y cartel de cerrado
 
@@ -71,6 +83,11 @@ pub struct PruebaHumo {
     fase_papas: u32,
     /// Qué chequeo corre al final del paso 31 (papas y puerta, pelar, freír, vender, gente).
     cadena_papas: u32,
+    /// Etapa 5: estado libre del brazo de la cadena que está corriendo (se pone en cero al
+    /// pasar al siguiente): fase, cuadro de referencia y números para comparar.
+    fase5: u32,
+    cuadro5: u32,
+    notas5: Vec<f64>,
     /// SPEC-027: fase de la prueba de ampliaciones y lo que se mide entre cuadros.
     fase_amp: u32,
     bloque_cajon: Option<(Gd<BloqueStock>, Vector3)>,
@@ -1391,12 +1408,22 @@ impl INode for PruebaHumo {
                             3 => self.chequear_vender(),           // TASK-0358: papas en cajita y cartel
                             4 => self.chequear_gente_se_renueva(), // TASK-0506: REQ-AMB-15/16
                             5 => self.chequear_autos(),            // TASK-0508: REQ-AMB-17
+                            // Etapa 5: cada tarea en su archivo prueba_humo_<tema>.rs.
+                            6 => self.chequear_agenda(),     // TASK-0502: SPEC-018
+                            7 => self.chequear_grupos(),     // TASK-0503: REQ-RUT-05 a 09
+                            8 => self.chequear_ropa(),       // TASK-0507: REQ-RUT-10/11
+                            9 => self.chequear_habituales(), // TASK-0504: SPEC-030
+                            10 => self.chequear_eventos(),   // TASK-0505: SPEC-019
+                            11 => self.chequear_cruces(),    // TASK-0509: REQ-AMB-18
                             _ => true,
                         };
                         if listo {
                             self.cadena_papas += 1;
+                            self.fase5 = 0;
+                            self.cuadro5 = self.cuadro;
+                            self.notas5.clear();
                         }
-                        if self.cadena_papas >= 6 {
+                        if self.cadena_papas >= 12 {
                             self.terminar();
                         } else {
                             self.paso -= 1; // se repite este paso hasta terminar

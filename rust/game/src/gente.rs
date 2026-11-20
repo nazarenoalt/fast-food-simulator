@@ -5,18 +5,31 @@ use std::collections::HashMap;
 use carrito_core::aderezos::enumerar;
 use carrito_core::azar::Azar;
 use carrito_core::caminos::{self, Red, TipoNodo};
-use carrito_core::clientes::{self, Animo, Fila, Paciencia, Pedido};
-use carrito_core::peatones::{self, Plan, Variedad};
+use carrito_core::clientes::{self, Animo, Evaluacion, Fila, Paciencia, Pedido};
+use carrito_core::eventos::Modificador;
+use carrito_core::peatones::{Apariencia, Plan, Variedad};
+use carrito_core::rutinas::Perfil;
+use carrito_core::vestimenta;
 use godot::classes::{INode3D, Node3D};
 use godot::prelude::*;
 
 use crate::carrito::{self, Carrito};
-use crate::datos::catalogo;
+use crate::datos::{catalogo, plaza};
 use crate::dia_noche::{self, DiaNoche};
 use crate::hud;
 use crate::negocio::{self, Negocio};
 use crate::peaton::{Accion, Peaton};
 use crate::util;
+
+// Cada tarea de la etapa 5 tiene su archivo (submódulo, ve los campos de `Gente`).
+#[path = "gente_cruces.rs"]
+mod cruces; // TASK-0509: REQ-AMB-18
+#[path = "gente_eventos.rs"]
+mod eventos; // TASK-0505: SPEC-019
+#[path = "gente_grupos.rs"]
+mod grupos; // TASK-0503: REQ-RUT-05 a REQ-RUT-09
+#[path = "gente_habituales.rs"]
+mod habituales; // TASK-0504: SPEC-030
 
 pub const GRUPO: &str = "gente";
 const RADIO_CONVERTIR: f32 = 28.0;
@@ -27,6 +40,10 @@ struct Cliente {
     paciencia: Paciencia,
     llego: bool,
     rechazados: Vec<InstanceId>,
+    /// REQ-RUT-04
+    perfil: Perfil,
+    /// REQ-HAB-01: si es un habitual, su número (lo maneja `habituales`).
+    habitual: Option<usize>,
 }
 
 #[derive(GodotClass)]
@@ -48,6 +65,25 @@ pub struct Gente {
     /// últimas que se fueron.
     donde: HashMap<u64, Vector3>,
     desapariciones: Vec<Vector3>,
+    /// REQ-RUT-02: el perfil de cada persona.
+    perfiles: HashMap<u64, Perfil>,
+    /// Día y hora de este cuadro, y lo que cambian los eventos (REQ-EVE-04).
+    dia: u32,
+    hora: f32,
+    modificador: Modificador,
+    // Estado propio de cada tarea (ver los submódulos).
+    est_cruces: cruces::Estado,
+    est_eventos: eventos::Estado,
+    est_grupos: grupos::Estado,
+    est_habituales: habituales::Estado,
+}
+
+/// De dónde sale la apariencia de alguien que llega.
+enum Origen {
+    /// Alguien nuevo, vestido de esta paleta (REQ-RUT-10, REQ-AMB-16).
+    Nueva(carrito_core::peatones::Paleta),
+    /// Un habitual que vuelve como era (REQ-HAB-01).
+    Vuelve(Apariencia),
 }
 
 fn color_animo(a: Animo) -> Color {
@@ -88,6 +124,14 @@ impl INode3D for Gente {
             variedad: Variedad::default(),
             donde: HashMap::new(),
             desapariciones: Vec::new(),
+            perfiles: HashMap::new(),
+            dia: 1,
+            hora: 17.0,
+            modificador: Modificador::default(),
+            est_cruces: Default::default(),
+            est_eventos: Default::default(),
+            est_grupos: Default::default(),
+            est_habituales: Default::default(),
         }
     }
 
@@ -101,17 +145,23 @@ impl INode3D for Gente {
         let Some(dn) = util::unico::<DiaNoche>(&yo, dia_noche::GRUPO) else { return };
         let (hora, min_por_s) = {
             let d = dn.bind();
+            self.dia = d.dia();
             (d.hora(), d.minutos_por_segundo())
         };
+        self.hora = hora;
+        // REQ-EVE-04: lo que cambian los eventos activos.
+        self.modificador = plaza().modificador(self.dia, hora);
 
         // Limpiar a los que ya se fueron.
         self.peatones.retain(|p| p.is_instance_valid());
         let vivos: Vec<u64> = self.peatones.iter().map(|p| p.bind().id).collect();
         self.asientos.retain(|id, _| vivos.contains(id));
+        self.perfiles.retain(|id, _| vivos.contains(id));
         self.registrar_idas(&vivos);
 
-        // REQ-AMB-04: cantidad de gente según la hora; al empezar, la plaza ya tiene gente.
-        let objetivo = peatones::cantidad_objetivo(hora);
+        // REQ-AMB-04, REQ-RUT-01, REQ-RUT-03: cantidad de gente según la agenda (adelantada) y
+        // los eventos; al empezar, la plaza ya tiene gente.
+        let objetivo = plaza().agenda.cantidad_objetivo(hora, &self.modificador);
         if !self.poblado {
             self.poblado = true;
             for _ in 0..objetivo {
@@ -127,7 +177,9 @@ impl INode3D for Gente {
 
         // REQ-CLI-01: llegada de clientes (proceso al azar con la tasa por hora de juego).
         let reputacion = util::unico::<Negocio>(&yo, negocio::GRUPO).map(|n| n.bind().reputacion()).unwrap_or(3.0);
-        let p = clientes::tasa_clientes(hora, reputacion) / 60.0 * (min_por_s as f32 * dt);
+        // REQ-EVE-04: los eventos multiplican la tasa de clientes.
+        let tasa = clientes::tasa_clientes(hora, reputacion) * self.modificador.clientes;
+        let p = tasa / 60.0 * (min_por_s as f32 * dt);
         // REQ-CLI-12: con el cartel de cerrado colgado no se suman clientes nuevos.
         if clientes::llegan_clientes(&self.fila, self.cartel_cerrado()) && self.azar.chance(p) {
             self.nuevo_cliente(false);
@@ -141,7 +193,12 @@ impl INode3D for Gente {
         }
 
         self.atender_clientes(dt);
+        // Lo propio de cada tarea de la etapa 5.
+        self.cuadro_grupos(dt);
+        self.cuadro_habituales(dt);
+        self.cuadro_eventos(dt);
         self.avisar_vecinos();
+        self.cuadro_cruces(dt);
     }
 }
 
@@ -224,39 +281,94 @@ impl Gente {
         self.al_azar(|t| *t == TipoNodo::Salida)
     }
 
-    fn agregar(&mut self, en: usize, acciones: Vec<Accion>, plan: Plan) -> Gd<Peaton> {
+    /// Una persona de ese perfil, vestida según la hora (REQ-RUT-10) y sin repetir a nadie
+    /// (REQ-AMB-16), con su velocidad (REQ-RUT-02).
+    fn agregar(&mut self, en: usize, acciones: Vec<Accion>, perfil: Perfil, plan: Plan) -> Gd<Peaton> {
+        let paleta = vestimenta::paleta(perfil, self.hora);
+        // Un corredor que no trota (REQ-RUT-11, de noche) camina como cualquiera.
+        let perfil_vel = if perfil == Perfil::Corredor && plan != Plan::Trotar { Perfil::Paseante } else { perfil };
+        let vel = plaza().agenda.velocidad(&mut self.azar, perfil_vel);
+        self.agregar_con(en, acciones, perfil, plan, Origen::Nueva(paleta), vel)
+    }
+
+    /// Como `agregar`, eligiendo de dónde sale la apariencia y la velocidad.
+    fn agregar_con(
+        &mut self,
+        en: usize,
+        acciones: Vec<Accion>,
+        perfil: Perfil,
+        plan: Plan,
+        origen: Origen,
+        vel: f32,
+    ) -> Gd<Peaton> {
         let id = self.sig_id;
         self.sig_id += 1;
-        let ap = self.variedad.nueva(&mut self.azar, id); // REQ-AMB-16
-        let vel = peatones::velocidad(&mut self.azar, plan);
+        let ap = match origen {
+            Origen::Nueva(paleta) => {
+                let mut ap = self.variedad.nueva_con(&mut self.azar, id, &paleta); // REQ-AMB-16
+                self.retocar_por_evento(&mut ap, perfil); // REQ-EVE-07
+                ap
+            }
+            Origen::Vuelve(ap) => {
+                self.variedad.vuelve(id, ap.clone()); // REQ-HAB-01
+                ap
+            }
+        };
         let mut p = Peaton::crear(id, ap, vel, plan == Plan::PasearPerro, acciones);
         let pos = self.pos(en);
         self.base_mut().add_child(&p);
         p.set_global_position(pos);
         self.peatones.push(p.clone());
+        self.perfiles.insert(id, perfil); // REQ-RUT-02
         p
     }
 
-    /// REQ-AMB-04, REQ-AMB-05: un paseante con un plan.
+    /// Asientos de la red que nadie ocupa y se pueden usar a esta hora (REQ-RUT-11).
+    fn asientos_libres(&self) -> Vec<usize> {
+        let ocupados: Vec<usize> = self.asientos.values().copied().collect();
+        self.red
+            .de_tipo(|t| matches!(t, TipoNodo::Asiento { .. }))
+            .into_iter()
+            .filter(|a| !ocupados.contains(a))
+            .filter(|a| vestimenta::asiento_permitido(self.red.pos[*a], self.hora))
+            .collect()
+    }
+
+    /// REQ-RUT-02, REQ-RUT-11: la actividad de alguien de ese perfil a esta hora.
+    fn plan_para(&mut self, perfil: Perfil) -> Plan {
+        for _ in 0..12 {
+            let plan = plaza().agenda.sortear_plan(&mut self.azar, perfil);
+            if vestimenta::plan_permitido(perfil, plan, self.hora) {
+                return plan;
+            }
+        }
+        Plan::Pasear
+    }
+
+    /// REQ-AMB-04, REQ-AMB-05, REQ-RUT-01, REQ-RUT-02: alguien de la agenda con un plan.
     fn nuevo_paseante(&mut self, desde_salida: bool) {
-        let plan = peatones::elegir_plan(&mut self.azar);
+        let perfil = plaza().agenda.sortear_perfil(&mut self.azar, self.hora, &self.modificador);
+        // REQ-RUT-05 a REQ-RUT-09: los perfiles con comportamiento propio o en grupo.
+        if self.planear_grupo(perfil, desde_salida) {
+            return;
+        }
+        let mut plan = self.plan_para(perfil);
+        // Si no hay banco libre (o permitido a esta hora), pasea: así no se pierde gente de la
+        // agenda que prefiere sentarse (oficinistas, jubilados).
+        let libres = self.asientos_libres();
+        if plan == Plan::Sentarse && libres.is_empty() {
+            plan = Plan::Pasear;
+        }
         let inicio = if desde_salida { self.salida_al_azar() } else { self.al_azar(|t| *t == TipoNodo::Paso) };
         let salida = self.salida_al_azar();
         let c = self.azar.rango(-0.4, 0.4);
         match plan {
             Plan::Sentarse => {
-                let ocupados: Vec<usize> = self.asientos.values().copied().collect();
-                let libres: Vec<usize> = self
-                    .red
-                    .de_tipo(|t| matches!(t, TipoNodo::Asiento { .. }))
-                    .into_iter()
-                    .filter(|a| !ocupados.contains(a))
-                    .collect();
                 let Some(&asiento) = self.azar.elegir(&libres) else { return };
                 let TipoNodo::Asiento { rot_y } = self.red.tipo[asiento] else { return };
                 let mut ida = self.ruta(inicio, asiento, c);
                 let vuelta = self.ruta(asiento, salida, c);
-                let segundos = peatones::duracion_quieto(&mut self.azar, plan);
+                let segundos = plaza().agenda.quieto(&mut self.azar, perfil);
                 if !desde_salida {
                     ida = vec![self.pos(asiento)];
                 }
@@ -268,6 +380,7 @@ impl Gente {
                         Accion::Caminar(vuelta),
                         Accion::Desaparecer,
                     ],
+                    perfil,
                     plan,
                 );
                 let id = p.bind().id;
@@ -277,7 +390,7 @@ impl Gente {
                 // Dos personas que se juntan a charlar en un lugar.
                 let lugar = self.al_azar(|t| *t == TipoNodo::Charla);
                 let centro = self.pos(lugar);
-                let segundos = peatones::duracion_quieto(&mut self.azar, plan);
+                let segundos = plaza().agenda.quieto(&mut self.azar, perfil);
                 for lado in [-1.0_f32, 1.0] {
                     let destino = centro + Vector3::new(lado * 0.45, 0.0, 0.0);
                     let otro = centro - Vector3::new(lado * 0.45, 0.0, 0.0);
@@ -294,6 +407,7 @@ impl Gente {
                             Accion::Caminar(vuelta),
                             Accion::Desaparecer,
                         ],
+                        perfil,
                         plan,
                     );
                     if !desde_salida {
@@ -312,7 +426,7 @@ impl Gente {
                     desde = hasta;
                 }
                 ruta.extend(self.ruta(desde, salida, c));
-                self.agregar(inicio, vec![Accion::Caminar(ruta), Accion::Desaparecer], plan);
+                self.agregar(inicio, vec![Accion::Caminar(ruta), Accion::Desaparecer], perfil, plan);
             }
         }
     }
@@ -330,16 +444,21 @@ impl Gente {
             .iter()
             .filter(|p| {
                 let b = p.bind();
-                !self.clientes.contains_key(&b.id) && !b.ocupado_quieto() && !self.asientos.contains_key(&b.id)
+                // Un chico no viene solo a comprar (REQ-RUT-06).
+                !self.clientes.contains_key(&b.id)
+                    && !b.ocupado_quieto()
+                    && !self.asientos.contains_key(&b.id)
+                    && !self.est_grupos.es_chico(b.id)
             })
             .map(|p| (p.clone(), p.get_global_position().distance_to(destino)))
             .filter(|(_, d)| *d < RADIO_CONVERTIR)
             .min_by(|a, b| a.1.total_cmp(&b.1))
             .map(|(p, _)| p);
 
-        let mut peaton = match (ya_en_la_fila, cercano) {
+        let sorteado = plaza().agenda.sortear_perfil(&mut self.azar, self.hora, &self.modificador);
+        let peaton = match (ya_en_la_fila, cercano) {
             (true, _) => {
-                let mut p = self.agregar(nodo_fila, vec![Accion::EnFila], Plan::Pasear);
+                let mut p = self.agregar(nodo_fila, vec![Accion::EnFila], sorteado, Plan::Pasear);
                 p.set_global_position(destino);
                 p
             }
@@ -357,15 +476,33 @@ impl Gente {
                     .min_by(|&a, &b| self.pos(a).distance_to(destino).total_cmp(&self.pos(b).distance_to(destino)))
                     .unwrap_or(0);
                 let ruta = self.ruta(inicio, nodo_fila, 0.0);
-                self.agregar(inicio, vec![Accion::Caminar(ruta), Accion::EnFila], Plan::Pasear)
+                self.agregar(inicio, vec![Accion::Caminar(ruta), Accion::EnFila], sorteado, Plan::Pasear)
             }
         };
+        // REQ-RUT-04: el cliente tiene el perfil del paseante que se tentó (o el sorteado).
         let id = peaton.bind().id;
-        self.fila.unirse(id)?;
+        let perfil = self.perfiles.get(&id).copied().unwrap_or(sorteado);
+        self.sumar_a_la_fila(peaton, perfil, 1.0, None)
+    }
+
+    /// REQ-CLI-03, REQ-RUT-04: suma a `peaton` a la fila como cliente, con la paciencia de su
+    /// perfil multiplicada por `factor` (REQ-HAB-06). Devuelve su id, o `None` si no hay lugar.
+    fn sumar_a_la_fila(
+        &mut self,
+        mut peaton: Gd<Peaton>,
+        perfil: Perfil,
+        factor: f32,
+        habitual: Option<usize>,
+    ) -> Option<u64> {
+        let carrito = util::unico::<Carrito>(&self.to_gd(), carrito::GRUPO)?;
+        let id = peaton.bind().id;
+        let lugar = self.fila.unirse(id)?;
+        let destino = carrito.bind().posicion_fila(lugar);
         peaton.bind_mut().set_lugar_fila(destino, carrito.bind().mirada_fila());
+        let paciencia = Paciencia::con_factor(plaza().agenda.paciencia(perfil) * factor);
         self.clientes.insert(
             id,
-            Cliente { peaton, pedido: None, paciencia: Paciencia::default(), llego: false, rechazados: Vec::new() },
+            Cliente { peaton, pedido: None, paciencia, llego: false, rechazados: Vec::new(), perfil, habitual },
         );
         Some(id)
     }
@@ -390,6 +527,8 @@ impl Gente {
         let Some(carrito) = util::unico::<Carrito>(&yo, carrito::GRUPO) else { return };
         let mut negocio = util::unico::<Negocio>(&yo, negocio::GRUPO);
         let mut se_van: Vec<u64> = Vec::new();
+        let mut perdidos: Vec<u64> = Vec::new();
+        let mut atendidos: Vec<(u64, Evaluacion, Pedido)> = Vec::new();
         let ids: Vec<u64> = self.clientes.keys().copied().collect();
         let mirada = carrito.bind().mirada_fila();
         let primero = self.fila.primero();
@@ -418,10 +557,15 @@ impl Gente {
             };
             // REQ-CLI-04: el primero, al llegar, pide.
             if pedido_nuevo {
-                let p = clientes::generar_pedido(&mut self.azar, &menu, &aderezos);
+                // REQ-HAB-04: el habitual pide lo de siempre.
+                let p = match self.pedido_habitual(id, &menu, &aderezos) {
+                    Some(p) => p,
+                    None => clientes::generar_pedido(&mut self.azar, &menu, &aderezos),
+                };
                 let c = self.clientes.get_mut(&id).unwrap();
                 c.pedido = Some(p);
             }
+            let texto = self.clientes[&id].pedido.as_ref().map(|p| self.texto_globo(id, p)); // REQ-HAB-05
             let c = self.clientes.get_mut(&id).unwrap();
             if !c.llego {
                 continue;
@@ -434,12 +578,12 @@ impl Gente {
                     n.bind_mut().cliente_perdido();
                 }
                 hud::avisar(&yo, "Un cliente se fue enojado · ★☆☆☆☆");
+                perdidos.push(id);
                 se_van.push(id);
                 continue;
             }
             // REQ-CLI-05: globo con el pedido y el color de la paciencia.
-            if let Some(p) = &c.pedido {
-                let texto = texto_pedido(p);
+            if let Some(texto) = texto {
                 let color = color_animo(c.paciencia.animo());
                 c.peaton.bind_mut().globo(&texto, color);
             }
@@ -461,8 +605,9 @@ impl Gente {
                         Err(rechazo) => {
                             c.rechazados.push(comida.instance_id());
                             c.paciencia.penalizar(clientes::PENALIDAD_RECHAZO_S);
-                            c.peaton.bind_mut().decir(rechazo.frase(), Color::from_rgb(1.0, 0.5, 0.4), 3.0);
-                            hud::avisar(&yo, &format!("El cliente lo rechazó: {}", rechazo.frase()));
+                            let frase = rechazo.frase(&entregado.producto);
+                            c.peaton.bind_mut().decir(frase, Color::from_rgb(1.0, 0.5, 0.4), 3.0);
+                            hud::avisar(&yo, &format!("El cliente lo rechazó: {frase}"));
                         }
                         Ok(ev) => {
                             // REQ-CLI-09, REQ-CLI-10
@@ -474,6 +619,7 @@ impl Gente {
                             hud::avisar(&yo, &format!("Venta: {texto}"));
                             // REQ-SON-08
                             crate::sonido::sonar(&yo, carrito_core::sonido::ids::COBRO);
+                            atendidos.push((id, ev, pedido));
                             se_van.push(id);
                         }
                     }
@@ -482,6 +628,13 @@ impl Gente {
             }
         }
 
+        // SPEC-030: los habituales recuerdan cómo los atendieron.
+        for (id, ev, pedido) in atendidos {
+            self.al_atender(id, &ev, &pedido);
+        }
+        for id in perdidos {
+            self.al_perder(id);
+        }
         for id in se_van {
             self.despedir(id);
         }
@@ -514,6 +667,31 @@ impl Gente {
         if let Some(c) = self.fila.primero().and_then(|id| self.clientes.get_mut(&id)) {
             c.paciencia.restante = s;
         }
+    }
+
+    /// Para pruebas: hace llegar `n` personas de la agenda desde el borde, a la hora actual.
+    /// Devuelve los ids de los que llegaron (un grupo cuenta como varios). REQ-RUT-01
+    pub fn probar_paseantes(&mut self, n: usize) -> Vec<u64> {
+        let antes = self.sig_id;
+        for _ in 0..n {
+            self.nuevo_paseante(true);
+        }
+        (antes..self.sig_id).filter(|id| self.perfiles.contains_key(id)).collect()
+    }
+
+    /// Para pruebas: el perfil de una persona presente. REQ-RUT-02
+    pub fn perfil_de(&self, id: u64) -> Option<Perfil> {
+        self.perfiles.get(&id).copied()
+    }
+
+    /// Para pruebas: cuánta gente quiere la agenda ahora (REQ-RUT-03, REQ-EVE-04).
+    pub fn objetivo_gente(&self) -> usize {
+        plaza().agenda.cantidad_objetivo(self.hora, &self.modificador)
+    }
+
+    /// Para pruebas: la paciencia con la que empezó el primero de la fila. REQ-RUT-04
+    pub fn paciencia_total_del_primero(&self) -> Option<(Perfil, f32)> {
+        self.fila.primero().and_then(|id| self.clientes.get(&id)).map(|c| (c.perfil, c.paciencia.total))
     }
 
     pub fn largo_fila(&self) -> usize {

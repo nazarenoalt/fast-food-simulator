@@ -127,6 +127,13 @@ impl DiaNoche {
         self.reloj.minuto = minuto.rem_euclid(carrito_core::reloj::MINUTOS_DIA);
         self.aplicar();
     }
+
+    /// Pone el número de día (1 = viernes, REQ-EVE-01). Para pruebas y para cargar partidas.
+    #[func]
+    pub fn set_dia(&mut self, dia: u32) {
+        self.reloj.dia = dia.max(1);
+        self.aplicar();
+    }
 }
 
 impl DiaNoche {
@@ -151,7 +158,9 @@ impl DiaNoche {
 
     pub fn hora_texto(&self) -> String {
         let rapido = if self.reloj.multiplicador > 1.0 { "  ×30" } else { "" };
-        format!("Día {}  {}{rapido}", self.reloj.dia, self.reloj.hora_texto())
+        // REQ-EVE-01: el día de la semana al lado de la hora.
+        let semana = carrito_core::eventos::dia_semana(self.reloj.dia).texto();
+        format!("Día {} · {semana} {}{rapido}", self.reloj.dia, self.reloj.hora_texto())
     }
 
     fn aplicar(&mut self) {

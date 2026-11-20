@@ -12,6 +12,7 @@ mod ciudad; // SPEC-013
 mod comida; // SPEC-002/003/005
 mod datos;
 mod dia_noche; // SPEC-007
+mod feria; // SPEC-019 (puestos de la feria)
 mod formas;
 mod freidora; // SPEC-029
 mod gente; // SPEC-009/013

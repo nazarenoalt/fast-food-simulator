@@ -37,7 +37,7 @@ y se van) y juzgan lo que les diste.
 - **REQ-CLI-08** Evaluación de lo entregado:
   - Otro producto, salchicha, chorizo o papas crudos o quemados, pan del choripán blando o quemado
     (SPEC-015), carne echada a perder (SPEC-016) → lo **rechaza**: queda en la bandeja, dice por
-    qué y pierde 20 s de paciencia.
+    qué (concordando: "¡El chorizo está crudo!", "¡Están crudas!") y pierde 20 s de paciencia.
   - Si lo acepta: estrellas = 5 − 1 por aderezo pedido que falta − 0,5 por aderezo que no
     pidió − 1,5 si la salchicha o las papas están pasadas − hasta 1,5 según cuánta paciencia gastó.
     Mínimo 1, máximo 5.
@@ -64,4 +64,5 @@ y se van) y juzgan lo que les diste.
 
 ## Fuera de alcance
 
-- Cobrar con billetes y dar vuelto, pedidos de varios productos, clientes habituales.
+- Cobrar con billetes y dar vuelto, pedidos de varios productos. Habituales: SPEC-030;
+  perfiles y eventos que cambian paciencia y cantidad: SPEC-018 y SPEC-019.

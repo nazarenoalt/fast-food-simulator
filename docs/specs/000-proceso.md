@@ -58,12 +58,15 @@ Estado: Borrador | Aprobada | Implementada
 | PAR | 015 Parrilla con carbón y pan tostado |
 | HEL | 016 Heladera y cadena de frío |
 | TIE | 017 Tienda y modo armado |
+| RUT | 018 Rutinas de la plaza |
+| EVE | 019 Eventos de la plaza |
 | SON | 024 Sonido |
 | MOD | 025 Modelos 3D |
 | PAP | 026 Papas fritas |
 | AMP | 027 Ampliaciones del carrito |
 | LOG | 028 Logo del carrito |
 | FRE | 029 Preparar y freír papas |
+| HAB | 030 Clientes habituales |
 
 ## Convenciones de código
 
