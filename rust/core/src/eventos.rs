@@ -43,9 +43,9 @@ impl DiaSemana {
     }
 }
 
-/// REQ-EVE-01: el día 1 es viernes.
+/// REQ-EVE-01: el día 1 es lunes.
 pub fn dia_semana(dia: u32) -> DiaSemana {
-    DiaSemana::ORDEN[((dia.max(1) - 1 + 4) % 7) as usize]
+    DiaSemana::ORDEN[((dia.max(1) - 1) % 7) as usize]
 }
 
 fn uno() -> f32 {
@@ -293,37 +293,39 @@ mod tests {
     use crate::rutinas::tests::plaza_real;
 
     #[test]
-    fn req_eve_01_el_dia_1_es_viernes() {
-        assert_eq!(dia_semana(1), DiaSemana::Vie);
-        assert_eq!(dia_semana(2), DiaSemana::Sab);
-        assert_eq!(dia_semana(3), DiaSemana::Dom);
-        assert_eq!(dia_semana(6), DiaSemana::Mie);
-        assert_eq!(dia_semana(8), DiaSemana::Vie);
-        assert_eq!(dia_semana(2).texto(), "Sáb");
+    fn req_eve_01_el_dia_1_es_lunes() {
+        assert_eq!(dia_semana(1), DiaSemana::Lun);
+        assert_eq!(dia_semana(2), DiaSemana::Mar);
+        assert_eq!(dia_semana(3), DiaSemana::Mie);
+        assert_eq!(dia_semana(5), DiaSemana::Vie);
+        assert_eq!(dia_semana(6), DiaSemana::Sab);
+        assert_eq!(dia_semana(7), DiaSemana::Dom);
+        assert_eq!(dia_semana(8), DiaSemana::Lun);
+        assert_eq!(dia_semana(6).texto(), "Sáb");
     }
 
     #[test]
     fn req_eve_02_04_feria_el_fin_de_semana() {
         let p = plaza_real();
         // Viernes al mediodía: nada.
-        assert_eq!(p.modificador(1, 12.0), Modificador::default());
+        assert_eq!(p.modificador(5, 12.0), Modificador::default());
         // Sábado al mediodía: feria con más gente y más clientes.
-        let m = p.modificador(2, 12.0);
+        let m = p.modificador(6, 12.0);
         assert!(m.activo("feria/feria") && m.activo("feria/puestos"), "{m:?}");
         assert_eq!((m.gente, m.clientes), (1.5, 1.3));
         assert!(m.perfiles.iter().any(|(p, _)| *p == Perfil::Familia));
         // Sábado a las 8: los puestos están, la feria todavía no empezó.
-        let m = p.modificador(2, 8.0);
+        let m = p.modificador(6, 8.0);
         assert!(m.activo("feria/puestos") && !m.activo("feria/feria"));
         assert_eq!(m.gente, 1.0);
         // Lunes: nada.
-        assert!(p.modificador(4, 12.0).tramos.is_empty());
+        assert!(p.modificador(1, 12.0).tramos.is_empty());
     }
 
     #[test]
     fn req_eve_02_04_07_08_09_partido_miercoles_y_domingo() {
         let p = plaza_real();
-        let mie = 6;
+        let mie = 3;
         let m = p.modificador(mie, 19.0);
         assert!(m.activo("partido/previa"));
         assert_eq!(m.camisetas, 0.5);
@@ -337,20 +339,23 @@ mod tests {
         assert!(p.modificador(mie + 1, 0.25).activo("partido/festejo"));
         assert!(!p.modificador(mie + 1, 0.6).activo("partido/festejo"));
         // Domingo también.
-        assert!(p.modificador(3, 22.0).activo("partido/partido"));
-        // El día 1 a las 0:15 no hay "ayer".
+        assert!(p.modificador(7, 22.0).activo("partido/partido"));
+        // El festejo del domingo sigue a las 0:15 del lunes siguiente (día 8).
+        assert!(p.modificador(8, 0.25).activo("partido/festejo"));
+        // El día 1 (lunes) a las 0:15 no hay "ayer": la partida no viene de un domingo.
         assert!(p.modificador(1, 0.25).tramos.is_empty());
     }
 
     #[test]
     fn req_eve_03_aviso_del_dia() {
         let p = plaza_real();
-        assert_eq!(aviso_del_dia(&p.eventos, 1), None, "viernes sin eventos");
-        assert_eq!(aviso_del_dia(&p.eventos, 2).as_deref(), Some("Hoy: feria en la plaza de 10 a 18"));
-        assert_eq!(aviso_del_dia(&p.eventos, 6).as_deref(), Some("Hoy: juega el equipo del barrio a las 21"));
+        assert_eq!(aviso_del_dia(&p.eventos, 1), None, "lunes sin eventos");
+        assert_eq!(aviso_del_dia(&p.eventos, 5), None, "viernes sin eventos");
+        assert_eq!(aviso_del_dia(&p.eventos, 6).as_deref(), Some("Hoy: feria en la plaza de 10 a 18"));
+        assert_eq!(aviso_del_dia(&p.eventos, 3).as_deref(), Some("Hoy: juega el equipo del barrio a las 21"));
         // Domingo: los dos juntos.
         assert_eq!(
-            aviso_del_dia(&p.eventos, 3).as_deref(),
+            aviso_del_dia(&p.eventos, 7).as_deref(),
             Some("Hoy: feria en la plaza de 10 a 18 y juega el equipo del barrio a las 21")
         );
     }
@@ -358,7 +363,7 @@ mod tests {
     #[test]
     fn req_eve_07_la_mitad_con_camiseta() {
         let p = plaza_real();
-        let m = p.modificador(6, 19.0);
+        let m = p.modificador(3, 19.0);
         let mut azar = Azar::new(5);
         let con: Vec<[f32; 3]> = (0..1000).filter_map(|_| camiseta(&mut azar, &m)).collect();
         assert!((420..580).contains(&con.len()), "{}", con.len());

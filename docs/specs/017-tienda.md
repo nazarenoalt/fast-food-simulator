@@ -63,7 +63,7 @@ venderlos y cambiar el color, sin tocar archivos. Usa los anclajes de SPEC-006.
 
 - Guardar la partida (lo comprado se pierde al cerrar: SPEC-022, etapa 7b). Segunda parte
   de la etapa 4 (food truck, tráiler, alacenas, toldos y guirnaldas): [SPEC-027](027-ampliaciones.md).
-  Precios definitivos (etapa 6b).
+  Ajuste de precios: etapa 2.5.
 
 ## Notas de diseño
 

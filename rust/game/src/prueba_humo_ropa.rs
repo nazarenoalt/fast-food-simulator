@@ -12,7 +12,7 @@ use crate::peaton::Peaton;
 const MAS_RAPIDO_SIN_TROTAR: f32 = 2.3;
 
 impl PruebaHumo {
-    /// Un lunes (sin eventos): a las 13:00 todos los que llegan van de manga corta; a las 22:30,
+    /// Un jueves (sin eventos): a las 13:00 todos los que llegan van de manga corta; a las 22:30,
     /// todos de manga larga, nadie trota ni pasea al perro. Deja día y hora como estaban.
     /// Se llama cada cuadro hasta que devuelve true.
     pub(super) fn chequear_ropa(&mut self) -> bool {

@@ -27,7 +27,7 @@ _Todavía no hay archivos: `godot/data/sonidos.ron` ya los espera y el juego fun
 | `bolsa_abre.ogg` | Sacar algo de una bolsa |
 | `brasas.ogg` | Brasas y crepitar del carbón (preparado: etapa 3) |
 | `caja_carton.ogg` | Sacar algo de una caja de cartón |
-| `caja_registradora.ogg` | Caja registradora al cobrar |
+| `moneda.ogg` | Moneda al cobrar una venta |
 | `campanita_1.ogg` | Campanita de cliente que llega |
 | `campanita_2.ogg` | Campanita de cliente que llega |
 | `carbon_bolsa.ogg` | Echar carbón (preparado: etapa 3) |

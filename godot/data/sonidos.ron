@@ -46,8 +46,8 @@
     (id: "sacar_bolsa", archivos: ["bolsa_abre.ogg"], bus: Efectos, volumen_db: -4, espacial: true, distancia_max: 8, enfriamiento: 0.2),
     // Sacar algo de una caja de cartón
     (id: "sacar_caja", archivos: ["caja_carton.ogg"], bus: Efectos, volumen_db: -4, espacial: true, distancia_max: 8, enfriamiento: 0.2),
-    // Caja registradora al cobrar
-    (id: "cobro", archivos: ["caja_registradora.ogg"], bus: Efectos, volumen_db: -2, enfriamiento: 0.5),
+    // Moneda al cobrar una venta (no hay caja registradora: TASK-0006)
+    (id: "cobro", archivos: ["moneda.ogg"], bus: Efectos, volumen_db: -2, enfriamiento: 0.5),
     // Campanita de cliente que llega
     (id: "campanita", archivos: ["campanita_1.ogg", "campanita_2.ogg"], bus: Efectos, volumen_db: -4, espacial: true, distancia_max: 25, enfriamiento: 1),
     // Pasos del jugador

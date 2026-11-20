@@ -12,6 +12,7 @@ Cada etapa abre con sus specs (SPEC-000) y cierra con docs al día. Formato en [
 | 0003 | Git LFS para modelos `.glb`, fuentes `.blend` e imágenes de arte | — | ✅ |
 | 0004 | Cerrar el juego sin avisos de objetos y cuerpos de Jolt perdidos | — | ✅ |
 | 0005 | De noche, los carteles que brillan (fijos y logo) no se ven lavados | 013, 028 | ✅ |
+| 0006 | La semana empieza el lunes; cerrar 6a y postergar 6b (`feat (mundo)`) | 019, 009, 010, 024 | ✅ |
 
 ## Hechas
 | ID | Tarea | Spec | Estado |
@@ -30,6 +31,15 @@ Cada etapa abre con sus specs (SPEC-000) y cierra con docs al día. Formato en [
 | 0255 | Rendimiento (FPS) con ciudad y fila llena | 013 | ⬜ |
 | 0256 | Agarre cercano, colocar con la mira (cruz blanca), salchicha al pan apuntando, levantar paquetes del estante y volcarlos al hervidor | 002, 003, 004 | ✅ |
 | 0257 | Las comidas listas no se echan a perder | 016 | ✅ |
+| 0258 | Las sombras no tiemblan "como líquido" al moverse el sol (pedido del dueño) | 007 | ⬜ |
+| 0259 | Caminar con arranque y frenado suaves, menos estático | 001 | ⬜ |
+| 0260 | Clic: lo que tenés en la mano queda siempre donde apunta la cruz (hervidor, estante, mesada), nunca se tira ni hay que calcular la distancia | 002, 003 | ⬜ |
+| 0261 | El cartel de cerrado viene con el carrito inicial y arranca colgado (cerrado) | 009, 026 | ⬜ |
+| 0262 | Las salchichas flotan en el hervidor y se ven (hoy quedan en el fondo) | 003 | ⬜ |
+| 0263 | Arreglo: "clic para guardar en el estante" tira el paquete al piso (el clic derecho sí lo guarda) | 004 | ⬜ |
+| 0264 | Arranque tranquilo: los primeros días viene poca gente, para aprender | 009, 018 | ⬜ |
+| 0265 | Lo que tenés en la mano se ve siempre derecho (el pancho, con la salchicha a la vista) | 002 | ⬜ |
+| 0266 | Las salchichas pueden quedarse en el agua sin pasarse | 003 | ⬜ |
 
 ## Etapa 3 · Plancha y parrilla (`feat (cocina)`) · PR TASK-0300
 | ID | Tarea | Spec | Estado |
@@ -80,20 +90,11 @@ Cada etapa abre con sus specs (SPEC-000) y cierra con docs al día. Formato en [
 | 0509 | Los peatones esperan en el cordón si viene un auto (también en las calles laterales) | 013 | ✅ |
 | 0510 | La frase del rechazo concuerda con lo entregado ("¡Están crudas!") | 009 | ✅ |
 
-## Etapa 6a · Precios y cobro (`feat (economia)`) · PR TASK-0600
-| ID | Tarea | Spec | Estado |
-|---|---|---|---|
-| 0601 | Escribir spec 020 Precios | 020 | ⬜ |
-| 0602 | Elegir precios; la demanda reacciona | 020 | ⬜ |
-| 0603 | Cobrar con billetes y dar vuelto | 020 | ⬜ |
-
-## Etapa 6b · Gastos y progresión (`feat (economia)`) · PR TASK-0650
-| ID | Tarea | Spec | Estado |
-|---|---|---|---|
-| 0651 | Escribir spec 021 Gastos | 021 | ⬜ |
-| 0652 | Gastos fijos: permiso, gas | 021 | ⬜ |
-| 0653 | Inspección de higiene | 021 | ⬜ |
-| 0654 | Objetivos y progresión | 021 | ⬜ |
+## Etapa 6 · Economía: descartada y postergada (decisión del dueño, TASK-0006)
+- **6a Precios y cobro: descartada.** Los precios son fijos ([SPEC-010](specs/010-economia.md))
+  y el cliente paga solo al aceptar la comida, con sonido de moneda. Sin billetes, vuelto ni caja.
+- **6b: postergada.** Sin permisos, gas, inspección de higiene ni suciedad. Objetivos y
+  campañas quedan para más adelante.
 
 ## Etapa 7a · Sonido y arte (`feat (ambientacion)`) · PR TASK-0700
 | ID | Tarea | Spec | Estado |
@@ -107,5 +108,12 @@ Cada etapa abre con sus specs (SPEC-000) y cierra con docs al día. Formato en [
 |---|---|---|---|
 | 0751 | Escribir specs 022 Guardado y 023 Clima | 022, 023 | ⬜ |
 | 0752 | Guardado de partida | 022 | ⬜ |
-| 0753 | Menú y opciones | 022 | ⬜ |
+| 0753 | Pausa, menú e interfaz gráfica; opciones | 022 | ⬜ |
 | 0754 | Clima: lluvia y viento | 023 | ⬜ |
+| 0755 | Elegir la dificultad en el menú: cambia la cantidad de gente y la exigencia | 022 | ⬜ |
+
+## Etapa 8 · Arranque guiado (`feat (economia)`) · PR TASK-0800
+| ID | Tarea | Spec | Estado |
+|---|---|---|---|
+| 0801 | Empezar con un solo producto a elección; los demás se suman comprando | — | ⬜ |
+| 0802 | Tutorial guiado para aprender a jugar (al final, con el juego terminado) | — | ⬜ |

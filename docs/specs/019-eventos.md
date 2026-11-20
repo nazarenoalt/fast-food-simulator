@@ -9,7 +9,7 @@ barrio, con camisetas, plaza vacía durante el partido y festejo después.
 
 ## Requisitos
 
-- **REQ-EVE-01** Semana de 7 días: el día 1 es viernes. La pantalla muestra el día de la
+- **REQ-EVE-01** Semana de 7 días: el día 1 es lunes. La pantalla muestra el día de la
   semana al lado de la hora (ej. "Sáb 10:30").
 - **REQ-EVE-02** Los eventos están en `godot/data/eventos.ron`: días de la semana, tramos
   horarios (pueden pasar las 24:00, que cuentan en el día siguiente) y, por tramo,
@@ -45,5 +45,6 @@ barrio, con camisetas, plaza vacía durante el partido y festejo después.
 
 ## Notas de diseño
 
-- Día 1 viernes: el primer sábado llega a los ~7 min reales de partida.
+- Día 1 lunes (decisión del dueño, TASK-0006): la partida arranca con la semana; el primer
+  partido es el miércoles (día 3) y la primera feria el sábado (día 6, ~2 h reales).
 - Los multiplicadores se componen con la agenda (SPEC-018) y la reputación (REQ-CLI-01).
