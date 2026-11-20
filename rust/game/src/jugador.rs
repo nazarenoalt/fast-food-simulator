@@ -3,8 +3,8 @@
 use godot::classes::input::MouseMode;
 use godot::classes::{
     Camera3D, CapsuleShape3D, CharacterBody3D, ICharacterBody3D, Input, InputEvent, InputEventKey,
-    InputEventMouseButton, InputEventMouseMotion, InputMap, KinematicCollision3D, Node, ProjectSettings, RayCast3D,
-    RigidBody3D,
+    InputEventMouseButton, InputEventMouseMotion, InputMap, KinematicCollision3D, Node, Object, ProjectSettings,
+    RayCast3D, RigidBody3D,
 };
 use godot::global::{Key, MouseButton};
 use godot::prelude::*;
@@ -28,19 +28,22 @@ use crate::preparar;
 use crate::puerta::PuertaCarrito;
 use crate::sonido;
 use crate::tienda;
-use carrito_core::agarre;
+use carrito_core::agarre::{self, AccionClic, Mira};
+use carrito_core::datos::Colision;
 use carrito_core::deposito::Empaque;
+use carrito_core::movimiento::{self, Balanceo};
 use carrito_core::sonido::ids;
 
 const VEL_CAMINAR: f32 = 3.5; // REQ-JUG-03
 const VEL_CORRER: f32 = 6.0; // REQ-JUG-03
-const VEL_SALTO: f32 = 4.5;
 const ALTO: f32 = 1.75; // REQ-JUG-05
 const RADIO: f32 = 0.3; // REQ-JUG-05
 const ALTO_OJOS: f32 = 1.65; // REQ-JUG-05
 /// REQ-JUG-09: escalón más alto que se sube caminando.
 const ESCALON_MAX: f32 = 0.30;
 const ALCANCE: f32 = 2.5; // REQ-INT-01
+/// REQ-INT-09: cuántas comidas que flotan atraviesa la cruz para ver si abajo está el hervidor.
+const ATRAVESAR_MAX: usize = 3;
 const RESORTE: f32 = 20.0; // REQ-INT-04
 const VEL_MAX_MANO: f32 = 12.0; // REQ-INT-04
 /// REQ-INT-04: qué tan rápido gira hacia el giro de la cámara (1/s) y tope (rad/s).
@@ -48,7 +51,6 @@ const RESORTE_GIRO: f32 = 15.0;
 const GIRO_MAX_MANO: f32 = 20.0;
 const DIST_TRABADO: f32 = 1.5; // REQ-INT-05
 const VEL_TIRO: f32 = 4.0; // REQ-INT-06
-const SENSIBILIDAD: f32 = 0.0025;
 /// Metros entre paso y paso. REQ-SON-08
 const LARGO_PASO: f32 = 1.6;
 
@@ -67,16 +69,25 @@ pub enum Objetivo {
     Freidora(Gd<Freidora>), // REQ-FRE-05
 }
 
-/// REQ-INT-08/09/10: qué pasa al colocar lo que tenés en la mano donde apunta la mira.
-enum Colocacion {
-    Apoyar,
-    Pared,
-    /// Sobre una base de armado (nombre de la base).
-    Armar(String),
-    Guardar,
-    /// REQ-FRE-07: papas adentro del colador, o apoyadas como siempre si está lleno.
-    Colador(Gd<Colador>),
-    ColadorLleno,
+/// REQ-INT-08: lo que hace el clic con lo que tenés en la mano (lo decide
+/// `agarre::accion_clic`) y dónde queda. El cartel y el clic salen de acá.
+#[derive(Clone)]
+struct Colocacion {
+    accion: AccionClic,
+    /// Dónde queda (en el colador, el punto de la mira). `None` al soltar o con el hervidor lleno.
+    destino: Option<Transform3D>,
+    /// REQ-FRE-07
+    colador: Option<Gd<Colador>>,
+    /// REQ-INT-09: el lugar libre del depósito donde se guarda el paquete.
+    lugar: Option<Gd<LugarDeposito>>,
+}
+
+/// REQ-INT-06: lo que toca la cruz al colocar (y el hervidor, si es parte de uno).
+struct Toque {
+    punto: Vector3,
+    normal: Vector3,
+    tocado: Option<Gd<Object>>,
+    hervidor: Option<Gd<Hervidor>>,
 }
 
 #[derive(GodotClass)]
@@ -96,6 +107,15 @@ pub struct Jugador {
     gravedad: f32,
     /// Metros caminados desde el último paso que sonó. REQ-SON-08
     paso_m: f32,
+    /// REQ-JUG-10
+    balanceo: Balanceo,
+    /// REQ-INT-08: lo último que mostró el cartel (qué tenía en la mano, desde dónde miraba y qué
+    /// iba a hacer el clic), para que el clic haga eso mismo.
+    cartel_clic: Option<(InstanceId, Transform3D, Colocacion)>,
+}
+
+fn a3(v: Vector3) -> [f32; 3] {
+    [v.x, v.y, v.z]
 }
 
 fn registrar_acciones() {
@@ -138,6 +158,8 @@ impl ICharacterBody3D for Jugador {
             pitch,
             gravedad: 9.8,
             paso_m: 0.0,
+            balanceo: Balanceo::default(),
+            cartel_clic: None,
         }
     }
 
@@ -201,8 +223,9 @@ impl ICharacterBody3D for Jugador {
             if capturado {
                 // REQ-JUG-02: mirar con el mouse, vertical limitado a ±85°.
                 let r = mov.get_relative();
-                self.base_mut().rotate_y(-r.x * SENSIBILIDAD);
-                self.pitch = (self.pitch - r.y * SENSIBILIDAD).clamp(-85f32.to_radians(), 85f32.to_radians());
+                let sens = movimiento::SENSIBILIDAD;
+                self.base_mut().rotate_y(-r.x * sens);
+                self.pitch = (self.pitch - r.y * sens).clamp(-85f32.to_radians(), 85f32.to_radians());
                 let p = self.pitch;
                 if let Some(c) = &mut self.camara {
                     c.set_rotation(Vector3::new(p, 0.0, 0.0));
@@ -285,10 +308,11 @@ impl Jugador {
         let mut v = self.base().get_velocity();
 
         // REQ-JUG-04: gravedad del proyecto; salto solo apoyado.
-        if !self.base().is_on_floor() {
+        let apoyado = self.base().is_on_floor();
+        if !apoyado {
             v.y -= self.gravedad * dt;
         } else if input.is_action_just_pressed("saltar") && !armado::escribiendo() {
-            v.y = VEL_SALTO;
+            v.y = movimiento::VEL_SALTO;
         }
 
         // REQ-JUG-01: WASD relativo a hacia dónde mira; REQ-JUG-03: correr con Shift.
@@ -302,20 +326,25 @@ impl Jugador {
         let mut dir = basis * Vector3::new(ejes.x, 0.0, ejes.y);
         dir.y = 0.0;
         let vel = if input.is_action_pressed("correr") { VEL_CORRER } else { VEL_CAMINAR };
-        if dir.length() > 0.01 {
-            let dir = dir.normalized();
-            v.x = dir.x * vel;
-            v.z = dir.z * vel;
-        } else {
-            v.x = 0.0;
-            v.z = 0.0;
-        }
-        let apoyado = self.base().is_on_floor();
+        let camina = dir.length() > 0.01;
+        let pedida = if camina { dir.normalized() * vel } else { Vector3::ZERO };
+        // REQ-JUG-10: la velocidad va hacia la pedida de a poco (arranca y frena suave).
+        let [vx, vz] = movimiento::acercar_velocidad([v.x, v.z], [pedida.x, pedida.z], apoyado, dt);
+        v.x = vx;
+        v.z = vz;
         self.base_mut().set_velocity(v);
         self.base_mut().move_and_slide();
         // REQ-JUG-09: si choca de frente con un borde bajo (escalón), sube a ese nivel.
-        if apoyado && self.base().is_on_wall() && dir.length() > 0.01 {
-            self.subir_escalon(Vector3::new(v.x, 0.0, v.z) * dt);
+        if apoyado && self.base().is_on_wall() && camina {
+            self.subir_escalon(pedida * dt);
+        }
+
+        // REQ-JUG-10: la cámara se balancea al caminar y vuelve al centro al parar.
+        let real = self.base().get_real_velocity();
+        let en_piso = self.base().is_on_floor();
+        let sube = self.balanceo.paso(Vector2::new(real.x, real.z).length(), en_piso, dt);
+        if let Some(c) = &mut self.camara {
+            c.set_position(Vector3::new(0.0, ALTO_OJOS + sube, 0.0));
         }
 
         // REQ-SON-08: un paso cada tanto caminado, solo apoyado en el piso.
@@ -354,6 +383,16 @@ impl Jugador {
         if let Some(c) = &mut self.camara {
             c.set_rotation(Vector3::new(p, 0.0, 0.0));
         }
+    }
+
+    /// Alto de la cámara sobre los pies, con el balanceo (para pruebas). REQ-JUG-10
+    pub fn alto_camara(&self) -> f32 {
+        self.camara.as_ref().map(|c| c.get_position().y).unwrap_or(ALTO_OJOS)
+    }
+
+    /// La cámara en el mundo (para pruebas).
+    pub fn vista(&self) -> Transform3D {
+        self.camara.as_ref().map(|c| c.get_global_transform()).unwrap_or(Transform3D::IDENTITY)
     }
 
     /// Lo que tiene en la mano (para pruebas).
@@ -487,41 +526,110 @@ impl Jugador {
         if self.volteado { giro * Basis::from_axis_angle(Vector3::RIGHT, std::f32::consts::PI) } else { giro }
     }
 
-    /// REQ-INT-09, REQ-INT-10: dónde y cómo quedaría lo que tenés en la mano si hacés clic.
-    fn destino_colocar(&mut self) -> Option<(Transform3D, Colocacion)> {
-        let mano = self.mano.clone().filter(|c| c.is_instance_valid())?;
+    /// REQ-INT-03: medidas horizontales (a lo largo de X y de Z locales) de lo agarrable, para
+    /// saber cuál es su largo.
+    fn ejes_horizontales(cuerpo: &Gd<RigidBody3D>) -> (f32, f32) {
+        if let Ok(c) = cuerpo.clone().try_cast::<Comida>()
+            && let Some(def) = catalogo().producto(c.bind().producto())
+        {
+            return match def.colision {
+                Colision::Caja { medidas: [x, _, z] } => (x, z),
+                Colision::Capsula { radio, largo } => (largo, radio * 2.0),
+            };
+        }
+        if let Ok(p) = cuerpo.clone().try_cast::<Paquete>() {
+            let [x, _, z] = p.bind().def().tamano();
+            return (x, z);
+        }
+        (0.1, 0.1)
+    }
+
+    /// REQ-INT-09: el hervidor del que es parte lo tocado (su cuba, sus paredes), si hay uno.
+    fn hervidor_de(tocado: Option<Gd<Object>>) -> Option<Gd<Hervidor>> {
+        let mut nodo = tocado?.try_cast::<Node>().ok();
+        for _ in 0..4 {
+            let n = nodo?;
+            match n.try_cast::<Hervidor>() {
+                Ok(h) => return Some(h),
+                Err(n) => nodo = n.get_parent(),
+            }
+        }
+        None
+    }
+
+    /// REQ-INT-06: lo que toca la cruz a `agarre::ALCANCE_COLOCAR` o menos. Si toca comida que
+    /// flota en el hervidor, también da el hervidor de abajo (REQ-INT-09: el agua es parte del
+    /// hervidor).
+    fn mira_colocar(&mut self) -> Option<Toque> {
         let rayo = self.rayo.as_mut()?;
         // REQ-CLI-13: colocar no ve la zona del cartel de cerrado (es solo para usarlo).
         rayo.set_collision_mask(1);
+        rayo.set_target_position(Vector3::new(0.0, 0.0, -agarre::ALCANCE_COLOCAR));
         rayo.force_raycast_update();
         let choque =
             rayo.is_colliding().then(|| (rayo.get_collision_point(), rayo.get_collision_normal(), rayo.get_collider()));
+        let mut tocado = choque.as_ref().and_then(|c| c.2.clone());
+        let mut hervidor = Self::hervidor_de(tocado.clone());
+        // Atraviesa la comida que flota para ver si abajo está el hervidor.
+        let mut atravesadas: Vec<Gd<Comida>> = Vec::new();
+        while hervidor.is_none() && atravesadas.len() < ATRAVESAR_MAX {
+            let Some(c) = tocado.and_then(|o| o.try_cast::<Comida>().ok()) else { break };
+            rayo.add_exception(&c);
+            atravesadas.push(c);
+            rayo.force_raycast_update();
+            tocado = if rayo.is_colliding() { rayo.get_collider() } else { None };
+            hervidor = Self::hervidor_de(tocado.clone());
+        }
+        for c in &atravesadas {
+            rayo.remove_exception(c);
+        }
+        rayo.set_target_position(Vector3::new(0.0, 0.0, -ALCANCE));
         rayo.set_collision_mask(1 | formas::CAPA_USABLES);
         let (punto, normal, tocado) = choque?;
+        Some(Toque { punto, normal, tocado, hervidor })
+    }
+
+    /// REQ-INT-08: qué hace el clic con lo que tenés en la mano ahí donde apuntás, y dónde queda.
+    /// Una sola función: de acá salen el cartel y el clic. `None` con la mano vacía.
+    fn colocacion(&mut self) -> Option<Colocacion> {
+        let mano = self.mano.clone().filter(|c| c.is_instance_valid() && !c.is_queued_for_deletion())?;
+        // REQ-INT-06: nada a 3 m o menos (lejos, el cielo): se suelta.
+        let Some(Toque { punto, normal, tocado, hervidor }) = self.mira_colocar() else {
+            return Some(Colocacion { accion: AccionClic::Soltar, destino: None, colador: None, lugar: None });
+        };
         let v3 = |v: Vector3| [v.x, v.y, v.z];
+        let comida = mano.clone().try_cast::<Comida>().ok();
+        let (media_altura, medio_ancho, _) = Self::medidas(&mano);
+        let mut mira = Mira { normal: Some(v3(normal)), ..Mira::default() };
 
         // REQ-FRE-07: papas sobre un colador van adentro (lleno, se apoyan como siempre).
-        let colador =
-            mano.clone().try_cast::<Comida>().ok().and_then(|c| freidora::colador_destino(&c, tocado.clone()));
-        if let Some(Ok(col)) = colador {
-            // El origen es donde toca la mira: la porción va al lugar libre más cercano.
-            return Some((Transform3D::new(Basis::IDENTITY, punto), Colocacion::Colador(col)));
-        }
-        let lleno = colador.is_some();
+        let colador = comida.as_ref().and_then(|c| freidora::colador_destino(c, tocado.clone()));
+        mira.colador = colador.as_ref().map(|r| r.is_ok());
+        let colador = colador.and_then(Result::ok);
 
         // REQ-INT-10: un agregado sobre su base va a la zona de encastre.
-        if let Ok(comida) = mano.clone().try_cast::<Comida>()
+        let mut en_base = None;
+        if let Some(c) = &comida
             && let Some(base) = tocado.and_then(|o| o.try_cast::<Comida>().ok())
+            && let Some(pos) = base.bind().encastre_para(c.bind().producto())
         {
-            let producto = comida.bind().producto().to_string();
-            if let Some(pos) = base.bind().encastre_para(&producto) {
-                let t = Transform3D::new(base.get_global_transform().basis.orthonormalized(), pos);
-                return Some((t, Colocacion::Armar(base.bind().nombre().to_string())));
-            }
+            mira.base = Some(base.bind().nombre().to_string());
+            en_base = Some(Transform3D::new(base.get_global_transform().basis.orthonormalized(), pos));
         }
-        let (media_altura, medio_ancho, _) = Self::medidas(&mano);
+
+        // REQ-INT-09, REQ-COC-10: lo que se cocina en agua, con la cruz en el hervidor, va al
+        // primer lugar libre del agua (sin lugares: lleno).
+        let mut al_agua = None;
+        if let (Some(c), Some(h)) = (&comida, &hervidor)
+            && Comida::va_al_hervidor(c.bind().producto())
+        {
+            al_agua = h.bind().lugares_libres(medio_ancho * 2.0, media_altura * 2.0).into_iter().next();
+            mira.hervidor = Some(al_agua.is_some());
+        }
 
         // REQ-INT-09: un paquete cerca de un lugar libre (y a la vista) va centrado ahí.
+        let mut en_lugar = None;
+        let mut lugar = None;
         if mano.clone().try_cast::<Paquete>().is_ok() {
             let libres: Vec<Gd<LugarDeposito>> = self
                 .base()
@@ -537,20 +645,50 @@ impl Jugador {
             {
                 let tl = libres[i].get_global_transform();
                 let b = tl.basis.orthonormalized();
-                let t = Transform3D::new(b, tl.origin + b.col_b() * (media_altura + agarre::HOLGURA));
-                return Some((t, Colocacion::Guardar));
+                en_lugar = Some(Transform3D::new(b, tl.origin + b.col_b() * (media_altura + agarre::HOLGURA)));
+                mira.lugar_libre = true;
+                lugar = Some(libres[i].clone());
             }
         }
 
-        let c = agarre::centro_colocado(v3(punto), v3(normal), media_altura, medio_ancho);
-        let como = if lleno {
-            Colocacion::ColadorLleno
-        } else if agarre::es_apoyo(v3(normal)) {
-            Colocacion::Apoyar
-        } else {
-            Colocacion::Pared
+        let accion = agarre::accion_clic(&mira);
+        let destino = match &accion {
+            AccionClic::Soltar | AccionClic::HervidorLleno => None,
+            AccionClic::Colador => Some(Transform3D::new(Basis::IDENTITY, punto)),
+            AccionClic::Armar(_) => en_base,
+            AccionClic::AlAgua => al_agua,
+            AccionClic::Guardar => en_lugar,
+            AccionClic::Apoyar | AccionClic::ColadorLleno => {
+                let c = agarre::centro_colocado(v3(punto), v3(normal), media_altura, medio_ancho);
+                Some(Transform3D::new(self.giro_colocado(), formas::v3(c)))
+            }
         };
-        Some((Transform3D::new(self.giro_colocado(), Vector3::new(c[0], c[1], c[2])), como))
+        Some(Colocacion { accion, destino, colador, lugar })
+    }
+
+    /// REQ-INT-08: lo que dice el cartel. Si la vista casi no se movió desde que se mostró (el
+    /// mouse puede moverse un poco entre el cartel y el clic), es lo mismo que se mostró; si no
+    /// (las pruebas apuntan de golpe), se decide de nuevo con la misma función.
+    fn colocacion_del_cartel(&mut self) -> Option<Colocacion> {
+        let id = self.mano.as_ref().filter(|c| c.is_instance_valid())?.instance_id();
+        let ahora = self.vista();
+        if let Some((de, vista, c)) = &self.cartel_clic
+            && *de == id
+            && agarre::misma_mira(
+                a3(vista.origin),
+                a3(-vista.basis.col_c()),
+                a3(ahora.origin),
+                a3(-ahora.basis.col_c()),
+            )
+        {
+            return Some(c.clone());
+        }
+        self.colocacion()
+    }
+
+    /// REQ-INT-08: lo que haría el clic ahora con lo de la mano (para pruebas).
+    pub fn accion_clic(&mut self) -> Option<AccionClic> {
+        self.colocacion_del_cartel().map(|c| c.accion)
     }
 
     /// REQ-INT-09: no hay nada entre los ojos y el lugar (una puerta cerrada, un cajón).
@@ -563,29 +701,57 @@ impl Jugador {
         !rayo.is_colliding() || rayo.get_collision_point().distance_to(destino) < 0.15
     }
 
-    /// REQ-INT-06, REQ-INT-09, REQ-INT-10: deja lo de la mano donde apunta la mira (o lo suelta).
+    /// REQ-INT-06, REQ-INT-08, REQ-INT-09, REQ-INT-10: hace lo que dice el cartel: deja lo de
+    /// la mano donde apunta la cruz o, si ahí no hay dónde apoyarlo, lo suelta y cae.
     pub fn colocar(&mut self) {
-        let destino = self.destino_colocar();
+        let Some(Colocacion { accion, destino, colador, lugar }) = self.colocacion_del_cartel() else { return };
+        self.cartel_clic = None;
+        // REQ-COC-08: con el hervidor lleno el clic no hace nada (el cartel lo dice).
+        if accion == AccionClic::HervidorLleno {
+            return;
+        }
+        // REQ-INT-08 (TASK-0263): "Guardar" guarda en el acto. Antes el clic solo movía el
+        // paquete al lugar y el guardado dependía de que la física lo viera adentro de la zona en
+        // los cuadros siguientes (REQ-PRO-06); si algo lo empujaba antes, caía al piso.
+        if accion == AccionClic::Guardar
+            && let Some(mut l) = lugar
+            && let Some(p) = self.paquete_en_mano()
+            && self.soltar_en_silencio().is_some()
+        {
+            if !l.bind_mut().guardar(p.clone()) {
+                let mut p = p;
+                if let Some(t) = destino {
+                    p.set_global_transform(t);
+                }
+                p.set_sleeping(false);
+            }
+            return;
+        }
         let Some(mut c) = self.soltar() else { return };
         // REQ-FRE-07: adentro del colador.
-        if let Some((t, Colocacion::Colador(col))) = &destino
-            && let Ok(papa) = c.clone().try_cast::<Comida>()
+        if accion == AccionClic::Colador
+            && let (Some(mut col), Some(t), Ok(papa)) = (colador, destino, c.clone().try_cast::<Comida>())
         {
-            if let Err(e) = col.clone().bind_mut().meter(papa, Some(t.origin)) {
+            if let Err(e) = col.bind_mut().meter(papa, Some(t.origin)) {
                 hud::avisar(&self.to_gd(), e.mensaje());
             }
             return;
         }
-        if let Some((t, _)) = destino {
+        c.set_angular_velocity(Vector3::ZERO);
+        c.set_linear_velocity(Vector3::ZERO);
+        // REQ-INT-06: sin destino se suelta donde está y cae (sin el empujón del resorte).
+        if let Some(t) = destino {
             c.set_global_transform(t);
-            c.set_linear_velocity(Vector3::ZERO);
-            c.set_angular_velocity(Vector3::ZERO);
         }
+        // Despierto: si se durmió quieto en la mano, la física lo tiene que ver donde quedó (el
+        // agua del hervidor, la zona de encastre) y hacerlo caer si se soltó.
+        c.set_sleeping(false);
     }
 
-    /// REQ-COC-10: vuelca todas las unidades del paquete de la mano en el agua del hervidor.
+    /// REQ-COC-10: vuelca en el agua del hervidor las unidades del paquete de la mano que
+    /// entran en los lugares libres; si sobran, el paquete queda en la mano con esas.
     pub fn volcar(&mut self, hervidor: &Gd<Hervidor>) {
-        let Some(paquete) = self.mano.clone().and_then(|m| m.try_cast::<Paquete>().ok()) else { return };
+        let Some(mut paquete) = self.mano.clone().and_then(|m| m.try_cast::<Paquete>().ok()) else { return };
         let (producto, n, temp) = {
             let p = paquete.bind();
             (p.def().producto.clone(), p.restantes(), p.temp)
@@ -598,14 +764,24 @@ impl Jugador {
         let Some(mut padre) = self.base().get_parent() else { return };
         let Some(def) = catalogo().producto(&producto) else { return };
         let (media_altura, medio_ancho, _) = comida::medidas_de(def);
-        for t in hervidor.bind().lugares_volcado(n, medio_ancho * 2.0, media_altura * 2.0) {
+        let libres = hervidor.bind().lugares_libres(medio_ancho * 2.0, media_altura * 2.0);
+        let (al_agua, sobran) = agarre::repartir_volcado(n, libres.len());
+        if al_agua == 0 {
+            hud::avisar(&yo, "Hervidor lleno"); // REQ-COC-08
+            return;
+        }
+        for t in libres.into_iter().take(al_agua as usize) {
             let mut c = Comida::crear(&producto);
             c.bind_mut().fijar_temperatura(temp);
             padre.add_child(&c);
             c.set_global_transform(t);
         }
-        if let Some(mut p) = self.soltar_en_silencio() {
-            p.queue_free();
+        if sobran == 0 {
+            if let Some(mut p) = self.soltar_en_silencio() {
+                p.queue_free();
+            }
+        } else {
+            paquete.bind_mut().quitar(al_agua);
         }
         sonido::sonar_en(&yo, ids::SOLTAR, hervidor.get_global_position());
     }
@@ -624,7 +800,9 @@ impl Jugador {
         // REQ-INT-03: no choca con el jugador (va pegado a la cámara).
         let yo = self.to_gd().upcast::<Node>();
         c.add_collision_exception_with(&yo);
-        self.volteado = c.get_global_transform().basis.col_b().y < 0.0;
+        // REQ-INT-03: solo lo que se cocina por lados conserva qué cara mira abajo.
+        let por_lados = c.clone().try_cast::<Comida>().is_ok_and(|c| c.bind().por_lados());
+        self.volteado = por_lados && c.get_global_transform().basis.col_b().y < 0.0;
         if let Some(r) = &mut self.rayo {
             r.add_exception(&c);
         }
@@ -825,11 +1003,11 @@ impl Jugador {
             v = v.normalized() * VEL_MAX_MANO;
         }
         c.set_linear_velocity(v);
-        // REQ-INT-04: el giro va hacia el de la cámara (dado vuelta si lo estaba), como resorte.
-        let mut objetivo = t.basis.orthonormalized();
-        if self.volteado {
-            objetivo = objetivo * Basis::from_axis_angle(Vector3::RIGHT, std::f32::consts::PI);
-        }
+        // REQ-INT-03, REQ-INT-04: el giro va, como resorte, al derecho relativo a la cámara
+        // (acostado, cruzado, inclinado hacia los ojos; dado vuelta si va por lados y lo estaba).
+        let (ancho_x, fondo_z) = Self::ejes_horizontales(&c);
+        let [ex, ey, ez] = agarre::giro_mano(ancho_x, fondo_z, self.volteado).map(formas::v3);
+        let objetivo = t.basis.orthonormalized() * Basis::from_cols(ex, ey, ez);
         let actual = c.get_global_transform().basis.orthonormalized().get_quaternion();
         let mut q = (objetivo.get_quaternion() * actual.inverse()).normalized();
         if q.w < 0.0 {
@@ -847,16 +1025,12 @@ impl Jugador {
     /// REQ-INT-02, REQ-INT-08
     fn actualizar_cartel(&mut self) {
         let en_mano = self.mano.clone().filter(|c| c.is_instance_valid() && !c.is_queued_for_deletion());
-        // REQ-INT-08: qué hace el clic con lo que tenés en la mano, ahí donde apuntás.
-        let clic = match en_mano.as_ref().and_then(|_| self.destino_colocar()) {
-            None => "[Clic] Soltar".to_string(),
-            Some((_, Colocacion::Apoyar)) => "[Clic] Apoyar acá".to_string(),
-            Some((_, Colocacion::Pared)) => "[Clic] Dejar acá".to_string(),
-            Some((_, Colocacion::Armar(base))) => format!("[Clic] Poner en el {base}"),
-            Some((_, Colocacion::Guardar)) => "[Clic] Guardar en el estante".to_string(),
-            Some((_, Colocacion::Colador(_))) => "[Clic] Poner en el colador".to_string(),
-            Some((_, Colocacion::ColadorLleno)) => "[Clic] Apoyar acá (el colador está lleno)".to_string(),
-        };
+        // REQ-INT-08: qué hace el clic con lo que tenés en la mano, ahí donde apuntás (lo mismo
+        // que decide `colocar`).
+        let colocacion = self.colocacion();
+        let clic = colocacion.as_ref().map(|c| c.accion.cartel()).unwrap_or_default();
+        let vista = self.vista();
+        self.cartel_clic = en_mano.as_ref().zip(colocacion).map(|(m, c)| (m.instance_id(), vista, c));
         let mano_ocupada = en_mano.is_some();
         let objetivo = self.objetivo();
         let texto = if let Some(m) = en_mano {
@@ -885,11 +1059,17 @@ impl Jugador {
                 let p = p.bind();
                 let mut t = format!("{}\n{} · [Clic der.] Tirar", p.descripcion(), clic);
                 // REQ-COC-10
-                if let Some(Objetivo::Hervidor(_)) = &objetivo
-                    && Comida::va_al_hervidor(&p.def().producto)
+                if let Some(Objetivo::Hervidor(h)) = &objetivo
+                    && let Some(def) = catalogo().producto(&p.def().producto)
+                    && def.va_al_hervidor()
                 {
-                    let nombre = catalogo().producto(&p.def().producto).map(|d| d.nombre.clone()).unwrap_or_default();
-                    t += &format!(" · [E] Echar al agua ({} × {nombre})", p.restantes());
+                    // Van las que entran (REQ-COC-08): sin lugar, el hervidor está lleno.
+                    let (media_altura, medio_ancho, _) = comida::medidas_de(def);
+                    let libres = h.bind().lugares_libres(medio_ancho * 2.0, media_altura * 2.0).len();
+                    match agarre::repartir_volcado(p.restantes(), libres) {
+                        (0, _) => t += " · Hervidor lleno",
+                        (n, _) => t += &format!(" · [E] Echar al agua ({n} × {})", def.nombre),
+                    }
                 }
                 if let Some(Objetivo::Cartel(k)) = &objetivo {
                     t += &format!(" · {}", k.bind().cartel().replace("[Clic/E]", "[E]")); // REQ-CLI-13

@@ -28,6 +28,7 @@ pub mod hervidor; // SPEC-003 (fuente de calor)
 pub mod lados; // SPEC-014 (cocción por lados)
 pub mod logo; // SPEC-028
 pub mod modelos; // SPEC-025
+pub mod movimiento; // SPEC-001 (arranque, frenado y balanceo)
 pub mod papas; // SPEC-026
 pub mod parrilla; // SPEC-015 (carbón)
 pub mod peatones; // SPEC-013
