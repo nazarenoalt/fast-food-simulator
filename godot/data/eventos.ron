@@ -1,6 +1,7 @@
 // SPEC-019 · Eventos de la plaza (REQ-EVE-02). Días: Lun Mar Mie Jue Vie Sab Dom (el día 1 es
-// viernes, REQ-EVE-01). Cada tramo: horas desde el comienzo del día del evento (pueden pasar
-// de 24), multiplicadores de gente y clientes, perfiles que se suman y chance de camiseta.
+// lunes, REQ-EVE-01; la primera semana no hay eventos, REQ-EVE-10). Cada tramo: horas desde el
+// comienzo del día del evento (pueden pasar de 24), multiplicadores de gente y clientes (o
+// `clientes_entre`: sorteado una vez por evento), perfiles que se suman y chance de camiseta.
 [
     (
         id: "feria",
@@ -23,8 +24,9 @@
             (id: "previa", desde: 18.0, hasta: 21.0, camisetas: 0.5),
             // REQ-EVE-08
             (id: "partido", desde: 21.0, hasta: 23.0, gente: 0.3, clientes: 0.3),
-            // REQ-EVE-09: hasta las 0:30 del día siguiente.
-            (id: "festejo", desde: 23.0, hasta: 24.5, clientes: 2.0, perfiles: [(Nocturno, 8.0)], camisetas: 1.0),
+            // REQ-EVE-09: hasta las 0:30 del día siguiente; clientes entre ×2 y ×4, sorteado en
+            // cada partido.
+            (id: "festejo", desde: 23.0, hasta: 24.5, clientes_entre: Some((2.0, 4.0)), perfiles: [(Nocturno, 8.0)], camisetas: 1.0),
         ],
     ),
 ]
