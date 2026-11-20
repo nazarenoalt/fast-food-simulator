@@ -13,7 +13,7 @@ y se van) y juzgan lo que les diste.
 - **REQ-CLI-01** La cantidad esperada de clientes por hora de juego depende de la hora:
   casi nadie de 0 a 7, picos al mediodía (12–14) y a la noche (20–22). Se multiplica por un
   factor de reputación (SPEC-010): con 0 estrellas viene el 40%, con 5 estrellas el 160%;
-  por el menú: × (1 + 0,15 × (productos del menú − 1)); y por el arranque (REQ-ARR-04).
+  por el menú: × (1 + 0,15 × (productos del menú − 1)); y por el arranque (REQ-ARR-05).
 - **REQ-CLI-02** Los clientes llegan caminando desde los extremos de la vereda o desde la
   plaza, siguiendo los caminos (SPEC-013).
 - **REQ-CLI-03** Fila: hasta 6 lugares (menos la primera semana, REQ-ARR-05) en la vereda, frente al carrito. Si está llena no
