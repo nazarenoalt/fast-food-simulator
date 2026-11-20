@@ -1,6 +1,6 @@
 # SPEC-032 · Rendimiento
 
-Estado: **Aprobada (TASK-0250)**
+Estado: **Implementada (TASK-0250)**
 
 ## Objetivo
 

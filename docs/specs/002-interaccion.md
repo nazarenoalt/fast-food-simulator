@@ -1,6 +1,6 @@
 # SPEC-002 · Interacción y agarre
 
-Estado: **Implementada (etapa 2.5: agarre cercano y colocar con la mira; TASK-0250 en curso)**
+Estado: **Implementada (etapa 2.5: agarre cercano, colocar con la mira; TASK-0250)**
 
 ## Objetivo
 

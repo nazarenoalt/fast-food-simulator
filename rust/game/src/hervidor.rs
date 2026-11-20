@@ -86,11 +86,6 @@ impl Hervidor {
         true
     }
 
-    /// REQ-COC-10: dónde van los primeros `n` alimentos volcados (en los lugares libres).
-    pub fn lugares_volcado(&self, n: u32, largo: f32, grosor: f32) -> Vec<Transform3D> {
-        self.lugares_libres(largo, grosor).into_iter().take(n as usize).collect()
-    }
-
     /// REQ-COC-08, REQ-COC-10 (TASK-0262): lugares libres en la superficie del agua para algo
     /// de `largo` × `grosor`, en orden (una sola capa, flotando, acostado a lo largo de la
     /// cuba). Descuenta lo que ya está en el agua. Vacío = hervidor lleno.

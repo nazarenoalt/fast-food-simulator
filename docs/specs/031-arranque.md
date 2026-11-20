@@ -1,6 +1,6 @@
 # SPEC-031 · Arranque de la partida
 
-Estado: **Aprobada (TASK-0250)**
+Estado: **Implementada (TASK-0250)**
 
 ## Objetivo
 

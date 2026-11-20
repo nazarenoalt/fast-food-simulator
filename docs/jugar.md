@@ -47,9 +47,11 @@ Tab abre el proveedor. Lo que comprás llega en una hora de juego a un pallet al
 carrito; llevá el paquete a un lugar libre del estante (apuntá ahí y hacé clic) y queda guardado.
 
 ## Mover cosas
-Lo que agarrás queda en tu mano, abajo a la derecha. Con algo en la mano aparece una cruz
-blanca en el centro: donde apunta es donde va a quedar al hacer clic (el cartel dice qué va a
-pasar). Los paquetes, cajas y bolsas de papas del estante también se agarran con clic y se
+Lo que agarrás queda en tu mano, abajo a la derecha, siempre derecho (el pancho con la
+salchicha a la vista). Con algo en la mano aparece una cruz blanca en el centro: donde apunta
+(hasta 3 m) es donde va a quedar al hacer clic, y el clic hace siempre lo que dice el cartel
+("Apoyar", "Al agua", "Guardar en el estante"). Si apuntás a una pared o al cielo, el cartel dice
+"Soltar" y cae al piso. Los paquetes, cajas y bolsas de papas del estante también se agarran con clic y se
 llevan a cualquier lado; dejalos en un lugar libre y se vuelven a guardar.
 
 ## Agregar contenido sin tocar código
