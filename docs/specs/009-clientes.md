@@ -16,8 +16,9 @@ y se van) y juzgan lo que les diste.
   por el menú: × (1 + 0,15 × (productos del menú − 1)); y por el arranque (REQ-ARR-05).
 - **REQ-CLI-02** Los clientes llegan caminando desde los extremos de la vereda o desde la
   plaza, siguiendo los caminos (SPEC-013).
-- **REQ-CLI-03** Fila: hasta 6 lugares (menos la primera semana, REQ-ARR-05) en la vereda, frente al carrito. Si está llena no
-  llegan más clientes. Cuando alguien se va, los de atrás avanzan.
+- **REQ-CLI-03** Fila: hasta 6 lugares (menos la primera semana, REQ-ARR-05) en la vereda,
+  frente al carrito. Si está llena no llegan más clientes. Cuando alguien se va, los de atrás
+  avanzan.
 
 ### Pedido
 - **REQ-CLI-04** Cuando el primero de la fila llega a su lugar, pide: un producto del menú y
