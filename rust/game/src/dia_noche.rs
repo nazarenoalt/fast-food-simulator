@@ -3,7 +3,9 @@
 use carrito_core::forma::TipoPieza;
 use carrito_core::reloj::Reloj;
 use godot::classes::base_material_3d::{Flags, ShadingMode};
+use godot::classes::directional_light_3d::{ShadowMode, SkyMode};
 use godot::classes::environment::{AmbientSource, BgMode, ToneMapper};
+use godot::classes::light_3d::Param;
 use godot::classes::sky::ProcessMode as SkyProcessMode;
 use godot::classes::{
     DirectionalLight3D, Environment, INode, Input, MeshInstance3D, Node, ProceduralSkyMaterial, Sky, WorldEnvironment,
@@ -15,6 +17,51 @@ use crate::{formas, nocturno};
 
 pub const GRUPO: &str = "dia_noche";
 
+/// REQ-AMB-12: tamaño aparente del disco del sol en el cielo (grados).
+const TAMANO_DISCO_SOL: f32 = 1.0;
+
+/// REQ-DIA-08, REQ-AMB-14: ajustes de las sombras del sol (TASK-0258). El sol gira un poquito
+/// cada cuadro y Godot vuelve a dibujar el mapa de sombras con la grilla girada: los bordes se
+/// corren de a un texel ("tiemblan como líquido"). Se achica el texel (atlas de 8192 en
+/// `project.godot` y 4 tramos más cortos y repartidos hacia adelante) y se suaviza el borde con
+/// PCF (desenfoque y filtro "Soft Medium" de `project.godot`), sin PCSS (tamaño 0: su ruido
+/// por píxel hierve al moverse).
+pub mod sombras {
+    /// Hasta dónde hay sombras (m): toda la plaza vista desde el carrito.
+    pub const DISTANCIA_MAX: f32 = 100.0;
+    /// Dónde termina cada tramo, como parte de la distancia: 6 m, 18 m, 45 m y 100 m.
+    pub const TRAMOS: [f32; 3] = [0.06, 0.18, 0.45];
+    /// Desde dónde se desvanecen, como parte de la distancia.
+    pub const DESVANECER: f32 = 0.85;
+    /// Desenfoque del borde (PCF).
+    pub const DESENFOQUE: f32 = 1.5;
+    /// Corrimientos contra el "acné" (manchas que se mueven con el sol en las superficies).
+    pub const BIAS: f32 = 0.1;
+    pub const NORMAL_BIAS: f32 = 2.0;
+    /// Profundidad del "pancake" (m): los que tapan desde fuera de la vista igual hacen sombra.
+    pub const PANCAKE: f32 = 20.0;
+}
+
+/// REQ-DIA-08: la luz del sol con sombras estables y suaves.
+fn configurar_sombras_sol(sol: &mut Gd<DirectionalLight3D>) {
+    sol.set_shadow(true);
+    sol.set_sky_mode(SkyMode::LIGHT_ONLY);
+    // Sin tamaño aparente: PCF en vez de PCSS (el disco del cielo lo pinta otra luz).
+    sol.set_param(Param::SIZE, 0.0);
+    // REQ-AMB-14: sombras continuas, tramos mezclados (sin cortes redondos).
+    sol.set_shadow_mode(ShadowMode::PARALLEL_4_SPLITS);
+    sol.set_blend_splits(true);
+    sol.set_param(Param::SHADOW_MAX_DISTANCE, sombras::DISTANCIA_MAX);
+    sol.set_param(Param::SHADOW_SPLIT_1_OFFSET, sombras::TRAMOS[0]);
+    sol.set_param(Param::SHADOW_SPLIT_2_OFFSET, sombras::TRAMOS[1]);
+    sol.set_param(Param::SHADOW_SPLIT_3_OFFSET, sombras::TRAMOS[2]);
+    sol.set_param(Param::SHADOW_FADE_START, sombras::DESVANECER);
+    sol.set_param(Param::SHADOW_BLUR, sombras::DESENFOQUE);
+    sol.set_param(Param::SHADOW_BIAS, sombras::BIAS);
+    sol.set_param(Param::SHADOW_NORMAL_BIAS, sombras::NORMAL_BIAS);
+    sol.set_param(Param::SHADOW_PANCAKE_SIZE, sombras::PANCAKE);
+}
+
 #[derive(GodotClass)]
 #[class(base=Node)]
 pub struct DiaNoche {
@@ -22,6 +69,7 @@ pub struct DiaNoche {
     reloj: Reloj,
     noche: Option<bool>,
     sol: Option<Gd<DirectionalLight3D>>,
+    disco_sol: Option<Gd<DirectionalLight3D>>,
     luna: Option<Gd<DirectionalLight3D>>,
     entorno: Option<Gd<Environment>>,
     cielo: Option<Gd<ProceduralSkyMaterial>>,
@@ -36,6 +84,7 @@ impl INode for DiaNoche {
             reloj: Reloj::default(),
             noche: None,
             sol: None,
+            disco_sol: None,
             luna: None,
             entorno: None,
             cielo: None,
@@ -67,19 +116,18 @@ impl INode for DiaNoche {
         self.base_mut().add_child(&we);
 
         let mut sol = DirectionalLight3D::new_alloc();
-        sol.set_shadow(true);
-        // REQ-AMB-12: tamaño aparente del disco del sol en el cielo.
-        sol.set_param(godot::classes::light_3d::Param::SIZE, 1.0);
-        // REQ-AMB-14: sombras continuas. Se mezclan los tramos de distancia (sin cortes
-        // redondos) y el alcance cubre la plaza.
-        sol.set_shadow_mode(godot::classes::directional_light_3d::ShadowMode::PARALLEL_4_SPLITS);
-        sol.set_blend_splits(true);
-        sol.set_param(godot::classes::light_3d::Param::SHADOW_MAX_DISTANCE, 140.0);
-        sol.set_param(godot::classes::light_3d::Param::SHADOW_FADE_START, 0.85);
-        sol.set_param(godot::classes::light_3d::Param::SHADOW_NORMAL_BIAS, 1.5);
-        sol.set_param(godot::classes::light_3d::Param::SHADOW_BLUR, 1.5);
+        configurar_sombras_sol(&mut sol);
         sol.set_name("Sol");
         self.base_mut().add_child(&sol);
+
+        // REQ-AMB-12: el disco del sol lo dibuja otra luz que solo pinta el cielo (con su tamaño
+        // aparente); así la luz que hace sombra no usa sombras PCSS (REQ-DIA-08).
+        let mut disco_sol = DirectionalLight3D::new_alloc();
+        disco_sol.set_sky_mode(SkyMode::SKY_ONLY);
+        disco_sol.set_shadow(false);
+        disco_sol.set_param(Param::SIZE, TAMANO_DISCO_SOL);
+        disco_sol.set_name("DiscoSol");
+        self.base_mut().add_child(&disco_sol);
 
         let mut luna = DirectionalLight3D::new_alloc();
         luna.set_color(Color::from_rgb(0.6, 0.7, 1.0));
@@ -100,6 +148,7 @@ impl INode for DiaNoche {
         self.disco_luna = Some(disco);
 
         self.sol = Some(sol);
+        self.disco_sol = Some(disco_sol);
         self.luna = Some(luna);
         self.entorno = Some(env);
         self.cielo = Some(cielo);
@@ -128,7 +177,7 @@ impl DiaNoche {
         self.aplicar();
     }
 
-    /// Pone el número de día (1 = viernes, REQ-EVE-01). Para pruebas y para cargar partidas.
+    /// Pone el número de día (1 = lunes, REQ-EVE-01). Para pruebas y para cargar partidas.
     #[func]
     pub fn set_dia(&mut self, dia: u32) {
         self.reloj.dia = dia.max(1);
@@ -151,6 +200,11 @@ impl DiaNoche {
         self.reloj.dia
     }
 
+    /// La luz del sol (la que hace sombra). Para pruebas (REQ-DIA-08).
+    pub fn sol(&self) -> Option<Gd<DirectionalLight3D>> {
+        self.sol.clone()
+    }
+
     /// Minutos de juego que pasan por segundo real (incluye el ×30 de prueba).
     pub fn minutos_por_segundo(&self) -> f64 {
         self.reloj.minutos_por_segundo * self.reloj.multiplicador
@@ -166,20 +220,20 @@ impl DiaNoche {
     fn aplicar(&mut self) {
         let sol = self.reloj.sol();
 
-        // REQ-DIA-03, REQ-DIA-04
-        if let Some(luz) = &mut self.sol {
-            let d = formas::v3(sol.direccion());
+        // REQ-DIA-03, REQ-DIA-04, REQ-DIA-08: el sol se mueve de forma continua (cada cuadro).
+        let d = formas::v3(sol.direccion());
+        for luz in [&mut self.sol, &mut self.disco_sol].into_iter().flatten() {
             luz.set_position(d * 100.0);
             if d.y.abs() < 0.999 {
                 luz.look_at(Vector3::ZERO);
             }
             luz.set_color(formas::color(sol.color()));
-            luz.set_param(godot::classes::light_3d::Param::ENERGY, sol.energia());
+            luz.set_param(Param::ENERGY, sol.energia());
             luz.set_visible(sol.energia() > 0.001);
         }
         // REQ-DIA-05
         if let Some(luna) = &mut self.luna {
-            luna.set_param(godot::classes::light_3d::Param::ENERGY, sol.energia_luna());
+            luna.set_param(Param::ENERGY, sol.energia_luna());
             luna.set_visible(sol.energia_luna() > 0.001);
         }
         // REQ-AMB-11, REQ-AMB-12

@@ -51,7 +51,7 @@ fn dist(a: [f32; 2], b: [f32; 2]) -> f32 {
 }
 
 impl PruebaHumo {
-    /// Un lunes (sin eventos): a las 13:00 oficinistas sentados comiendo; a las 14:35 ya se van;
+    /// Un jueves (sin eventos): a las 13:00 oficinistas sentados comiendo; a las 14:35 ya se van;
     /// a las 17:30 familias con chicos que siguen a los adultos y dan vueltas a la fuente, y una
     /// pareja que camina junta; a las 22:00 las familias se van y hay una ronda nocturna junto a
     /// un farol. Devuelve true cuando termina (dejando el reloj como estaba).
@@ -64,9 +64,9 @@ impl PruebaHumo {
         let pasados = self.cuadro.saturating_sub(self.cuadro5);
         match self.fase5 {
             0 => {
-                // Se guardan día y hora para dejarlos como estaban; un lunes (día 4), sin eventos.
+                // Se guardan día y hora para dejarlos como estaban; un jueves (día 11), sin eventos.
                 self.notas5 = vec![dn.bind().hora() as f64 * 60.0, dn.bind().dia() as f64, 0.0, 0.0];
-                dn.bind_mut().set_dia(4);
+                dn.bind_mut().set_dia(11);
                 cambiar(self, &mut dn, 1, Some(13.0 * 60.0));
                 false
             }

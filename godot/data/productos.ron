@@ -68,7 +68,7 @@
                 (tipo: Capsula, medidas: (0.015, 0.16, 0), pos: (0, 0.005, 0), rot: (0, 0, 90), color: (0.75, 0.3, 0.25), tinte_lado: Some(1)),
             ],
             coccion: Some((
-                k: 0.05, t_min: 60, velocidad: 0.0012, punto: 10, pasado: 22,
+                k: 0.05, t_min: 60, velocidad: 0.0012, punto: 7, pasado: 18, // REQ-PAR-05
                 t_quemado: 280, segundos_quemado: 60,
                 color_crudo: (0.75, 0.3, 0.25),
                 color_cocido: (0.5, 0.22, 0.14),
@@ -101,7 +101,7 @@
             id: "choripan",
             nombre: "choripán",
             masa: 0.18,
-            precio: Some(12), // REQ-ECO-03
+            precio: Some(14), // REQ-ECO-03
             aderezos: ["chimichurri", "mostaza"], // REQ-ADE-07
             requiere: Some("Parrilla"), // REQ-CLI-04
             colision: Caja(medidas: (0.2, 0.07, 0.065)),
@@ -312,7 +312,7 @@
             id: "papas_en_cajita",
             nombre: "papas en cajita",
             masa: 0.14, // REQ-ARM-05: cajita + papas fritas
-            precio: Some(8), // REQ-FRE-11
+            precio: Some(10), // REQ-FRE-11
             aderezos: ["ketchup", "mayonesa"], // REQ-FRE-11, REQ-ADE-07
             altura_aderezos: Some(0.066), // sobre los bastones
             requiere: Some("Freidora"), // REQ-CLI-04

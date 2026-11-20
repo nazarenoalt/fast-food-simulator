@@ -22,6 +22,9 @@ Más adelante la hora va a manejar a los NPCs y los horarios de venta.
   azulada tenue para que se pueda ver.
 - **REQ-DIA-06** "Es de noche" (luces encendidas) cuando el sol está a menos de 3° sobre el
   horizonte. Todos los nodos del grupo `luces_noche` se prenden de noche y se apagan de día.
+- **REQ-DIA-08** Sombras estables (TASK-0258): el sol se mueve de forma continua, pero los
+  bordes de las sombras no tiemblan ni "se derriten como líquido" mientras se mueve: se
+  corren parejos, de a poco (sombras estabilizadas y suavizadas).
 - **REQ-DIA-07** La tecla T alterna velocidad ×1 / ×30 (para probar), y la hora se ve en pantalla.
 
 ## Criterios de aceptación

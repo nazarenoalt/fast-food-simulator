@@ -6,7 +6,7 @@ use crate::tostado::EstadoPan;
 
 pub const LUGARES_FILA: usize = 6; // REQ-CLI-03
 pub const SEPARACION_FILA: f32 = 0.85;
-pub const PACIENCIA_S: f32 = 100.0; // REQ-CLI-06
+pub const PACIENCIA_S: f32 = 150.0; // REQ-CLI-06
 pub const PENALIDAD_RECHAZO_S: f32 = 20.0; // REQ-CLI-08
 pub const PROPINA_MAX: f32 = 0.2; // REQ-CLI-09
 
@@ -30,15 +30,50 @@ pub fn tasa_clientes(hora: f32, reputacion: f32) -> f32 {
     (base + picos) * factor_reputacion(reputacion)
 }
 
-/// REQ-CLI-03: fila de hasta 6 personas. Guarda ids de clientes en orden.
-#[derive(Debug, Clone, Default, PartialEq)]
+/// REQ-CLI-01: factor por el menú: × (1 + 0,15 × (productos del menú − 1)). Con uno solo, 1.
+pub fn factor_menu(productos: usize) -> f32 {
+    1.0 + 0.15 * (productos.max(1) - 1) as f32
+}
+
+/// REQ-ARR-05 (y REQ-CLI-01, REQ-CLI-03): la primera semana los clientes van subiendo. Devuelve
+/// el factor de clientes y los lugares de la fila del día `dia` (el 1 es el primero).
+pub fn rampa(dia: u32) -> (f32, usize) {
+    match dia {
+        0 | 1 => (0.3, 3),
+        2 => (0.45, 4),
+        3 => (0.6, 5),
+        4 => (0.75, LUGARES_FILA),
+        5 => (0.9, LUGARES_FILA),
+        _ => (1.0, LUGARES_FILA),
+    }
+}
+
+/// REQ-CLI-03: fila de hasta 6 personas (menos la primera semana, REQ-ARR-05). Guarda ids de
+/// clientes en orden.
+#[derive(Debug, Clone, PartialEq)]
 pub struct Fila {
     ids: Vec<u64>,
+    /// Lugares que tiene hoy (REQ-ARR-05).
+    lugares: usize,
+}
+
+impl Default for Fila {
+    fn default() -> Self {
+        Self { ids: Vec::new(), lugares: LUGARES_FILA }
+    }
 }
 
 impl Fila {
+    /// REQ-ARR-05: cambia los lugares de la fila. Si ya hay más gente, nadie se va: solo no se
+    /// suma nadie hasta que haya lugar.
+    pub fn set_lugares(&mut self, lugares: usize) {
+        self.lugares = lugares.clamp(1, LUGARES_FILA);
+    }
+    pub fn lugares(&self) -> usize {
+        self.lugares
+    }
     pub fn llena(&self) -> bool {
-        self.ids.len() >= LUGARES_FILA
+        self.ids.len() >= self.lugares
     }
     pub fn len(&self) -> usize {
         self.ids.len()
@@ -315,6 +350,52 @@ mod tests {
     }
 
     #[test]
+    fn req_cli_01_factor_por_menu() {
+        assert_eq!(factor_menu(1), 1.0);
+        assert!((factor_menu(2) - 1.15).abs() < 1e-6);
+        assert!((factor_menu(4) - 1.45).abs() < 1e-6);
+        // Sin menú no baja de 1 (no hay productos de menos).
+        assert_eq!(factor_menu(0), 1.0);
+    }
+
+    #[test]
+    fn req_arr_05_cli_03_rampa_de_la_primera_semana() {
+        let esperado = [(1, 0.3, 3), (2, 0.45, 4), (3, 0.6, 5), (4, 0.75, 6), (5, 0.9, 6), (6, 1.0, 6), (7, 1.0, 6)];
+        for (dia, factor, lugares) in esperado {
+            let (f, l) = rampa(dia);
+            assert!((f - factor).abs() < 1e-6, "día {dia}: ×{f}");
+            assert_eq!(l, lugares, "día {dia}");
+        }
+        for dia in 8..40 {
+            assert_eq!(rampa(dia), (1.0, LUGARES_FILA), "día {dia}");
+        }
+    }
+
+    #[test]
+    fn req_arr_05_cli_03_la_fila_respeta_los_lugares_del_dia() {
+        let mut f = Fila::default();
+        f.set_lugares(rampa(1).1);
+        for id in 0..3 {
+            assert_eq!(f.unirse(id), Some(id as usize));
+        }
+        assert!(f.llena());
+        assert_eq!(f.unirse(3), None, "el día 1 la fila tiene 3 lugares");
+        assert!(!llegan_clientes(&f, None));
+        // Al día siguiente hay un lugar más.
+        f.set_lugares(rampa(2).1);
+        assert!(!f.llena());
+        assert_eq!(f.unirse(3), Some(3));
+        assert!(f.llena());
+        // Si los lugares bajan con gente de más, nadie se va pero no entra nadie.
+        f.set_lugares(3);
+        assert_eq!(f.len(), 4);
+        assert_eq!(f.unirse(9), None);
+        f.salir(0);
+        f.salir(1);
+        assert!(!f.llena());
+    }
+
+    #[test]
     fn req_cli_03_fila_de_seis_que_avanza() {
         let mut f = Fila::default();
         for id in 0..6 {
@@ -392,14 +473,16 @@ mod tests {
     #[test]
     fn req_cli_05_06_paciencia_y_animo() {
         let mut p = Paciencia::default();
+        assert_eq!(p.total, 150.0, "REQ-CLI-06: 150 s");
         assert_eq!(p.animo(), Animo::Contento);
         p.paso(10.0, false);
-        assert_eq!(p.restante, 95.0, "en la fila baja a la mitad");
-        p.paso(45.0, true);
+        assert_eq!(p.restante, 145.0, "en la fila baja a la mitad");
+        p.paso(70.0, true);
         assert_eq!(p.animo(), Animo::Impaciente);
-        p.paso(30.0, true);
+        p.paso(45.0, true);
         assert_eq!(p.animo(), Animo::Enojado);
-        assert!(p.paso(100.0, true));
+        assert!(!p.paso(29.0, true));
+        assert!(p.paso(1.0, true), "se agota a los 150 s");
     }
 
     #[test]
@@ -417,7 +500,7 @@ mod tests {
         assert_eq!(evaluar(&ped, &otro, 10.0, 0.0), Err(Rechazo::OtroProducto));
         let mut pac = Paciencia::default();
         pac.penalizar(PENALIDAD_RECHAZO_S);
-        assert_eq!(pac.restante, 80.0);
+        assert_eq!(pac.restante, 130.0);
     }
 
     #[test]
@@ -498,9 +581,11 @@ mod tests {
 
     #[test]
     fn req_rut_04_paciencia_con_factor() {
+        // REQ-CLI-06 con los perfiles de agenda.ron: oficinista ×0,8 → 120 s, jubilado ×1,2 → 180 s.
         let mut p = Paciencia::con_factor(0.8);
-        assert_eq!(p.restante, 80.0);
-        p.paso(40.0, true);
+        assert_eq!(p.restante, 120.0);
+        assert!((Paciencia::con_factor(1.2).total - 180.0).abs() < 1e-4);
+        p.paso(60.0, true);
         assert!((p.usada() - 0.5).abs() < 1e-5);
         assert_eq!(Paciencia::default().total, PACIENCIA_S);
     }

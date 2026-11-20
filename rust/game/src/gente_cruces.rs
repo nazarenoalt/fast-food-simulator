@@ -75,10 +75,9 @@ impl Gente {
                 .get(&id)
                 .filter(|e| (e.cordon[0] - c.cordon[0]).hypot(e.cordon[1] - c.cordon[1]) < 1.0)
                 .map_or(0.0, |e| e.segundos);
-            let margen = cruces::margen_pedido(esperado);
             let viene = estado_autos
                 .iter()
-                .find(|&&(carril, s, v)| cruces::viene_auto_antes(&est.recorridos[carril], s, v, &c, margen));
+                .find(|&&(carril, s, v)| cruces::espera(&est.recorridos[carril], s, v, &c, esperado));
             let Some(&(carril, s, _)) = viene else { continue };
             if esperado == 0.0 {
                 est.esperas.insert(id, Espera { cordon: c.cordon, donde: pos, segundos: 0.0 });

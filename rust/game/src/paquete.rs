@@ -21,6 +21,8 @@ pub struct Paquete {
     pub acomodado: bool,
     /// Temperatura del paquete (°C). REQ-HEL-06
     pub temp: f32,
+    /// El dibujo (se rehace si se sacan unidades). REQ-COC-10
+    visual: Option<Gd<Node3D>>,
 }
 
 impl Paquete {
@@ -33,7 +35,7 @@ impl Paquete {
     /// REQ-DEP-09: un paquete con `restantes` unidades y a `temp` °C (levantado del estante).
     pub fn crear_con(def: DefBloque, restantes: u32, temp: f32) -> Gd<Self> {
         let restantes = Bloque::con_restantes(def.clone(), restantes).restantes;
-        Gd::from_init_fn(|base| Self { base, def, restantes, sostenido: false, acomodado: false, temp })
+        Gd::from_init_fn(|base| Self { base, def, restantes, sostenido: false, acomodado: false, temp, visual: None })
     }
 
     pub fn restantes(&self) -> u32 {
@@ -42,6 +44,21 @@ impl Paquete {
 
     pub fn def(&self) -> &DefBloque {
         &self.def
+    }
+
+    /// REQ-COC-10: saca `n` unidades (las que se volcaron al hervidor) y se redibuja.
+    pub fn quitar(&mut self, n: u32) {
+        self.restantes = self.restantes.saturating_sub(n);
+        let masa_unidad = catalogo().producto(&self.def.producto).map(|p| p.masa).unwrap_or(0.05);
+        let masa = masa_unidad * self.restantes as f32 + 0.05;
+        self.base_mut().set_mass(masa);
+        let (def, restantes) = (self.def.clone(), self.restantes);
+        if let Some(visual) = &mut self.visual {
+            for mut h in visual.get_children().iter_shared() {
+                h.queue_free();
+            }
+            bloque_stock::construir_visual(visual, &def, restantes);
+        }
     }
 
     pub fn descripcion(&self) -> String {
@@ -81,6 +98,7 @@ impl IRigidBody3D for Paquete {
         visual.set_position(Vector3::new(0.0, -ty / 2.0, 0.0));
         yo.add_child(&visual);
         bloque_stock::construir_visual(&mut visual, &def, self.restantes);
+        self.visual = Some(visual);
 
         let mut s = BoxShape3D::new_gd();
         s.set_size(Vector3::new(tx + 0.01, ty + 0.01, tz + 0.01));

@@ -28,6 +28,8 @@ pub(super) struct Estado {
     /// REQ-EVE-03: último día en que salió el aviso de la mañana (0 = ninguno) y su texto.
     dia_avisado: u32,
     ultimo_aviso: Option<String>,
+    /// Día en que salió `ultimo_aviso` (REQ-EVE-10: la primera semana no sale ninguno).
+    dia_ultimo_aviso: u32,
     /// REQ-EVE-05: los puestos armados y sus vendedores (no cuentan como gente de la plaza
     /// ni como clientes: no están en `Gente::peatones`).
     feria: Option<Gd<Feria>>,
@@ -75,6 +77,7 @@ impl Gente {
         if let Some(texto) = eventos::aviso_del_dia(&plaza().eventos, self.dia) {
             hud::avisar(&self.to_gd(), &texto);
             self.est_eventos.ultimo_aviso = Some(texto);
+            self.est_eventos.dia_ultimo_aviso = self.dia;
         }
     }
 
@@ -250,18 +253,26 @@ impl Gente {
         self.est_eventos.ultimo_aviso.clone()
     }
 
+    /// Para pruebas: el aviso de la mañana de hoy, si salió alguno (REQ-EVE-03, REQ-EVE-10).
+    pub fn aviso_de_hoy(&self) -> Option<String> {
+        (self.est_eventos.dia_ultimo_aviso == self.dia).then(|| self.est_eventos.ultimo_aviso.clone()).flatten()
+    }
+
     /// Para pruebas: ¿esa persona lleva la camiseta de un equipo de hoy? REQ-EVE-07
     pub fn con_camiseta(&self, id: u64) -> bool {
         let equipos: Vec<[f32; 3]> = plaza().eventos.iter().flat_map(|e| e.equipos.clone()).collect();
         self.peatones
             .iter()
-            .find(|p| p.bind().id == id)
+            .find(|p| p.is_instance_valid() && p.bind().id == id)
             .is_some_and(|p| equipos.contains(&p.bind().apariencia().remera))
     }
 
     /// Para pruebas: cuántos están saltando ahora. REQ-EVE-09
     pub fn saltando(&self) -> usize {
-        self.peatones.iter().filter(|p| matches!(p.bind().accion_actual(), Some(Accion::Saltar { .. }))).count()
+        self.peatones
+            .iter()
+            .filter(|p| p.is_instance_valid() && matches!(p.bind().accion_actual(), Some(Accion::Saltar { .. })))
+            .count()
     }
 
     /// Para pruebas: hace llegar `n` personas de la agenda ya en su lugar (sin caminar desde

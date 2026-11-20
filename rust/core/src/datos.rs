@@ -287,8 +287,17 @@ pub(crate) mod tests {
         std::fs::read_to_string(dir_datos().join(nombre)).unwrap_or_else(|e| panic!("{nombre}: {e}"))
     }
 
-    /// Carga los archivos reales del juego.
+    /// Carga los archivos reales del juego, con el carrito del jugador de la prueba de humo: la
+    /// base común más los cuatro equipos y sin el cartel (REQ-ARR-04), el de antes del arranque.
     pub(crate) fn catalogo_real() -> Catalogo {
+        let mut c = catalogo_base_comun();
+        let arranque = crate::arranque::tests::arranque_real();
+        c.carrito_jugador = crate::arranque::config_prueba(&c.carrito_jugador, &arranque);
+        c
+    }
+
+    /// Los archivos reales tal cual: `carrito_jugador.ron` es la base común (REQ-ARR-02).
+    pub(crate) fn catalogo_base_comun() -> Catalogo {
         catalogo_con_jugador(&leer("carrito_jugador.ron")).unwrap_or_else(|e| panic!("{e}"))
     }
 
@@ -430,7 +439,7 @@ pub(crate) mod tests {
         let c = catalogo_real();
         assert_eq!(crate::armado::combinar(&c.combinaciones, "cajita_papas", "papas_fritas"), Some("papas_en_cajita"));
         let p = c.producto("papas_en_cajita").unwrap();
-        assert_eq!(p.precio, Some(8.0));
+        assert_eq!(p.precio, Some(10.0)); // REQ-FRE-11
         assert_eq!(p.aderezos, vec!["ketchup".to_string(), "mayonesa".to_string()]);
         assert_eq!(p.requiere.as_deref(), Some("Freidora"));
         assert!(p.coccion.is_none(), "no se cocina: conserva la cocción de las papas (REQ-ARM-03)");
@@ -458,7 +467,7 @@ pub(crate) mod tests {
         menu.sort();
         assert_eq!(menu, ["choripan", "hamburguesa", "pancho", "papas_en_cajita"].map(String::from).to_vec());
         assert_eq!(c.producto("hamburguesa").unwrap().precio, Some(14.0));
-        assert_eq!(c.producto("choripan").unwrap().precio, Some(12.0));
+        assert_eq!(c.producto("choripan").unwrap().precio, Some(14.0));
     }
 
     #[test]

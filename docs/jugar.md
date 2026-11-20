@@ -17,11 +17,25 @@
 | M | Silenciar o reactivar todo el sonido |
 | Esc | Soltar el mouse |
 
+## Empezar ([SPEC-031](specs/031-arranque.md))
+- Al empezar sale el panel **"¿Con qué arrancás?"**: Pancho, Hamburguesa, Choripán o Papas
+  fritas. El juego queda quieto hasta que elegís con un clic. El carrito trae solo el equipo y la
+  mercadería de ese producto, y los clientes piden solo eso. Cada producto nuevo que sumás
+  (comprando su equipo en el modo armado, B) trae 15% más de clientes.
+- El puesto arranca **cerrado**, con el cartel colgado: no llega nadie hasta que lo sacás
+  (ver "Cartel de cerrado" más abajo).
+- **La primera semana es tranquila:** el lunes vienen pocos clientes y en la fila entran 3; cada
+  día viene un poco más gente hasta el sábado. No hay feria ni partido hasta la segunda semana.
+- Lo que trae cada opción se cambia en `godot/data/arranque.ron`, y la base común del carrito
+  en `godot/data/carrito_jugador.ron`.
+
 ## Atender a un cliente
 1. E sobre el hervidor para prenderlo.
-2. E sobre el paquete de salchichas del estante y hacé clic apuntando al agua. O agarrá el
-   paquete entero (clic) y apretá E sobre el hervidor: caen todas las salchichas de una.
-3. Esperá a que esté cocida (el cartel lo dice y cambia de color).
+2. E sobre el paquete de salchichas del estante y hacé clic apuntando a cualquier parte del
+   hervidor: cae al agua. O agarrá el paquete entero (clic) y apretá E sobre el hervidor: caen
+   las salchichas de una. Flotan en una capa y entran 14; las que sobran quedan en el paquete.
+3. Esperá a que esté cocida (el cartel lo dice y cambia de color). En el agua no se pasa:
+   podés dejarla lista esperando al cliente.
 4. Sacá un pan de la bolsa, dejalo en la mesada, agarrá la salchicha, apuntá la cruz al pan
    y hacé clic: la salchicha va arriba del pan y se arma el pancho.
 5. Con el pancho en la mano, mirá un pomo y apretá E para ponerle el aderezo que pidió el
@@ -33,9 +47,11 @@ Tab abre el proveedor. Lo que comprás llega en una hora de juego a un pallet al
 carrito; llevá el paquete a un lugar libre del estante (apuntá ahí y hacé clic) y queda guardado.
 
 ## Mover cosas
-Lo que agarrás queda en tu mano, abajo a la derecha. Con algo en la mano aparece una cruz
-blanca en el centro: donde apunta es donde va a quedar al hacer clic (el cartel dice qué va a
-pasar). Los paquetes, cajas y bolsas de papas del estante también se agarran con clic y se
+Lo que agarrás queda en tu mano, abajo a la derecha, siempre derecho (el pancho con la
+salchicha a la vista). Con algo en la mano aparece una cruz blanca en el centro: donde apunta
+(hasta 3 m) es donde va a quedar al hacer clic, y el clic hace siempre lo que dice el cartel
+("Apoyar", "Al agua", "Guardar en el estante"). Si apuntás a una pared o al cielo, el cartel dice
+"Soltar" y cae al piso. Los paquetes, cajas y bolsas de papas del estante también se agarran con clic y se
 llevan a cualquier lado; dejalos en un lugar libre y se vuelven a guardar.
 
 ## Agregar contenido sin tocar código
@@ -73,12 +89,12 @@ llevan a cualquier lado; dejalos en un lugar libre y se vuelven a guardar.
   Prendé la cuba con E (llega a 180 °C en ~1 minuto), poné la porción en el colador (clic; caben
   4 y podés sumar tandas aunque esté bajado: cada una se fríe a su ritmo y se saca sola), bajalo
   con E y sacalo antes de que se pase (unos 80 s las deja doradas). Agarrá las papas, apuntá
-  a una cajita vacía y hacé clic: se arman las papas en cajita ($8, ketchup o mayonesa).
+  a una cajita vacía y hacé clic: se arman las papas en cajita ($10, ketchup o mayonesa).
   Solo las piden si tu carrito tiene freidora.
 - **Cartel de cerrado:** colgado, no llegan clientes nuevos (los de la fila se quedan). Desde la
   vereda, apuntá al frente del carrito, donde cuelga, y hacé clic (con la mano libre) o E (aunque tengas algo en la mano): lo sacás,
-  desaparece y abrís. Para cerrar, lo mismo en ese lugar: lo volvés a colgar. Ojo: recién puesto en
-  el modo armado arranca colgado.
+  desaparece y abrís. Para cerrar, lo mismo en ese lugar: lo volvés a colgar. Viene con el
+  carrito y la partida arranca con el cartel colgado (cerrado).
 - Cada cliente pide un plato del menú; solo piden lo que tu carrito puede cocinar.
 
 ## La plaza durante la semana
@@ -86,13 +102,19 @@ llevan a cualquier lado; dejalos en un lugar libre y se vuelven a guardar.
   al trabajo a la mañana, jubilados en los bancos, oficinistas al mediodía (apurados: tienen
   menos paciencia), familias con chicos a la tarde y grupos de amigos a la noche, con campera.
   Los horarios y quién llega están en `godot/data/agenda.ron`.
-- **La semana** ([SPEC-019](specs/019-eventos.md)): la partida arranca un viernes; el día se
-  ve al lado de la hora. Sábados y domingos hay **feria** de 10 a 18 (más gente y más
-  clientes). Miércoles y domingos **juega el equipo** a las 21: antes hay camisetas, durante
-  el partido la plaza se vacía y a las 23 el festejo llena la fila. Aviso a las 7:00.
+- **La semana** ([SPEC-019](specs/019-eventos.md)): la partida arranca un lunes; el día se
+  ve al lado de la hora. Desde la segunda semana, sábados y domingos hay **feria** de 10 a 18
+  (más gente y más clientes) y miércoles y domingos **juega el equipo** a las 21: antes hay
+  camisetas, durante el partido la plaza se vacía y a las 23 el festejo trae entre 2 y 4 veces
+  más clientes. Aviso a las 7:00.
 - **Habituales** ([SPEC-030](specs/030-habituales.md)): si atendés muy bien a alguien, puede
   volver todos los días a la misma hora, con su nombre en el globo, a pedir "lo de siempre".
   Si lo atendés mal, deja de venir. Todavía no se guardan al cerrar el juego.
+
+## Medir el rendimiento ([SPEC-032](specs/032-rendimiento.md))
+`GODOT=/ruta/godot tools/rendimiento.sh` abre la plaza un sábado con feria y la fila llena, mide
+60 s y escribe una línea `RENDIMIENTO: prom … fps · 1% bajo … fps …`. La meta es 60 fps de
+promedio y 45 en el 1% más lento. Necesita placa de video (no corre en `verificar.sh`).
 
 ## Sonido
 El juego suena con ambiente que cambia con la hora (pájaros de día, grillos de noche, murmullo

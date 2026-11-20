@@ -30,8 +30,12 @@ use carrito_core::tostado::EstadoPan;
 
 #[path = "prueba_humo_agenda.rs"]
 mod agenda_humo; // TASK-0502: agenda por hora (SPEC-018)
+#[path = "prueba_humo_arranque.rs"]
+mod arranque_humo; // TASK-0267/0261: producto inicial y cartel (SPEC-031)
 #[path = "prueba_humo_autos.rs"]
 mod autos_humo; // TASK-0508: los autos entran y salen fuera de la vista (REQ-AMB-17)
+#[path = "prueba_humo_balance.rs"]
+mod balance_humo; // TASK-0253/0254/0264: paciencia, menú, festejo y primera semana
 #[path = "prueba_humo_cruces.rs"]
 mod cruces_humo; // TASK-0509: esperar en el cordón (REQ-AMB-18)
 #[path = "prueba_humo_eventos.rs"]
@@ -44,6 +48,10 @@ mod gente_humo; // TASK-0506: la gente se renueva (REQ-AMB-15/16)
 mod grupos_humo; // TASK-0503: oficinistas, familias y salida nocturna (SPEC-018)
 #[path = "prueba_humo_habituales.rs"]
 mod habituales_humo; // TASK-0504: clientes habituales (SPEC-030)
+#[path = "prueba_humo_hervidor.rs"]
+mod hervidor_humo; // TASK-0262/0266/0258: el hervidor y las sombras
+#[path = "prueba_humo_manos.rs"]
+mod manos_humo; // TASK-0260/0263/0265/0252/0259: clic, mano, caminar
 #[path = "prueba_humo_pelar.rs"]
 mod pelar; // SPEC-029: pelar y cortar
 #[path = "prueba_humo_ropa.rs"]
@@ -670,7 +678,14 @@ impl INode for PruebaHumo {
         let mundo = self.mundo();
         match self.paso {
             // Esperar a que todo se construya y se asiente.
-            0 => self.esperar(30),
+            0 => {
+                // REQ-ARR-04: la prueba arranca el lunes de la segunda semana (día 8), sin la
+                // rampa de la primera semana ni la semana sin eventos (REQ-EVE-10).
+                if let Some(mut dn) = todos::<DiaNoche>(&mundo).pop() {
+                    dn.bind_mut().set_dia(8);
+                }
+                self.esperar(30)
+            }
             1 => {
                 // REQ-JUG-08: el jugador aparece detrás del mostrador.
                 let jugadores = todos::<Jugador>(&mundo);
@@ -1120,12 +1135,13 @@ impl INode for PruebaHumo {
                 self.pararse_al_lado(&mundo, pa.get_global_position());
                 self.disparos_ref = disparos_de_sonido(&mundo);
                 self.chequear(!pa.bind_mut().alternar(), "REQ-PAR-01 sin carbón no se enciende");
-                self.chequear(pa.bind_mut().cargar(1.0).is_ok(), "REQ-PAR-01 entra una bolsa de carbón");
+                // REQ-PAR-02: medio kilo dura 2 h de juego (0,25 kg/h): 120 s a 1 min/s.
+                self.chequear(pa.bind_mut().cargar(0.5).is_ok(), "REQ-PAR-01 entra una bolsa de carbón");
                 self.chequear(pa.bind_mut().cargar(3.0).is_err(), "REQ-PAR-01 no entra más de 3 kg");
                 self.chequear(pa.bind_mut().alternar(), "REQ-PAR-01 con carbón se enciende");
                 let encima = pa.get_global_position() + Vector3::new(0.0, 0.12, 0.0);
                 self.chorizo = Some(self.agregar_comida("chorizo", encima));
-                self.esperar(90 * 60);
+                self.esperar(105 * 60);
             }
             20 => {
                 // REQ-SON-08: sonó el carbón al cargar y empezaron las brasas al prender.
@@ -1144,7 +1160,7 @@ impl INode for PruebaHumo {
                     l.lados[0].avance > 3.0 && l.lados[1].avance == 0.0,
                     &format!("REQ-PAR-04 se cocina el lado de abajo del chorizo ({:.1})", l.lados[0].avance),
                 );
-                self.esperar(40 * 60);
+                self.esperar(25 * 60);
             }
             21 => {
                 // CA-PAR-02: sigue prendida un rato largo: se queda sin carbón y se apaga.
@@ -1415,6 +1431,11 @@ impl INode for PruebaHumo {
                             9 => self.chequear_habituales(), // TASK-0504: SPEC-030
                             10 => self.chequear_eventos(),   // TASK-0505: SPEC-019
                             11 => self.chequear_cruces(),    // TASK-0509: REQ-AMB-18
+                            // Etapa 2.5: cada agente en su archivo prueba_humo_<tema>.rs.
+                            12 => self.chequear_balance(),  // agente A
+                            13 => self.chequear_manos(),    // agente B
+                            14 => self.chequear_arranque(), // agente C
+                            15 => self.chequear_hervidor(), // agente D
                             _ => true,
                         };
                         if listo {
@@ -1423,7 +1444,7 @@ impl INode for PruebaHumo {
                             self.cuadro5 = self.cuadro;
                             self.notas5.clear();
                         }
-                        if self.cadena_papas >= 12 {
+                        if self.cadena_papas >= 16 {
                             self.terminar();
                         } else {
                             self.paso -= 1; // se repite este paso hasta terminar

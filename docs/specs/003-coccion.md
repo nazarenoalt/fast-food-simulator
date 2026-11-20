@@ -23,8 +23,9 @@ tiempo, y que el jugador lo vea.
 - **REQ-COC-04** Estados según el avance: **Crudo** (< punto), **Cocido** (≥ punto),
   **Pasado** (≥ pasado). Un alimento cuya temperatura supera su temperatura de quemado pasa
   a **Quemado** cuando acumula suficiente tiempo por encima de ella; Quemado es definitivo.
-- **REQ-COC-05** Salchicha en hervidor a 95 °C: pasa a Cocida entre 30 s y 90 s, y a Pasada
-  después de 150 s. En agua nunca se quema.
+- **REQ-COC-05** Salchicha en hervidor a 95 °C: pasa a Cocida entre 30 s y 90 s. En el agua no
+  se pasa ni se quema (TASK-0266): su avance se frena justo antes de Pasado, así se puede
+  dejar lista esperando. Fuera del agua sigue las reglas de siempre.
 - **REQ-COC-06** El color del alimento cambia de forma continua con el avance
   (salchicha: rosado → rojizo → marrón; quemado: casi negro).
 
@@ -33,18 +34,23 @@ tiempo, y que el jugador lo vea.
   Encendido, el agua sube 1,5 °C por segundo hasta 95 °C. Apagado, se enfría gradualmente
   hacia el ambiente.
 - **REQ-COC-08** Todo alimento cuyo cuerpo está dentro del volumen de agua del hervidor
-  toma como temperatura de entorno la temperatura del agua.
+  toma como temperatura de entorno la temperatura del agua. Flota (TASK-0262): queda acostado
+  con su centro a la altura de la superficie, sin hundirse ni apilarse en el fondo, y se ve
+  desde arriba. Entran las que caben en una sola capa (14 salchichas en el hervidor chico):
+  lleno, el clic no la mete ("Hervidor lleno") y al volcar un paquete quedan en él las que sobran.
 - **REQ-COC-09** Se enciende/apaga con E. Una luz piloto roja indica que está encendido y el
   cartel muestra la temperatura del agua.
 - **REQ-COC-10** Con un paquete en la mano de algo que se cocina entero (no por lados, como la
-  salchicha), E sobre el hervidor vuelca todas sus unidades al agua: acostadas en filas a lo
-  largo de la cuba (en capas si no entran), con la temperatura del paquete. El paquete se va.
+  salchicha), E sobre el hervidor vuelca sus unidades al agua: flotando en filas a lo largo
+  de la cuba, en los lugares libres (REQ-COC-08), con la temperatura del paquete. Si entran
+  todas, el paquete se va; si no, se queda en la mano con las que sobran.
 
 ## Criterios de aceptación
 
 - **CA-COC-01** Enciendo el hervidor, tiro una salchicha, en menos de 2 minutos está Cocida y
   se ve más oscura.
 - **CA-COC-02** Si la saco y la dejo afuera, deja de cocinarse (no cambia de estado).
+- **CA-COC-03** Dejo salchichas 10 minutos en el agua: flotan, se ven y siguen Cocidas.
 
 ## Fuera de alcance (próximas etapas)
 

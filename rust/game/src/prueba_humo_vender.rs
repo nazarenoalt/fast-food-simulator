@@ -19,7 +19,7 @@ use crate::jugador::{Jugador, Objetivo};
 use crate::negocio::Negocio;
 use crate::util;
 
-const PRECIO_PAPAS: f32 = 8.0; // REQ-FRE-11
+const PRECIO_PAPAS: f32 = 10.0; // REQ-FRE-11, REQ-ECO-03
 
 /// Lo que la prueba guarda entre cuadros.
 #[derive(Default)]

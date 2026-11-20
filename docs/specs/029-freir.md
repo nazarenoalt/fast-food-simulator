@@ -47,8 +47,8 @@ aceite caliente con el colador y se vendan en cajita. Usa el modelo de calor de 
 
 ### Cajita
 - **REQ-FRE-11** Combinación (REQ-ARM-01): `cajita_papas` (base) + `papas_fritas`
-  (agregado) = `papas_en_cajita`, que conserva la cocción de las papas. Se vende a $8
-  (REQ-ECO-07), admite ketchup y mayonesa y requiere Freidora (REQ-CLI-04).
+  (agregado) = `papas_en_cajita`, que conserva la cocción de las papas. Se vende a $10
+  (REQ-ECO-03), admite ketchup y mayonesa y requiere Freidora (REQ-CLI-04).
 
 ## Criterios de aceptación
 

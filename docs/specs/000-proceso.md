@@ -67,6 +67,8 @@ Estado: Borrador | Aprobada | Implementada
 | LOG | 028 Logo del carrito |
 | FRE | 029 Preparar y freír papas |
 | HAB | 030 Clientes habituales |
+| ARR | 031 Arranque de la partida |
+| REN | 032 Rendimiento |
 
 ## Convenciones de código
 

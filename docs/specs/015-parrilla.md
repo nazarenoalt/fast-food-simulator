@@ -14,7 +14,7 @@ que reponer. El pan se tuesta en la misma parrilla.
   carbón en kg (máximo 3 kg). Se carga con bolsas de carbón (producto con `carbon`: los kg que
   trae; se usa con E sobre la parrilla, como los repuestos de SPEC-012). Si la bolsa haría pasar
   los 3 kg, no entra y no se gasta. Se enciende con E cuando tiene carbón.
-- **REQ-PAR-02** Encendida, el carbón se gasta 0,5 kg por hora de juego y las brasas se
+- **REQ-PAR-02** Encendida, el carbón se gasta 0,25 kg por hora de juego y las brasas se
   calientan 3 °C por segundo hasta una temperatura máxima que depende del carbón que queda:
   `T_max = 20 + 300 × min(1, carbón / 1 kg)`. Sin carbón se apaga sola.
 - **REQ-PAR-03** Apagada o sin carbón, la parrilla se enfría hacia el ambiente. Se ve el
@@ -24,7 +24,8 @@ que reponer. El pan se tuesta en la misma parrilla.
 
 ### Chorizo
 - **REQ-PAR-05** El chorizo se cocina como la hamburguesa, por lados (REQ-PLA-04 y 05), con
-  sus propios valores. A 250 °C cada lado queda Cocido entre 60 s y 150 s.
+  sus propios valores. A 320 °C los dos lados quedan Cocidos en 80–95 s; a 250 °C cada lado
+  queda Cocido entre 40 s y 100 s (TASK-0253).
 
 ### Pan tostado
 - **REQ-PAR-06** El pan de choripán tiene un avance de **tostado** por cada cara, con las

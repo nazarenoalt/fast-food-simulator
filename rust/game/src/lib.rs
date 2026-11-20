@@ -5,6 +5,7 @@ use godot::prelude::*;
 
 mod aderecera; // SPEC-012
 mod armado; // SPEC-017
+mod arranque; // SPEC-031 (panel "¿Con qué arrancás?")
 mod bloque_stock; // SPEC-004
 mod carrito; // SPEC-006
 mod cartel; // SPEC-009 (cartel de cerrado)
@@ -35,6 +36,7 @@ mod plaza; // SPEC-008
 mod preparar; // SPEC-029 (pelar y cortar)
 mod prueba_humo;
 mod puerta; // SPEC-006 (puerta de las bases)
+mod rendimiento; // SPEC-032 (escena de medición)
 mod sonido; // SPEC-024
 mod tienda; // SPEC-011
 mod transito; // SPEC-013

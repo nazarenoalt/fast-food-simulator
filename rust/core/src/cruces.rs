@@ -203,7 +203,7 @@ pub fn viene_auto_antes(rec: &Recorrido, s: f32, v: f32, cruce: &Cruce, segundos
 }
 
 /// REQ-AMB-18: cuánto margen pide quien lleva `esperado` segundos en el cordón: 3 s; si ya
-/// esperó `ESPERA_MAXIMA`, un hueco más corto; y pasado `ESPERA_TOPE`, ninguno.
+/// esperó `ESPERA_MAXIMA`, un hueco más corto; y pasado `ESPERA_TOPE`, ninguno (ver `espera`).
 pub fn margen_pedido(esperado: f32) -> f32 {
     if esperado < ESPERA_MAXIMA {
         SEGUNDOS_AVISO
@@ -211,6 +211,21 @@ pub fn margen_pedido(esperado: f32) -> f32 {
         AVISO_APURADO
     } else {
         0.0
+    }
+}
+
+/// Por debajo de esta velocidad (m/s) un auto cuenta como parado.
+const PARADO: f32 = 0.5;
+
+/// REQ-AMB-18: ¿quien lleva `esperado` segundos en el cordón tiene que seguir esperando por el
+/// auto del carril `rec` (en `s`, a `v` m/s)? Pasado `ESPERA_TOPE` ya no espera a un auto
+/// parado en el paso (que no se trabe), pero nunca se cruza delante de uno andando que llega
+/// en menos de `AVISO_APURADO`.
+pub fn espera(rec: &Recorrido, s: f32, v: f32, cruce: &Cruce, esperado: f32) -> bool {
+    if esperado < ESPERA_TOPE {
+        viene_auto_antes(rec, s, v, cruce, margen_pedido(esperado))
+    } else {
+        v >= PARADO && viene_auto_antes(rec, s, v, cruce, AVISO_APURADO)
     }
 }
 
@@ -346,6 +361,21 @@ mod tests {
         // Con un auto parado encima del paso, al final cruza igual.
         assert!(viene_auto_antes(&rec, s0, 0.0, &c, apurado));
         assert!(!viene_auto_antes(&rec, s0, 0.0, &c, margen_pedido(ESPERA_TOPE)));
+        assert!(!espera(&rec, s0, 0.0, &c, ESPERA_TOPE));
+        assert!(espera(&rec, s0, 0.0, &c, ESPERA_TOPE - 1.0));
+    }
+
+    #[test]
+    fn req_amb_18_a_los_20_s_no_cruza_delante_de_un_auto_andando() {
+        let x = SENDAS[1];
+        let c = cruce(&[[x, -24.7], [x, Z_VEREDA_ENFRENTE]]).unwrap();
+        let rec = recorrido(0);
+        let s0 = s_en(&rec, [x, -27.0]);
+        // Un auto a 10 m/s a ~1 s del paso, o ya encima andando: sigue esperando aunque esperó 20 s.
+        assert!(espera(&rec, s0 - 10.0, 10.0, &c, ESPERA_TOPE + 5.0));
+        assert!(espera(&rec, s0, 8.0, &c, ESPERA_TOPE + 5.0));
+        // Uno a ~2,4 s: ya cruza (el auto frena, REQ-AMB-08).
+        assert!(!espera(&rec, s0 - 24.0, 10.0, &c, ESPERA_TOPE + 5.0));
     }
 
     #[test]

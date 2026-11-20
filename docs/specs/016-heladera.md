@@ -41,8 +41,8 @@ conserva; el jugador tiene que guardarla y no dejarla al sol.
 
 ## Fuera de alcance
 
-- Freezer, electricidad como recurso con costo, hielo, olores. El gas y la luz llegan con
-  SPEC-021.
+- Freezer, electricidad como recurso con costo, hielo, olores. Gas y luz con costo: descartados
+  (TASK-0006).
 
 ## Notas de diseño
 

@@ -37,7 +37,7 @@ sonidos de cada acción y música tranquila opcional. El juego funciona igual si
   encima y la plancha esté caliente, más de 100 °C), parrilla (carbón al cargarla y brasas
   mientras esté prendida; se callan si se apaga sola sin carbón), heladera (puerta al abrir y
   al cerrar), agarrar, soltar, tirar y apoyar comida, pomo de aderezo, paquete que llega y que
-  se guarda, sacar del depósito, cobro, campanita de cliente que llega, pasos del jugador,
+  se guarda, sacar del depósito, cobro (una moneda, en cada venta), campanita de cliente que llega, pasos del jugador,
   autos que pasan cerca, aleteo de palomas. La lluvia queda en los datos, sin conectar.
 - **REQ-SON-09** Un archivo que falta o la ausencia de audio nunca es un error: el sonido
   se omite y el juego sigue.

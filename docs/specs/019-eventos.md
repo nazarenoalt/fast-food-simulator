@@ -9,7 +9,7 @@ barrio, con camisetas, plaza vacía durante el partido y festejo después.
 
 ## Requisitos
 
-- **REQ-EVE-01** Semana de 7 días: el día 1 es viernes. La pantalla muestra el día de la
+- **REQ-EVE-01** Semana de 7 días: el día 1 es lunes. La pantalla muestra el día de la
   semana al lado de la hora (ej. "Sáb 10:30").
 - **REQ-EVE-02** Los eventos están en `godot/data/eventos.ron`: días de la semana, tramos
   horarios (pueden pasar las 24:00, que cuentan en el día siguiente) y, por tramo,
@@ -31,13 +31,16 @@ barrio, con camisetas, plaza vacía durante el partido y festejo después.
   llega lleva la camiseta de uno de los dos equipos (colores en `eventos.ron`).
 - **REQ-EVE-08** De 21 a 23 (durante el partido) gente y clientes ×0,3.
 - **REQ-EVE-09** De 23 a 0:30, festejo: llegan grupos de 3–4 con camiseta que saltan y
-  levantan los brazos. Clientes ×2.
+  levantan los brazos. Clientes ×2 a ×4, sorteado en cada partido (TASK-0254).
+- **REQ-EVE-10** La primera semana (días 1 a 7) no hay eventos: ni feria, ni partido, ni
+  festejo, ni aviso. Empiezan el día 8 (primer partido el día 10, primera feria el día 13).
 
 ## Criterios de aceptación
 
-- **CA-EVE-01** El sábado a las 12 veo los puestos con vendedores y más gente que el viernes.
-- **CA-EVE-02** El miércoles a las 20 veo camisetas; a las 22 la plaza está casi vacía; a
-  las 23:30 hay grupos festejando y la fila se llena.
+- **CA-EVE-01** El sábado de la segunda semana a las 12 veo los puestos con vendedores y más
+  gente que el viernes.
+- **CA-EVE-02** El miércoles de la segunda semana a las 20 veo camisetas; a las 22 la plaza
+  está casi vacía; a las 23:30 hay grupos festejando y llegan más clientes.
 
 ## Fuera de alcance
 
@@ -45,5 +48,6 @@ barrio, con camisetas, plaza vacía durante el partido y festejo después.
 
 ## Notas de diseño
 
-- Día 1 viernes: el primer sábado llega a los ~7 min reales de partida.
+- Día 1 lunes (decisión del dueño, TASK-0006) y primera semana sin eventos (TASK-0264): la
+  partida arranca tranquila para aprender (ver también SPEC-031).
 - Los multiplicadores se componen con la agenda (SPEC-018) y la reputación (REQ-CLI-01).

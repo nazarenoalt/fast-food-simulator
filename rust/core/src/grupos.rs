@@ -23,7 +23,7 @@ pub const ALTURA_CHICOS: [f32; 2] = [1.0, 1.3];
 /// REQ-RUT-06: los chicos siguen a los adultos a menos de esto (m).
 pub const DISTANCIA_CHICOS: f32 = 2.0;
 /// REQ-RUT-06: con chicos, el grupo espera antes (así nadie queda a más de 2 m).
-pub const UMBRAL_FAMILIA: f32 = 1.5;
+pub const UMBRAL_FAMILIA: f32 = 1.2;
 /// REQ-RUT-08: si uno se adelanta más que esto (m) del último, espera.
 pub const UMBRAL_GRUPO: f32 = 3.0;
 /// REQ-RUT-08: de a dos, cada uno corrido esto (m) del centro del camino: entre los dos hay
