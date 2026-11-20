@@ -33,11 +33,13 @@ Cada etapa abre con sus specs (SPEC-000) y cierra con docs al día. Formato en [
 | 0257 | Las comidas listas no se echan a perder | 016 | ✅ |
 | 0258 | Las sombras no tiemblan "como líquido" al moverse el sol (pedido del dueño) | 007 | ⬜ |
 | 0259 | Caminar con arranque y frenado suaves, menos estático | 001 | ⬜ |
-| 0260 | Con comida en la mano, apuntar al hervidor la pone adentro, sin calcular la distancia | 002, 003 | ⬜ |
+| 0260 | Clic: lo que tenés en la mano queda siempre donde apunta la cruz (hervidor, estante, mesada), nunca se tira ni hay que calcular la distancia | 002, 003 | ⬜ |
 | 0261 | El cartel de cerrado viene con el carrito inicial y arranca colgado (cerrado) | 009, 026 | ⬜ |
 | 0262 | Las salchichas flotan en el hervidor y se ven (hoy quedan en el fondo) | 003 | ⬜ |
 | 0263 | Arreglo: "clic para guardar en el estante" tira el paquete al piso (el clic derecho sí lo guarda) | 004 | ⬜ |
 | 0264 | Arranque tranquilo: los primeros días viene poca gente, para aprender | 009, 018 | ⬜ |
+| 0265 | Lo que tenés en la mano se ve siempre derecho (el pancho, con la salchicha a la vista) | 002 | ⬜ |
+| 0266 | Las salchichas pueden quedarse en el agua sin pasarse | 003 | ⬜ |
 
 ## Etapa 3 · Plancha y parrilla (`feat (cocina)`) · PR TASK-0300
 | ID | Tarea | Spec | Estado |
