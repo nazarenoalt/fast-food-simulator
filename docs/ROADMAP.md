@@ -31,6 +31,13 @@ Cada etapa abre con sus specs (SPEC-000) y cierra con docs al día. Formato en [
 | 0255 | Rendimiento (FPS) con ciudad y fila llena | 013 | ⬜ |
 | 0256 | Agarre cercano, colocar con la mira (cruz blanca), salchicha al pan apuntando, levantar paquetes del estante y volcarlos al hervidor | 002, 003, 004 | ✅ |
 | 0257 | Las comidas listas no se echan a perder | 016 | ✅ |
+| 0258 | Las sombras no tiemblan "como líquido" al moverse el sol (pedido del dueño) | 007 | ⬜ |
+| 0259 | Caminar con arranque y frenado suaves, menos estático | 001 | ⬜ |
+| 0260 | Con comida en la mano, apuntar al hervidor la pone adentro, sin calcular la distancia | 002, 003 | ⬜ |
+| 0261 | El cartel de cerrado viene con el carrito inicial y arranca colgado (cerrado) | 009, 026 | ⬜ |
+| 0262 | Las salchichas flotan en el hervidor y se ven (hoy quedan en el fondo) | 003 | ⬜ |
+| 0263 | Arreglo: "clic para guardar en el estante" tira el paquete al piso (el clic derecho sí lo guarda) | 004 | ⬜ |
+| 0264 | Arranque tranquilo: los primeros días viene poca gente, para aprender | 009, 018 | ⬜ |
 
 ## Etapa 3 · Plancha y parrilla (`feat (cocina)`) · PR TASK-0300
 | ID | Tarea | Spec | Estado |
@@ -99,5 +106,12 @@ Cada etapa abre con sus specs (SPEC-000) y cierra con docs al día. Formato en [
 |---|---|---|---|
 | 0751 | Escribir specs 022 Guardado y 023 Clima | 022, 023 | ⬜ |
 | 0752 | Guardado de partida | 022 | ⬜ |
-| 0753 | Menú y opciones | 022 | ⬜ |
+| 0753 | Pausa, menú e interfaz gráfica; opciones | 022 | ⬜ |
 | 0754 | Clima: lluvia y viento | 023 | ⬜ |
+| 0755 | Elegir la dificultad en el menú: cambia la cantidad de gente y la exigencia | 022 | ⬜ |
+
+## Etapa 8 · Arranque guiado (`feat (economia)`) · PR TASK-0800
+| ID | Tarea | Spec | Estado |
+|---|---|---|---|
+| 0801 | Empezar con un solo producto a elección; los demás se suman comprando | — | ⬜ |
+| 0802 | Tutorial guiado para aprender a jugar (al final, con el juego terminado) | — | ⬜ |
