@@ -118,3 +118,8 @@ Cada etapa abre con sus specs (SPEC-000) y cierra con docs al día. Formato en [
 | ID | Tarea | Spec | Estado |
 |---|---|---|---|
 | 0802 | Tutorial guiado para aprender a jugar (al final, con el juego terminado) | — | ⬜ |
+
+## Etapa 9 · Optimización (al final) · PR TASK-0900
+| ID | Tarea | Spec | Estado |
+|---|---|---|---|
+| 0901 | Investigar a fondo que ande en una PC con 16 GB y sin placa de video (gráficos integrados): opciones de calidad en el menú y optimizar | 032 | ⬜ |

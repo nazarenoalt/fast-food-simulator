@@ -36,12 +36,14 @@ tiempo, y que el jugador lo vea.
 - **REQ-COC-08** Todo alimento cuyo cuerpo está dentro del volumen de agua del hervidor
   toma como temperatura de entorno la temperatura del agua. Flota (TASK-0262): queda acostado
   con su centro a la altura de la superficie, sin hundirse ni apilarse en el fondo, y se ve
-  desde arriba.
+  desde arriba. Entran las que caben en una sola capa (14 salchichas en el hervidor chico):
+  lleno, el clic no la mete ("Hervidor lleno") y al volcar un paquete quedan en él las que sobran.
 - **REQ-COC-09** Se enciende/apaga con E. Una luz piloto roja indica que está encendido y el
   cartel muestra la temperatura del agua.
 - **REQ-COC-10** Con un paquete en la mano de algo que se cocina entero (no por lados, como la
-  salchicha), E sobre el hervidor vuelca todas sus unidades al agua: acostadas en filas a lo
-  largo de la cuba (en capas si no entran), con la temperatura del paquete. El paquete se va.
+  salchicha), E sobre el hervidor vuelca sus unidades al agua: flotando en filas a lo largo
+  de la cuba, en los lugares libres (REQ-COC-08), con la temperatura del paquete. Si entran
+  todas, el paquete se va; si no, se queda en la mano con las que sobran.
 
 ## Criterios de aceptación
 

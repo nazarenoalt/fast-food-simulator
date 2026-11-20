@@ -26,9 +26,9 @@ tirarla, y usar equipos (encender el hervidor, sacar del depósito).
 - **REQ-INT-05** Si el objeto agarrado queda trabado a más de 1,5 m del punto donde debería
   estar, se suelta solo.
 - **REQ-INT-06** Clic izquierdo con algo en la mano lo **coloca** (REQ-INT-09) donde apunta la
-  cruz, a 3 m o menos: nunca lo suelta ni lo tira (TASK-0260). Si ahí no se puede apoyar (lejos,
-  una pared, el cielo), el clic no hace nada y el cartel dice "No se puede apoyar acá". Clic
-  derecho lo tira hacia la mira con un impulso de 4 m/s.
+  cruz, a 3 m o menos, sin calcular la distancia (TASK-0260). Si ahí no hay dónde apoyarlo
+  (lejos, una pared, el cielo), lo suelta donde está y cae al piso (el cartel dice "Soltar").
+  Clic derecho lo tira hacia la mira con un impulso de 4 m/s.
 - **REQ-INT-07** La tecla E usa el objetivo. Con la mano libre: enciende/apaga el hervidor
   o saca una unidad de un bloque del depósito (SPEC-004). Con algo en la mano: aderezos y
   repuestos sobre un pomo (SPEC-012); un paquete sobre el hervidor se vuelca (REQ-COC-10).
@@ -50,7 +50,7 @@ tirarla, y usar equipos (encender el hervidor, sacar del depósito).
 - **CA-INT-03** Con una salchicha en la mano miro el pan de la mesada y hago clic: se arma el pancho.
 - **CA-INT-04** Agarro la bolsa de papas del estante, la apoyo en el piso y la vuelvo a guardar.
 - **CA-INT-05** Con una salchicha en la mano apunto al borde del hervidor desde 2,5 m y hago
-  clic: queda en el agua. Apunto a una pared y hago clic: sigue en mi mano.
+  clic: queda en el agua. Apunto a una pared y hago clic: cae al piso.
 
 ## Fuera de alcance
 
