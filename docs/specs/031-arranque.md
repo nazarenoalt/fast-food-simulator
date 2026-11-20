@@ -27,7 +27,8 @@ primera semana tranquila, para aprender a jugar antes de que se llene de gente.
   Los demás equipos se compran en la tienda (SPEC-017). La caja arranca con $120 (REQ-ECO-01).
 - **REQ-ARR-03** El cartel de cerrado viene puesto en el anclaje `cartel` y arranca colgado:
   el puesto empieza cerrado (REQ-CLI-12, REQ-CLI-13) (TASK-0261).
-- **REQ-ARR-04** La prueba de humo no muestra el panel y arranca con los cuatro equipos.
+- **REQ-ARR-04** La prueba de humo no muestra el panel, arranca con los cuatro equipos y en el
+  día 8 (sin la rampa ni la semana sin eventos).
 
 ### Primera semana tranquila (TASK-0264)
 - **REQ-ARR-05** La primera semana la cantidad de clientes (REQ-CLI-01) va subiendo:

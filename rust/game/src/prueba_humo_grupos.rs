@@ -64,9 +64,9 @@ impl PruebaHumo {
         let pasados = self.cuadro.saturating_sub(self.cuadro5);
         match self.fase5 {
             0 => {
-                // Se guardan día y hora para dejarlos como estaban; un jueves (día 4), sin eventos.
+                // Se guardan día y hora para dejarlos como estaban; un jueves (día 11), sin eventos.
                 self.notas5 = vec![dn.bind().hora() as f64 * 60.0, dn.bind().dia() as f64, 0.0, 0.0];
-                dn.bind_mut().set_dia(4);
+                dn.bind_mut().set_dia(11);
                 cambiar(self, &mut dn, 1, Some(13.0 * 60.0));
                 false
             }

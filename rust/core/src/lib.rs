@@ -6,6 +6,7 @@ pub mod aderezos; // SPEC-012
 pub mod agarre; // SPEC-002
 pub mod ampliaciones; // SPEC-027
 pub mod armado; // SPEC-005
+pub mod arranque; // SPEC-031 (TASK-0267: producto inicial y carrito)
 pub mod autos; // SPEC-013 (autos de la calle)
 pub mod azar; // números al azar con semilla
 pub mod caminos; // SPEC-013 (red de peatones)
@@ -36,6 +37,7 @@ pub mod preparar; // SPEC-029 (pelar y cortar)
 pub mod proveedor; // SPEC-011
 pub mod puerta; // SPEC-006 (puerta de las bases)
 pub mod reloj; // SPEC-007
+pub mod rendimiento; // SPEC-032 (TASK-0255)
 pub mod rutinas; // SPEC-018 (agenda)
 pub mod sonido; // SPEC-024
 pub mod tienda; // SPEC-017

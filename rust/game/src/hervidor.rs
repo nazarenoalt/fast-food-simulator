@@ -80,6 +80,15 @@ impl Hervidor {
             .collect()
     }
 
+    /// REQ-COC-08, REQ-COC-10 (TASK-0262): lugares libres en la superficie del agua para algo
+    /// de `largo` × `grosor`, en orden (una sola capa, flotando). Vacío = hervidor lleno.
+    /// BASE-ETAPA-2.5: el agente D descuenta los ocupados y la capa única; el agente B lo usa
+    /// al colocar con la mira en el hervidor y al volcar un paquete.
+    #[allow(dead_code)] // BASE-ETAPA-2.5
+    pub fn lugares_libres(&self, largo: f32, grosor: f32) -> Vec<Transform3D> {
+        self.lugares_volcado(1, largo, grosor)
+    }
+
     /// Solo para pruebas.
     pub fn set_temperatura(&mut self, t: f32) {
         self.agua.temp = t;

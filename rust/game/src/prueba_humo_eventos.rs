@@ -40,7 +40,7 @@ impl PruebaHumo {
                     (d.dia() as f64, d.hora() as f64 * 60.0)
                 };
                 self.notas5 = vec![dia, minuto];
-                dn.bind_mut().set_dia(6);
+                dn.bind_mut().set_dia(13);
                 dn.bind_mut().set_minuto(12.0 * 60.0);
                 siguiente(self);
                 false
@@ -48,7 +48,7 @@ impl PruebaHumo {
             1 => {
                 let texto = dn.bind().hora_texto();
                 self.chequear(
-                    texto.contains("Día 6 · Sáb 12:00"),
+                    texto.contains("Día 13 · Sáb 12:00"),
                     &format!("REQ-EVE-01 la hora dice el día: «{texto}»"),
                 );
                 let aviso = gente.bind().ultimo_aviso();
@@ -67,7 +67,7 @@ impl PruebaHumo {
                     objetivo as f32 >= base as f32 * 1.4,
                     &format!("REQ-EVE-06 feria: la plaza quiere {objetivo} personas (sin feria {base})"),
                 );
-                dn.bind_mut().set_dia(5);
+                dn.bind_mut().set_dia(12);
                 siguiente(self);
                 false
             }
@@ -77,7 +77,7 @@ impl PruebaHumo {
                     puestos == 0 && vendedores == 0,
                     &format!("REQ-EVE-05 viernes 12:00 sin feria ({puestos} puestos, {vendedores} vendedores)"),
                 );
-                dn.bind_mut().set_dia(3);
+                dn.bind_mut().set_dia(10);
                 dn.bind_mut().set_minuto(19.0 * 60.0);
                 siguiente(self);
                 false

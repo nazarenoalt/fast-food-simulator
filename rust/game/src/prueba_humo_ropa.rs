@@ -24,7 +24,7 @@ impl PruebaHumo {
         match self.fase5 {
             0 => {
                 self.notas5 = vec![dn.bind().hora() as f64 * 60.0, dn.bind().dia() as f64];
-                dn.bind_mut().set_dia(4);
+                dn.bind_mut().set_dia(11);
                 dn.bind_mut().set_minuto(13.0 * 60.0);
                 self.fase5 = 1;
                 false
