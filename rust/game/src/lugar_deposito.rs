@@ -35,6 +35,29 @@ impl LugarDeposito {
             .find(|b| !b.is_queued_for_deletion())
     }
 
+    /// REQ-PRO-06, REQ-INT-08: el paquete pasa a ser el bloque de este lugar, con sus unidades y
+    /// su temperatura. No entra si el lugar está ocupado o si el paquete ya se acomodó.
+    pub fn guardar(&mut self, mut paquete: Gd<Paquete>) -> bool {
+        if self.ocupado() || paquete.is_queued_for_deletion() {
+            return false;
+        }
+        let (def, restantes, temp) = {
+            let p = paquete.bind();
+            if p.acomodado {
+                return false;
+            }
+            (p.def().clone(), p.restantes(), p.temp)
+        };
+        paquete.bind_mut().acomodado = true;
+        paquete.queue_free();
+        let bloque = BloqueStock::crear_con(def, restantes, temp);
+        self.base_mut().add_child(&bloque);
+        // REQ-SON-08
+        let pos = self.base().get_global_position();
+        crate::sonido::sonar_en(&self.to_gd(), carrito_core::sonido::ids::PAQUETE_GUARDADO, pos);
+        true
+    }
+
     /// Centro de la zona donde hay que dejar un paquete (global).
     pub fn centro_zona(&self) -> Vector3 {
         self.base().get_global_position() + Vector3::new(0.0, 0.15, 0.0)
@@ -61,23 +84,16 @@ impl INode3D for LugarDeposito {
         }
         let Some(zona) = &self.zona else { return };
         // REQ-PRO-06: un paquete suelto dentro de un lugar libre se acomoda solo.
-        for cuerpo in zona.get_overlapping_bodies().iter_shared() {
-            let Ok(mut paquete) = cuerpo.try_cast::<Paquete>() else { continue };
-            let (def, restantes, temp) = {
-                let p = paquete.bind();
-                if p.sostenido || p.acomodado {
-                    continue;
-                }
-                (p.def().clone(), p.restantes(), p.temp)
-            };
-            paquete.bind_mut().acomodado = true;
-            paquete.queue_free();
-            let bloque = BloqueStock::crear_con(def, restantes, temp);
-            self.base_mut().add_child(&bloque);
-            // REQ-SON-08
-            let pos = self.base().get_global_position();
-            crate::sonido::sonar_en(&self.to_gd(), carrito_core::sonido::ids::PAQUETE_GUARDADO, pos);
-            return;
+        let sueltos: Vec<Gd<Paquete>> = zona
+            .get_overlapping_bodies()
+            .iter_shared()
+            .filter_map(|c| c.try_cast::<Paquete>().ok())
+            .filter(|p| !p.bind().sostenido)
+            .collect();
+        for paquete in sueltos {
+            if self.guardar(paquete) {
+                return;
+            }
         }
     }
 }
