@@ -255,13 +255,16 @@ impl Gente {
         let equipos: Vec<[f32; 3]> = plaza().eventos.iter().flat_map(|e| e.equipos.clone()).collect();
         self.peatones
             .iter()
-            .find(|p| p.bind().id == id)
+            .find(|p| p.is_instance_valid() && p.bind().id == id)
             .is_some_and(|p| equipos.contains(&p.bind().apariencia().remera))
     }
 
     /// Para pruebas: cuántos están saltando ahora. REQ-EVE-09
     pub fn saltando(&self) -> usize {
-        self.peatones.iter().filter(|p| matches!(p.bind().accion_actual(), Some(Accion::Saltar { .. }))).count()
+        self.peatones
+            .iter()
+            .filter(|p| p.is_instance_valid() && matches!(p.bind().accion_actual(), Some(Accion::Saltar { .. })))
+            .count()
     }
 
     /// Para pruebas: hace llegar `n` personas de la agenda ya en su lugar (sin caminar desde
