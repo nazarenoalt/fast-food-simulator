@@ -574,8 +574,55 @@ impl INode3D for Carrito {
     fn ready(&mut self) {
         self.base_mut().add_to_group(GRUPO);
         modelos::revisar_faltantes(); // REQ-MOD-02
+        // REQ-ARR-02 / REQ-ARR-04: en la partida, la base común (el panel del arranque le suma
+        // el producto); en la prueba de humo, los cuatro equipos.
+        let config = match self.config_forzada.take() {
+            Some(c) => c,
+            None => crate::arranque::config_inicial(&self.to_gd()),
+        };
+        self.construir_config(config);
+    }
+}
+
+impl Carrito {
+    /// REQ-ARR-02: vuelve a armar el carrito entero con otra config (el producto elegido en el
+    /// arranque). Lo de antes se saca del árbol en el acto (así los nodos nuevos conservan sus
+    /// nombres) y se borra.
+    pub fn rearmar(&mut self, config: ConfigCarrito) {
+        fn sacar(mut n: Gd<Node3D>) {
+            if !n.is_instance_valid() {
+                return;
+            }
+            if let Some(mut p) = n.get_parent() {
+                p.remove_child(&n);
+            }
+            n.queue_free();
+        }
+        for (_, (_, n)) in std::mem::take(&mut self.puestos) {
+            sacar(n);
+        }
+        if let Some(r) = self.raiz_base.take() {
+            sacar(r);
+        }
+        let errores: Vec<Gd<Node3D>> = self
+            .base()
+            .get_children()
+            .iter_shared()
+            .filter(|h| h.is_in_group("errores_carrito"))
+            .filter_map(|h| h.try_cast::<Node3D>().ok())
+            .collect();
+        for e in errores {
+            sacar(e);
+        }
+        self.calcomanias.clear();
+        self.bandeja = None;
+        self.base_def = None;
+        self.funciones.clear();
+        self.construir_config(config);
+    }
+
+    fn construir_config(&mut self, mut config: ConfigCarrito) {
         let cat = catalogo();
-        let mut config = self.config_forzada.take().unwrap_or_else(|| cat.carrito_jugador.clone());
         if !self.base_forzada.is_empty() {
             config.base = self.base_forzada.to_string();
         }
