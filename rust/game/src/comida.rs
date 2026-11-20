@@ -50,6 +50,8 @@ pub struct Comida {
     pub pasadas: u32,
     /// Temperatura del entorno que le dio una fuente de calor, y en qué cuadro.
     entorno: Option<(f32, u64)>,
+    /// Último cuadro en que estuvo en el agua del hervidor. REQ-COC-05
+    en_agua: Option<u64>,
     tintes: Vec<Gd<StandardMaterial3D>>,
     /// Materiales que tiñe cada lado (REQ-PLA-05).
     tintes_lado: [Vec<Gd<StandardMaterial3D>>; 2],
@@ -91,6 +93,7 @@ impl Comida {
             consumida: false,
             pasadas: 0,
             entorno: None,
+            en_agua: None,
             tintes: Vec::new(),
             tintes_lado: [Vec::new(), Vec::new()],
             aderezos: Vec::new(),
@@ -372,6 +375,12 @@ impl Comida {
         self.entorno = Some((temp, Engine::singleton().get_physics_frames()));
     }
 
+    /// El hervidor avisa que este cuadro el alimento está en su agua a `temp`. REQ-COC-05, REQ-COC-08
+    pub fn exponer_agua(&mut self, temp: f32) {
+        self.exponer(temp);
+        self.en_agua = Some(Engine::singleton().get_physics_frames());
+    }
+
     /// Solo para pruebas: fuerza el estado de cocción.
     pub fn estado_coccion(&self) -> Option<EstadoCoccion> {
         self.coccion.as_ref().map(|(_, e)| *e)
@@ -594,7 +603,12 @@ impl IRigidBody3D for Comida {
                 }
             } else if let Some((p, e)) = &mut self.coccion {
                 let t = if t_entorno != TEMP_AMBIENTE { t_entorno } else { aire.unwrap_or(t_entorno) };
-                e.paso(p, t, dt);
+                // REQ-COC-05: en el agua del hervidor no se pasa ni se quema.
+                if self.en_agua.is_some_and(|f| cuadro.saturating_sub(f) <= 1) {
+                    e.paso_en_agua(p, t_entorno, dt);
+                } else {
+                    e.paso(p, t, dt);
+                }
             }
             // REQ-HEL-03: la carne perecedera pierde frescura según su temperatura;
             // REQ-HEL-08: una vez lista (sin nada crudo), ya no.

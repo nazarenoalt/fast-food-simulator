@@ -95,6 +95,17 @@ impl EstadoCoccion {
         }
     }
 
+    /// REQ-COC-05 (TASK-0266): igual que `paso`, pero en el agua del hervidor: no se pasa ni se
+    /// quema. El avance se frena justo antes de Pasado (`tope_en_agua`); lo que ya venía más
+    /// cocido no retrocede (REQ-COC-03). Fuera del agua se usa `paso` (reglas de siempre).
+    pub fn paso_en_agua(&mut self, perfil: &PerfilCoccion, t_agua: f32, dt: f32) {
+        let antes = *self;
+        self.paso(perfil, t_agua, dt);
+        self.avance = self.avance.min(tope_en_agua(perfil).max(antes.avance));
+        self.segundos_sobre_quemado = antes.segundos_sobre_quemado;
+        self.quemado = antes.quemado;
+    }
+
     /// REQ-COC-04
     pub fn punto(&self, perfil: &PerfilCoccion) -> Punto {
         if self.quemado {
@@ -120,6 +131,14 @@ impl EstadoCoccion {
             mezclar(perfil.color_cocido, perfil.color_pasado, t)
         }
     }
+}
+
+/// Qué tan antes de Pasado se frena en el agua, como parte del tramo Cocido → Pasado. REQ-COC-05
+const MARGEN_AGUA: f32 = 0.02;
+
+/// REQ-COC-05: avance máximo en el agua del hervidor, justo antes de Pasado.
+pub fn tope_en_agua(perfil: &PerfilCoccion) -> f32 {
+    perfil.pasado - (perfil.pasado - perfil.punto) * MARGEN_AGUA
 }
 
 pub fn mezclar(a: [f32; 3], b: [f32; 3], t: f32) -> [f32; 3] {
@@ -245,6 +264,46 @@ mod tests {
         assert!(pasada > 150.0, "pasada a los {pasada} s");
         // En agua nunca se quema.
         assert_eq!(segundos_hasta(&p, 95.0, Punto::Quemado, 3600.0), None);
+    }
+
+    #[test]
+    fn req_coc_05_diez_minutos_en_el_agua_a_95_sigue_cocida() {
+        let p = perfil_salchicha();
+        let mut e = EstadoCoccion::default();
+        let mut cocida_a = None;
+        for i in 0..(600 * 60) {
+            e.paso_en_agua(&p, 95.0, DT);
+            if cocida_a.is_none() && e.punto(&p) == Punto::Cocido {
+                cocida_a = Some(i as f32 * DT);
+            }
+        }
+        let cocida_a = cocida_a.expect("nunca se cocinó");
+        assert!((30.0..=90.0).contains(&cocida_a), "cocida a los {cocida_a} s");
+        assert_eq!(e.punto(&p), Punto::Cocido);
+        // Se frenó justo antes de Pasado.
+        assert!(e.avance < p.pasado && e.avance > p.pasado - 0.5, "avance {}", e.avance);
+        // Fuera del agua, reglas de siempre: a la misma temperatura se pasa enseguida.
+        for _ in 0..(10 * 60) {
+            e.paso(&p, 95.0, DT);
+        }
+        assert_eq!(e.punto(&p), Punto::Pasado);
+    }
+
+    #[test]
+    fn req_coc_05_en_el_agua_no_se_quema_ni_retrocede() {
+        let p = perfil_salchicha();
+        // Agua imposible de 250 °C: igual no se quema ni se pasa.
+        let mut e = EstadoCoccion::default();
+        for _ in 0..(120 * 60) {
+            e.paso_en_agua(&p, 250.0, DT);
+        }
+        assert_eq!(e.punto(&p), Punto::Cocido);
+        assert!(!e.quemado);
+        // Una ya pasada (de otra fuente) que cae al agua no retrocede.
+        let mut pasada = EstadoCoccion { avance: 14.0, temp: 95.0, ..Default::default() };
+        pasada.paso_en_agua(&p, 95.0, 1.0);
+        assert_eq!(pasada.avance, 14.0);
+        assert_eq!(pasada.punto(&p), Punto::Pasado);
     }
 
     #[test]
