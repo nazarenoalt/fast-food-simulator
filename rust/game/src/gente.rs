@@ -175,21 +175,27 @@ impl INode3D for Gente {
             self.t_spawn = 1.5;
         }
 
+        // REQ-ARR-05: la primera semana vienen menos clientes y la fila tiene menos lugares (la
+        // gente de la plaza no cambia).
+        let (factor_rampa, lugares) = clientes::rampa(self.dia);
+        self.fila.set_lugares(lugares);
         // REQ-CLI-01: llegada de clientes (proceso al azar con la tasa por hora de juego).
         let reputacion = util::unico::<Negocio>(&yo, negocio::GRUPO).map(|n| n.bind().reputacion()).unwrap_or(3.0);
+        // REQ-CLI-01: más productos en el menú, más clientes.
+        let productos = util::unico::<Carrito>(&yo, carrito::GRUPO).map_or(1, |c| c.bind().menu().len());
         // REQ-EVE-04: los eventos multiplican la tasa de clientes.
-        let tasa = clientes::tasa_clientes(hora, reputacion) * self.modificador.clientes;
+        let tasa = clientes::tasa_clientes(hora, reputacion)
+            * clientes::factor_menu(productos)
+            * factor_rampa
+            * self.modificador.clientes;
         let p = tasa / 60.0 * (min_por_s as f32 * dt);
         // REQ-CLI-12: con el cartel de cerrado colgado no se suman clientes nuevos.
         if clientes::llegan_clientes(&self.fila, self.cartel_cerrado()) && self.azar.chance(p) {
             self.nuevo_cliente(false);
         }
         // REQ-CLI-11: tecla de prueba.
-        if godot::classes::Input::singleton().is_action_just_pressed("traer_cliente")
-            && !self.fila.llena()
-            && !crate::armado::escribiendo()
-        {
-            self.nuevo_cliente(false);
+        if godot::classes::Input::singleton().is_action_just_pressed("traer_cliente") && !crate::armado::escribiendo() {
+            self.traer_cliente();
         }
 
         self.atender_clientes(dt);
@@ -647,7 +653,46 @@ impl Gente {
         Some(cartel.bind().estado())
     }
 
+    /// REQ-CLI-11: la tecla C trae un cliente al instante, aunque el cartel esté colgado
+    /// (REQ-CLI-12), pero no si la fila está llena (REQ-CLI-03, con los lugares del día de
+    /// REQ-ARR-05). Devuelve su id. También la usan las pruebas.
+    pub fn traer_cliente(&mut self) -> Option<u64> {
+        if self.fila.llena() {
+            return None;
+        }
+        self.nuevo_cliente(false)
+    }
+
     // ── Para pruebas ──────────────────────────────────────────────
+
+    /// Para pruebas: los lugares que tiene hoy la fila (REQ-ARR-05).
+    pub fn lugares_fila(&self) -> usize {
+        self.fila.lugares()
+    }
+
+    /// Para pruebas: el factor de clientes por el menú del carrito (REQ-CLI-01).
+    pub fn factor_menu(&self) -> f32 {
+        let productos = util::unico::<Carrito>(&self.to_gd(), carrito::GRUPO).map_or(1, |c| c.bind().menu().len());
+        clientes::factor_menu(productos)
+    }
+
+    /// Para pruebas: el multiplicador de clientes de los eventos de ahora (REQ-EVE-04).
+    pub fn factor_eventos(&self) -> f32 {
+        self.modificador.clientes
+    }
+
+    /// Para pruebas: todos los de la fila se van (sin pagar ni contar como perdidos).
+    pub fn vaciar_fila(&mut self) {
+        let ids: Vec<u64> = self.clientes.keys().copied().collect();
+        for id in ids {
+            if let Some(c) = self.clientes.get_mut(&id)
+                && c.peaton.is_instance_valid()
+            {
+                c.peaton.bind_mut().globo("", Color::WHITE);
+            }
+            self.despedir(id);
+        }
+    }
 
     /// Una llegada sola, como las de REQ-CLI-01 pero segura (no al azar). Devuelve si se sumó
     /// alguien a la fila: con el cartel colgado, no (REQ-CLI-12).
